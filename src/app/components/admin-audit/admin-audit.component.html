@@ -1,0 +1,68 @@
+<div class="container mx-auto p-6">
+    <div class="mb-6 flex justify-between items-center">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-800">سجل العمليات (Audit Log)</h1>
+            <p class="text-gray-500 mt-1">تتبع نشاط المشرفين والعمليات الحساسة في النظام</p>
+        </div>
+        <div class="flex gap-2">
+            <button (click)="exportData()" class="text-green-600 hover:text-green-800 flex items-center gap-1"
+                title="تصدير">
+                📥 تصدير
+            </button>
+            <button (click)="loadLogs()" class="text-blue-600 hover:text-blue-800 flex items-center gap-1"
+                title="تحديث">
+                🔄 تحديث
+            </button>
+        </div>
+    </div>
+
+    <div *ngIf="loading" class="text-center py-12">
+        <div class="animate-spin h-8 w-8 border-4 border-blue-500 border-t-transparent rounded-full mx-auto mb-4"></div>
+        <p class="text-gray-500">جاري تحميل السجلات...</p>
+    </div>
+
+    <div *ngIf="!loading" class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-right">
+                <thead class="bg-gray-50 border-b border-gray-200 text-gray-600 text-sm uppercase">
+                    <tr>
+                        <th class="px-6 py-4">التاريخ</th>
+                        <th class="px-6 py-4">المسؤول</th>
+                        <th class="px-6 py-4">الإجراء</th>
+                        <th class="px-6 py-4">الكيان</th>
+                        <th class="px-6 py-4">التفاصيل</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    <tr *ngFor="let log of logs; trackBy: trackByLog" class="hover:bg-gray-50 text-sm">
+                        <td class="px-6 py-4 text-gray-500 dir-ltr text-right">
+                            {{ log.createdDate | date:'medium' }}
+                        </td>
+                        <td class="px-6 py-4 font-medium text-gray-900">
+                            <div class="flex flex-col">
+                                <span>{{ log.adminUsername }}</span>
+                                <span class="text-xs text-gray-400">ID: {{ log.adminId || 'System' }}</span>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4">
+                            <span [class]="'px-2 py-1 rounded text-xs font-semibold ' + getActionColor(log.action)">
+                                {{ log.action }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-gray-600 font-mono text-xs">
+                            {{ log.entityName }} #{{ log.entityId }}
+                        </td>
+                        <td class="px-6 py-4 text-gray-600 max-w-md truncate" [title]="log.details">
+                            {{ log.details }}
+                        </td>
+                    </tr>
+                    <tr *ngIf="logs.length === 0">
+                        <td colspan="5" class="px-6 py-12 text-center text-gray-500">
+                            لا توجد سجلات لعرضها
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,50 @@
+/* Animations */
+@keyframes slideUpFade {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-up {
+  animation: slideUpFade 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.delay-100 {
+  animation-delay: 100ms;
+}
+
+.delay-200 {
+  animation-delay: 200ms;
+}
+
+/* Custom Input Styling */
+.input-group {
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.input-lg {
+  height: 3.5rem;
+  /* 56px for touch */
+  font-size: 1.25rem;
+}
+
+.input-lg:focus {
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+}
+
+.char-counter {
+  font-size: 0.75rem;
+  margin-top: 0.25rem;
+  text-align: left;
+  color: #94a3b8;
+  position: absolute;
+  bottom: -1.5rem;
+  left: 0.5rem;
+}

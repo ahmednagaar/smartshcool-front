@@ -1,0 +1,61 @@
+/* Card Hover & Interactive States */
+.test-card {
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    border: 2px solid transparent;
+    /* Fallback border color or slight shadow for visibility if gradient fails involves relying on shadow mostly */
+}
+
+.test-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.test-card.nafes:hover {
+    border-color: rgba(59, 130, 246, 0.3);
+    box-shadow: 0 20px 40px -5px rgba(59, 130, 246, 0.15);
+}
+
+.test-card.central:hover {
+    border-color: rgba(249, 115, 22, 0.3);
+    box-shadow: 0 20px 40px -5px rgba(249, 115, 22, 0.15);
+}
+
+/* Icon Animations */
+.card-icon-wrapper {
+    transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.test-card:hover .card-icon-wrapper {
+    transform: scale(1.1) rotate(5deg);
+}
+
+/* RTL Context specific adjustments if needed */
+:host-context([dir="rtl"]) .test-card:hover .card-icon-wrapper {
+    transform: scale(1.1) rotate(-5deg);
+}
+
+/* Button slide up effect on card hover */
+.card-action {
+    transition: all 0.3s ease;
+    transform: translateY(0);
+    position: relative;
+    z-index: 20;
+}
+
+.test-card:hover .card-action {
+    transform: translateY(-2px);
+}
+
+/* Badge styling */
+.grade-badge {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+/* Ensure relative container z-index stack is correct for bg decoration */
+.test-card .relative {
+    z-index: 10;
+}

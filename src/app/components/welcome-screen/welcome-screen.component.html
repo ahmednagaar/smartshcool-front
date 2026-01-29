@@ -1,0 +1,46 @@
+<div class="bg-v0-gradient min-h-screen p-4 flex items-center justify-center">
+  <div class="max-w-xl w-full">
+    <div class="card-v0 p-8 md:p-12 space-y-8 shadow-xl animate-slide-up bg-white/95 backdrop-blur-sm">
+
+      <!-- Icon & Header -->
+      <div class="text-center space-y-4">
+        <div
+          class="inline-flex items-center justify-center w-24 h-24 rounded-full bg-blue-50 text-primary mb-2 animate-bounce-slow">
+          <lucide-icon [img]="icons.Hand" class="w-12 h-12"></lucide-icon>
+        </div>
+        <h2 class="text-3xl md:text-4xl font-bold text-foreground">مرحباً بك!</h2>
+        <p class="text-lg text-muted">يُفضل كتابة اسمك لتتبع تقدمك، أو يمكنك المتابعة مباشرة</p>
+      </div>
+
+      <!-- Input Section -->
+      <div class="space-y-6 delay-100 animate-slide-up">
+        <div class="input-group">
+          <label for="studentName" class="sr-only">اسم الطالب</label>
+          <input id="studentName" type="text" [(ngModel)]="studentName" (keyup.enter)="continueToTestType()"
+            maxlength="30" placeholder="اكتب اسمك هنا..."
+            class="w-full px-6 py-4 text-xl text-center rounded-2xl border-2 border-slate-200 focus:border-primary focus:outline-none transition-colors input-lg placeholder:text-slate-300 text-slate-800 font-bold"
+            autocomplete="off" />
+          <div class="char-counter dir-ltr">
+            {{ studentName.length }} / 30
+          </div>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="flex flex-col gap-4 delay-200 animate-slide-up pt-4">
+        <button (click)="continueToTestType()"
+          class="btn-primary w-full text-xl font-bold py-5 rounded-xl shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 group">
+          <span>{{ studentName.trim() ? 'متابعة باسم ' + studentName : 'متابعة بدون اسم' }}</span>
+          <lucide-icon [img]="icons.ArrowLeft"
+            class="w-5 h-5 transition-transform group-hover:-translate-x-1"></lucide-icon>
+        </button>
+
+        <button (click)="goBack()"
+          class="btn-ghost w-full text-lg font-medium py-3 text-muted hover:text-foreground transition-colors">
+          رجوع
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>

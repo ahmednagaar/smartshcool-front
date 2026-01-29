@@ -1,0 +1,94 @@
+<div class="bg-v0-gradient min-h-screen p-4 md:p-8" dir="rtl">
+    <div class="container max-w-6xl mx-auto py-4">
+
+        <!-- Back Button -->
+        <div class="flex justify-start mb-8">
+            <button (click)="goBack()"
+                class="btn-ghost group flex items-center gap-2 text-muted hover:text-foreground transition-colors px-4 py-2 rounded-lg hover:bg-white/50">
+                <lucide-icon [img]="icons.ArrowRight"
+                    class="w-5 h-5 transition-transform group-hover:translate-x-1"></lucide-icon>
+                <span class="text-lg font-medium">رجوع</span>
+            </button>
+        </div>
+
+        <!-- Header -->
+        <div class="text-center mb-12 space-y-4 animate-fade-in-up">
+            <h2 class="text-3xl md:text-5xl font-bold text-foreground">اختر نوع الاختبار</h2>
+            <p class="text-xl text-muted max-w-2xl mx-auto">اختر المسار الذي يناسب صفك الدراسي للبدء في التدريب</p>
+        </div>
+
+        <!-- Cards Grid -->
+        <div class="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+
+            <!-- Nafes Test Card -->
+            <div class="test-card nafes bg-white rounded-3xl p-8 cursor-pointer relative overflow-hidden group"
+                (click)="selectTestType('nafes')">
+                <div
+                    class="absolute top-0 right-0 w-32 h-32 bg-blue-50 rounded-bl-full -mr-16 -mt-16 transition-transform group-hover:scale-150 duration-700 ease-out z-0">
+                </div>
+
+                <div class="relative z-10 flex flex-col h-full">
+                    <div
+                        class="card-icon-wrapper w-20 h-20 rounded-2xl bg-blue-100 flex items-center justify-center text-blue-600 mb-6">
+                        <lucide-icon [img]="icons.Target" class="w-10 h-10"></lucide-icon>
+                    </div>
+
+                    <h3 class="text-2xl md:text-3xl font-bold text-gray-900 mb-3">اختبار نافس</h3>
+
+                    <p class="text-muted text-lg mb-6 flex-grow leading-relaxed">
+                        اختبارات وطنية تقيس التحصيل التعليمي لطلبة المدارس
+                        <br>
+                        المواد: لغتي - الرياضيات - العلوم
+                    </p>
+
+                    <div class="flex flex-wrap gap-2 mb-8">
+                        <span class="grade-badge bg-blue-50 text-blue-700">الصف الثالث</span>
+                        <span class="grade-badge bg-blue-50 text-blue-700">الصف السادس</span>
+                        <span class="grade-badge bg-blue-50 text-blue-700">الصف الثالث متوسط</span>
+                    </div>
+
+                    <button
+                        class="card-action btn-primary w-full text-lg font-bold py-4 rounded-xl shadow-blue-200 shadow-lg">
+                        ابدأ التدريب
+                    </button>
+                </div>
+            </div>
+
+            <!-- Central Test Card -->
+            <div class="test-card central bg-white rounded-3xl p-8 cursor-pointer relative overflow-hidden group"
+                (click)="selectTestType('central')">
+                <div
+                    class="absolute top-0 right-0 w-32 h-32 bg-orange-50 rounded-bl-full -mr-16 -mt-16 transition-transform group-hover:scale-150 duration-700 ease-out z-0">
+                </div>
+
+                <div class="relative z-10 flex flex-col h-full">
+                    <div
+                        class="card-icon-wrapper w-20 h-20 rounded-2xl bg-orange-100 flex items-center justify-center text-orange-600 mb-6">
+                        <lucide-icon [img]="icons.BookOpen" class="w-10 h-10"></lucide-icon>
+                    </div>
+
+                    <h3 class="text-2xl md:text-3xl font-bold text-gray-900 mb-3">الاختبار المركزي</h3>
+
+                    <p class="text-muted text-lg mb-6 flex-grow leading-relaxed">
+                        اختبارات دورية لتعزيز المهارات الأساسية للطلاب
+                        <br>
+                        المواد: لغتي - الرياضيات - العلوم
+                    </p>
+
+                    <div class="flex flex-wrap gap-2 mb-8">
+                        <span class="grade-badge bg-orange-50 text-orange-700">الصف الثالث</span>
+                        <span class="grade-badge bg-orange-50 text-orange-700">الصف الرابع</span>
+                        <span class="grade-badge bg-orange-50 text-orange-700">الصف الخامس</span>
+                        <span class="grade-badge bg-orange-50 text-orange-700">الصف السادس</span>
+                    </div>
+
+                    <button
+                        class="card-action bg-white border-2 border-orange-500 text-orange-600 hover:bg-orange-50 w-full text-lg font-bold py-4 rounded-xl transition-colors">
+                        اختر المسار
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>

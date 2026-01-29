@@ -1,0 +1,99 @@
+<div class="bg-v0-gradient min-h-screen">
+    <!-- Header -->
+    <header class="header-v0 relative z-10 px-4">
+        <div class="container mx-auto">
+            <div class="header-content flex items-center justify-between">
+                <div class="space-y-1">
+                    <h1 class="text-2xl md:text-3xl font-bold text-foreground">التدريب على الاختبارات المركزية واختبارات
+                        نافس</h1>
+                    <p class="text-muted text-sm md:text-base mt-1">بإشراف الدكتورة لطيفة خلف العنزي</p>
+                </div>
+
+                <!-- Visitor Badge with Real Data -->
+                <div class="visitor-badge flex items-center gap-3 px-4 py-2 rounded-full shadow-sm"
+                    aria-label="Visitor Counter">
+                    <lucide-icon [img]="icons.Users" class="text-primary w-5 h-5"></lucide-icon>
+                    <div class="flex flex-col items-center leading-none">
+                        <span class="visitor-badge-count font-bold text-lg text-primary animate-number">
+                            {{ (visitorCount$ | async) | number }}
+                        </span>
+                        <span class="visitor-badge-label text-xs text-muted-foreground">زائر</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto py-12 px-4">
+        <div class="max-w-4xl mx-auto animate-fade-in">
+            <div
+                class="card-v0 p-8 md:p-14 text-center space-y-12 relative overflow-hidden backdrop-blur-sm bg-white/90">
+
+                <!-- Decoration background glow -->
+                <div
+                    class="absolute top-0 left-1/2 -translate-x-1/2 w-full h-24 bg-gradient-to-b from-blue-50/50 to-transparent pointer-events-none">
+                </div>
+
+                <div class="space-y-8 relative z-10">
+                    <div
+                        class="badge-smart inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-100/50 text-blue-700 text-sm font-semibold mb-2">
+                        <span class="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
+                        منصة تدريب ذكية
+                    </div>
+
+                    <h2 class="text-3xl md:text-5xl font-bold text-foreground leading-tight tracking-tight">
+                        منصة تدريب ذكية تساعدك على
+                        <span class="block text-primary mt-2">إتقان مهارات الاختبارات</span>
+                    </h2>
+
+                    <p class="text-xl md:text-2xl text-muted font-medium max-w-2xl mx-auto leading-relaxed">
+                        استعد ... وتفوق ... وأثبت قدرتك بثقة وتميز
+                    </p>
+                </div>
+
+                <div class="pt-4">
+                    <button (click)="startTraining()"
+                        class="btn-primary btn-start-training px-12 py-5 text-xl md:text-2xl font-bold rounded-2xl shadow-lg inline-flex items-center gap-3"
+                        aria-label="Start Training">
+                        <span>ابدأ التدريب الآن</span>
+                        <lucide-icon [img]="icons.ArrowLeft" class="w-6 h-6"></lucide-icon>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Footer Links -->
+            <footer class="mt-16">
+                <nav class="flex flex-wrap items-center justify-center gap-6 md:gap-12" aria-label="Footer Navigation">
+                    <a routerLink="/admin/login"
+                        class="group flex items-center gap-3 text-muted hover:text-primary transition-colors py-2 px-4 rounded-lg hover:bg-white/50">
+                        <span class="p-2 bg-gray-100 rounded-lg group-hover:bg-blue-100 transition-colors">
+                            <lucide-icon [img]="icons.Lock"
+                                class="w-5 h-5 text-gray-500 group-hover:text-blue-600"></lucide-icon>
+                        </span>
+                        <span class="font-medium">دخول المشرف</span>
+                    </a>
+
+                    <a routerLink="/parent/login"
+                        class="group flex items-center gap-3 text-muted hover:text-primary transition-colors py-2 px-4 rounded-lg hover:bg-white/50">
+                        <span class="p-2 bg-gray-100 rounded-lg group-hover:bg-orange-100 transition-colors">
+                            <lucide-icon [img]="icons.Users"
+                                class="w-5 h-5 text-gray-500 group-hover:text-orange-600"></lucide-icon>
+                        </span>
+                        <span class="font-medium">بوابة ولي الأمر</span>
+                    </a>
+                </nav>
+
+                <div class="mt-10 flex flex-col items-center gap-4 text-muted">
+                    <a href="https://wa.me/966507134468" target="_blank" rel="noopener noreferrer"
+                        class="flex items-center gap-2 hover:text-primary transition-colors font-semibold dir-ltr"
+                        aria-label="Contact support on WhatsApp">
+                        <lucide-icon [img]="icons.Phone" class="w-4 h-4"></lucide-icon>
+                        <span>0507134468</span>
+                    </a>
+                    <p class="text-sm opacity-75">جميع الحقوق محفوظة © {{ currentYear }}</p>
+                </div>
+            </footer>
+        </div>
+    </main>
+</div>

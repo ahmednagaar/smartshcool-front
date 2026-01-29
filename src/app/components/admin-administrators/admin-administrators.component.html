@@ -1,0 +1,109 @@
+<div class="container mx-auto p-6">
+    <!-- Header -->
+    <div class="mb-6">
+        <h1 class="text-2xl font-bold text-gray-800">إدارة المشرفين</h1>
+        <p class="text-gray-500 mt-1">عرض وإدارة الحسابات الإدارية والموافقات المعلقة</p>
+    </div>
+
+    <!-- Tabs -->
+    <div class="flex border-b border-gray-200 mb-6">
+        <button (click)="switchTab('all')" [class.border-blue-500]="activeTab === 'all'"
+            [class.text-blue-600]="activeTab === 'all'"
+            class="px-6 py-3 font-medium text-sm border-b-2 border-transparent hover:text-blue-600 transition-colors">
+            جميع المشرفين
+        </button>
+        <button (click)="switchTab('pending')" [class.border-blue-500]="activeTab === 'pending'"
+            [class.text-blue-600]="activeTab === 'pending'"
+            class="px-6 py-3 font-medium text-sm border-b-2 border-transparent hover:text-blue-600 transition-colors flex items-center gap-2">
+            طلبات معلقة
+            <span *ngIf="pendingAdmins.length > 0" class="bg-red-100 text-red-600 px-2 py-0.5 rounded-full text-xs">
+                {{ pendingAdmins.length }}
+            </span>
+        </button>
+    </div>
+
+    <!-- Loading -->
+    <div *ngIf="loading" class="text-center py-12">
+        <div class="animate-spin h-8 w-8 border-4 border-blue-500 border-t-transparent rounded-full mx-auto mb-4"></div>
+    </div>
+
+    <!-- Tab Content: ALL ADMINS -->
+    <div *ngIf="activeTab === 'all' && !loading">
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+            <table class="w-full text-right">
+                <thead class="bg-gray-50 border-b border-gray-200 text-gray-600 text-sm uppercase">
+                    <tr>
+                        <th class="px-6 py-4">الاسم</th>
+                        <th class="px-6 py-4">البريد الإلكتروني</th>
+                        <th class="px-6 py-4">الصلاحية</th>
+                        <th class="px-6 py-4">الحالة</th>
+                        <th class="px-6 py-4">آخر دخول</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    <tr *ngFor="let admin of admins" class="hover:bg-gray-50">
+                        <td class="px-6 py-4 font-medium">{{ admin.username }}</td>
+                        <td class="px-6 py-4 text-gray-500">{{ admin.email }}</td>
+                        <td class="px-6 py-4">
+                            <span
+                                [class]="'px-2 py-1 rounded-full text-xs font-semibold ' + getRoleBadgeClass(admin.role)">
+                                {{ admin.role }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4">
+                            <span class="px-2 py-1 rounded-full text-xs font-semibold"
+                                [class.bg-green-100]="admin.isApproved" [class.text-green-800]="admin.isApproved"
+                                [class.bg-yellow-100]="!admin.isApproved" [class.text-yellow-800]="!admin.isApproved">
+                                {{ admin.isApproved ? 'معتمد' : 'معلق' }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-gray-500 text-sm">
+                            {{ admin.lastLogin ? (admin.lastLogin | date:'short') : 'لم يسجل دخول' }}
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Tab Content: PENDING -->
+    <div *ngIf="activeTab === 'pending' && !loading">
+        <div *ngIf="pendingAdmins.length === 0"
+            class="text-center py-12 bg-gray-50 rounded-lg border border-dashed border-gray-300">
+            <p class="text-gray-500">لا توجد طلبات تسجيل معلقة حالياً</p>
+        </div>
+
+        <div *ngIf="pendingAdmins.length > 0"
+            class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+            <table class="w-full text-right">
+                <thead class="bg-gray-50 border-b border-gray-200 text-gray-600 text-sm uppercase">
+                    <tr>
+                        <th class="px-6 py-4">الاسم</th>
+                        <th class="px-6 py-4">البريد الإلكتروني</th>
+                        <th class="px-6 py-4">تاريخ التسجيل</th>
+                        <th class="px-6 py-4">الإجراءات</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    <tr *ngFor="let admin of pendingAdmins" class="hover:bg-gray-50">
+                        <td class="px-6 py-4 font-medium">{{ admin.username }}</td>
+                        <td class="px-6 py-4 text-gray-500">{{ admin.email }}</td>
+                        <td class="px-6 py-4 text-gray-500">{{ admin.createdDate | date:'short' }}</td>
+                        <td class="px-6 py-4">
+                            <div class="flex gap-2">
+                                <button (click)="approve(admin.id)"
+                                    class="px-3 py-1 bg-green-600 text-white rounded text-sm hover:bg-green-700 transition-colors">
+                                    موافقة
+                                </button>
+                                <button (click)="reject(admin.id)"
+                                    class="px-3 py-1 bg-red-600 text-white rounded text-sm hover:bg-red-700 transition-colors">
+                                    رفض
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
