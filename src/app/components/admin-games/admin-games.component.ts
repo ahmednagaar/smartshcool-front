@@ -5,10 +5,10 @@ import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../services/api.service';
 
 @Component({
-    selector: 'app-admin-games',
-    standalone: true,
-    imports: [CommonModule, FormsModule],
-    template: `
+  selector: 'app-admin-games',
+  standalone: true,
+  imports: [CommonModule, FormsModule],
+  template: `
     <div class="min-h-screen bg-nafes-cream p-8">
       <div class="container mx-auto">
         <h1 class="text-3xl font-bold text-nafes-dark mb-8">إدارة الاختبارات والألعاب</h1>
@@ -118,131 +118,131 @@ import { ApiService } from '../../services/api.service';
   `
 })
 export class AdminGamesComponent implements OnInit {
-    games: any[] = [];
-    allQuestions: any[] = [];
-    filteredQuestions: any[] = [];
-    showModal = false;
-    isEditing = false;
+  games: any[] = [];
+  allQuestions: any[] = [];
+  filteredQuestions: any[] = [];
+  showModal = false;
+  isEditing = false;
 
-    currentGame: any = {
-        questionIds: [],
-        grade: 3,
-        subject: 1
+  currentGame: any = {
+    questionIds: [],
+    grade: 3,
+    subject: 1
+  };
+
+  constructor(private api: ApiService) { }
+
+  ngOnInit() {
+    this.loadGames();
+    this.loadQuestions();
+  }
+
+  loadGames() {
+    this.api.getGames().subscribe(data => this.games = data);
+  }
+
+  loadQuestions() {
+    this.api.getQuestions().subscribe(response => {
+      this.allQuestions = response.data || [];
+      this.filterQuestions();
+    });
+  }
+
+  // Filter questions to show only those matching current game's grade/subject logic if desired,
+  // or just show all. For now, let's filter by the selected grade/subject to make it easier for admin.
+  filterQuestions() {
+    // Logic: Only show questions that match the Game's Grade and Subject?
+    // Or show all?
+    // Let's filter to help the user.
+    if (!this.currentGame.grade || !this.currentGame.subject) {
+      this.filteredQuestions = this.allQuestions;
+      return;
+    }
+
+    this.filteredQuestions = this.allQuestions.filter(q =>
+      q.grade == this.currentGame.grade &&
+      q.subject == this.currentGame.subject
+    );
+  }
+
+  openModal() {
+    this.isEditing = false;
+    this.currentGame = {
+      title: '',
+      description: '',
+      timeLimit: 10,
+      passingScore: 60,
+      grade: 3,
+      subject: 1,
+      questionIds: []
     };
+    this.filterQuestions(); // Refresh filter
+    this.showModal = true;
+  }
 
-    constructor(private api: ApiService) { }
+  editGame(game: any) {
+    this.isEditing = true;
+    // Need to fetch detailed game with questions to populate questionIds?
+    // The list endpoint might not return questionIds.
+    // Let's assume we need to fetch via ID if list doesn't have it.
+    // But for now, lets try to see if we can get it.
+    // If not, we might need a separate API call.
 
-    ngOnInit() {
+    // Using api get with questions
+    this.api.getGameWithQuestions(game.id).subscribe(details => {
+      this.currentGame = {
+        ...details,
+        questionIds: details.questions.map((q: any) => q.questionId)
+      };
+      this.filterQuestions();
+      this.showModal = true;
+    });
+  }
+
+  saveGame() {
+    if (this.isEditing) {
+      this.api.updateGame(this.currentGame.id, this.currentGame).subscribe(() => {
         this.loadGames();
-        this.loadQuestions();
+        this.closeModal();
+      });
+    } else {
+      this.api.createGame(this.currentGame).subscribe(() => {
+        this.loadGames();
+        this.closeModal();
+      });
     }
+  }
 
-    loadGames() {
-        this.api.getGames().subscribe(data => this.games = data);
+  deleteGame(id: number) {
+    if (confirm('هل أنت متأكد من حذف هذا الاختبار؟')) {
+      this.api.deleteGame(id).subscribe(() => this.loadGames());
     }
+  }
 
-    loadQuestions() {
-        this.api.getQuestions().subscribe(data => {
-            this.allQuestions = data;
-            this.filterQuestions();
-        });
+  toggleQuestion(questionId: number) {
+    const index = this.currentGame.questionIds.indexOf(questionId);
+    if (index > -1) {
+      this.currentGame.questionIds.splice(index, 1);
+    } else {
+      this.currentGame.questionIds.push(questionId);
     }
+  }
 
-    // Filter questions to show only those matching current game's grade/subject logic if desired,
-    // or just show all. For now, let's filter by the selected grade/subject to make it easier for admin.
-    filterQuestions() {
-        // Logic: Only show questions that match the Game's Grade and Subject?
-        // Or show all?
-        // Let's filter to help the user.
-        if (!this.currentGame.grade || !this.currentGame.subject) {
-            this.filteredQuestions = this.allQuestions;
-            return;
-        }
+  closeModal() {
+    this.showModal = false;
+  }
 
-        this.filteredQuestions = this.allQuestions.filter(q =>
-            q.grade == this.currentGame.grade &&
-            q.subject == this.currentGame.subject
-        );
-    }
+  getGradeName(grade: number): string {
+    return `الصف ${grade}`;
+  }
 
-    openModal() {
-        this.isEditing = false;
-        this.currentGame = {
-            title: '',
-            description: '',
-            timeLimit: 10,
-            passingScore: 60,
-            grade: 3,
-            subject: 1,
-            questionIds: []
-        };
-        this.filterQuestions(); // Refresh filter
-        this.showModal = true;
-    }
+  getSubjectName(subject: number): string {
+    const subjects: any = { 1: 'لغة عربية', 2: 'رياضيات', 3: 'علوم' };
+    return subjects[subject] || 'غير معروف';
+  }
 
-    editGame(game: any) {
-        this.isEditing = true;
-        // Need to fetch detailed game with questions to populate questionIds?
-        // The list endpoint might not return questionIds.
-        // Let's assume we need to fetch via ID if list doesn't have it.
-        // But for now, lets try to see if we can get it.
-        // If not, we might need a separate API call.
-
-        // Using api get with questions
-        this.api.getGameWithQuestions(game.id).subscribe(details => {
-            this.currentGame = {
-                ...details,
-                questionIds: details.questions.map((q: any) => q.questionId)
-            };
-            this.filterQuestions();
-            this.showModal = true;
-        });
-    }
-
-    saveGame() {
-        if (this.isEditing) {
-            this.api.updateGame(this.currentGame.id, this.currentGame).subscribe(() => {
-                this.loadGames();
-                this.closeModal();
-            });
-        } else {
-            this.api.createGame(this.currentGame).subscribe(() => {
-                this.loadGames();
-                this.closeModal();
-            });
-        }
-    }
-
-    deleteGame(id: number) {
-        if (confirm('هل أنت متأكد من حذف هذا الاختبار؟')) {
-            this.api.deleteGame(id).subscribe(() => this.loadGames());
-        }
-    }
-
-    toggleQuestion(questionId: number) {
-        const index = this.currentGame.questionIds.indexOf(questionId);
-        if (index > -1) {
-            this.currentGame.questionIds.splice(index, 1);
-        } else {
-            this.currentGame.questionIds.push(questionId);
-        }
-    }
-
-    closeModal() {
-        this.showModal = false;
-    }
-
-    getGradeName(grade: number): string {
-        return `الصف ${grade}`;
-    }
-
-    getSubjectName(subject: number): string {
-        const subjects: any = { 1: 'لغة عربية', 2: 'رياضيات', 3: 'علوم' };
-        return subjects[subject] || 'غير معروف';
-    }
-
-    getTypeName(type: number): string {
-        const types: any = { 1: 'اختيارات', 2: 'صواب/خطأ', 3: 'توصيل', 4: 'إكمال' };
-        return types[type] || 'غير معروف';
-    }
+  getTypeName(type: number): string {
+    const types: any = { 1: 'اختيارات', 2: 'صواب/خطأ', 3: 'توصيل', 4: 'إكمال' };
+    return types[type] || 'غير معروف';
+  }
 }

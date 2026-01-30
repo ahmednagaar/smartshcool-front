@@ -150,7 +150,6 @@ export class ApiService {
     // Admin Question Management
     private getAuthHeaders(): HttpHeaders {
         const token = localStorage.getItem('accessToken');
-        console.log('🔑 ApiService: Getting Auth Token:', token ? token.substring(0, 10) + '...' : 'NULL');
         if (!token) {
             console.warn('⚠️ No access token found in localStorage!');
         }
@@ -175,6 +174,18 @@ export class ApiService {
 
     getQuestionAnalytics(id: number): Observable<any> {
         return this.http.get(`${this.apiUrl}/question/analytics/${id}`, { headers: this.getAuthHeaders() });
+    }
+
+    // Bulk Import
+    bulkImportQuestions(questions: any[]): Observable<any> {
+        return this.http.post(`${this.apiUrl}/question/bulk-import`, questions, { headers: this.getAuthHeaders() });
+    }
+
+    // Export - Triggers browser download directly from endpoint
+    exportQuestions(format: 'csv' | 'json' = 'csv', search?: string) {
+        let url = `${this.apiUrl}/question/export?format=${format}`;
+        if (search) url += `&search=${search}`;
+        this.downloadFile(url, `questions_export_${new Date().toISOString().split('T')[0]}.${format}`);
     }
 
     // Admin Game Management
