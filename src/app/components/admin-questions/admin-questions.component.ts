@@ -1,10 +1,12 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../services/api.service';
 import { SmartQuestionEditorComponent } from './smart-question-editor.component';
 import { QuestionPreviewComponent } from './question-preview.component';
 import { RouterLink } from '@angular/router';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 
 type QuestionStatus = 'all' | 'active' | 'draft' | 'inactive';
 type SortField = 'createdDate' | 'text' | 'grade' | 'subject' | 'type';
@@ -601,7 +603,8 @@ interface QuestionFilter {
     }
   `]
 })
-export class AdminQuestionsComponent implements OnInit {
+export class AdminQuestionsComponent implements OnInit, OnDestroy {
+  private destroy$ = new Subject<void>();
   questions: any[] = [];
   isLoading = false;
   isSaving = false;
@@ -675,6 +678,11 @@ export class AdminQuestionsComponent implements OnInit {
     this.loadStats();
   }
 
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
   loadQuestions() {
     this.isLoading = true;
     this.api.getQuestions({
@@ -685,7 +693,7 @@ export class AdminQuestionsComponent implements OnInit {
       subject: this.filter.subject || undefined,
       type: this.filter.type || undefined,
       difficulty: this.filter.difficulty || undefined
-    }).subscribe({
+    }).pipe(takeUntil(this.destroy$)).subscribe({
       next: response => {
         // ApiResponse<PaginatedResponse<QuestionGetDto>> -> response.data is the list
         // PaginatedResponse properties are merged in root for JSON
@@ -702,7 +710,7 @@ export class AdminQuestionsComponent implements OnInit {
   }
 
   loadStats() {
-    this.api.getQuestionStats().subscribe({
+    this.api.getQuestionStats().pipe(takeUntil(this.destroy$)).subscribe({
       next: response => {
         // ApiResponse<object> -> response.data has the stats object
         const statsData = response.data || response;
@@ -761,7 +769,7 @@ export class AdminQuestionsComponent implements OnInit {
       ? this.api.updateQuestion(payload.id, payload)
       : this.api.createQuestion(payload);
 
-    request.subscribe({
+    request.pipe(takeUntil(this.destroy$)).subscribe({
       next: () => {
         this.closeModal();
         this.loadQuestions();
@@ -808,7 +816,7 @@ export class AdminQuestionsComponent implements OnInit {
 
   deleteQuestion(id: number) {
     if (confirm('هل أنت متأكد من حذف هذا السؤال؟')) {
-      this.api.deleteQuestion(id).subscribe(() => {
+      this.api.deleteQuestion(id).pipe(takeUntil(this.destroy$)).subscribe(() => {
         this.loadQuestions();
         this.loadStats();
       });
@@ -828,7 +836,7 @@ export class AdminQuestionsComponent implements OnInit {
   }
 
   viewAnalytics(id: number) {
-    this.api.getQuestionAnalytics(id).subscribe(data => {
+    this.api.getQuestionAnalytics(id).pipe(takeUntil(this.destroy$)).subscribe(data => {
       this.analyticsData = data;
       this.showAnalyticsModal = true;
     });
@@ -896,15 +904,15 @@ export class AdminQuestionsComponent implements OnInit {
 
   bulkDelete() {
     if (confirm(`هل أنت متأكد من حذف ${this.selectedIds.length} سؤال؟`)) {
-      let completed = 0;
-      this.selectedIds.forEach(id => {
-        this.api.deleteQuestion(id).subscribe(() => {
-          completed++;
-          if (completed === this.selectedIds.length) {
+      const deleteObservables = this.selectedIds.map(id => this.api.deleteQuestion(id));
+      import('rxjs').then(({ forkJoin }) => {
+        forkJoin(deleteObservables).pipe(takeUntil(this.destroy$)).subscribe({
+          next: () => {
             this.selectedIds = [];
             this.loadQuestions();
             this.loadStats();
-          }
+          },
+          error: () => alert('فشل حذف بعض الأسئلة')
         });
       });
     }
