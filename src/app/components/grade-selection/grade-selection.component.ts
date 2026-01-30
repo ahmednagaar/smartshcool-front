@@ -18,14 +18,14 @@ interface GradeOption {
     <div class="bg-v0-gradient min-h-screen pb-20">
       
       <!-- User Requested Black Header -->
-      <div class="bg-black w-full relative mb-0" style="height: 58px; z-index: 20;">
+      <div class="bg-gradient-to-r from-indigo-800 to-purple-700 w-full relative mb-0 shadow-lg" style="height: 58px; z-index: 20;">
         <div class="container mx-auto px-4 h-full flex items-center justify-center">
             <h1 class="font-handicrafts text-2xl md:text-3xl font-semibold text-white">اختر المرحلة الدراسية</h1>
         </div>
       </div>
 
       <!-- Container with negative margin to pull dashed lines up to the header -->
-      <div class="container max-w-6xl mx-auto px-4 mt-20">
+      <div class="container max-w-6xl mx-auto px-4 mt-32" style="margin-top: 87px;">
         
         <!-- Grades Grid -->
         <!-- Grades List (Flexbox for row layout with proper spacing) -->
@@ -53,7 +53,7 @@ interface GradeOption {
               <div class="flex-1 relative z-10 w-full" style="min-height: 200px;"></div>
               
               <!-- Button -->
-              <button class="grade-card-btn">
+              <button class="w-full py-4 bg-gradient-to-r from-primary to-primary-light text-white rounded-xl font-bold text-xl shadow-lg shadow-primary/20 group-hover:shadow-primary/40 transition-all duration-300 transform group-hover:translate-y-[-2px]">
                 {{ grade.label }}
               </button>
             </div>
