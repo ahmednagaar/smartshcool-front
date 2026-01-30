@@ -303,4 +303,18 @@ export class ApiService {
             // TestType, Difficulty left empty to fetch all
         });
     }
+    // NEW: Get available subjects for games
+    getSubjects(): Observable<any[]> {
+        return this.http.get<any[]>(`${this.apiUrl}/question/subjects`);
+    }
+
+    // NEW: Get DragDrop questions by subject
+    getDragDropQuestions(subject: number, grade?: number): Observable<any> {
+        return this.getQuestions({
+            type: 5, // DragDrop type
+            subject: subject,
+            grade: grade,
+            pageSize: 20
+        });
+    }
 }

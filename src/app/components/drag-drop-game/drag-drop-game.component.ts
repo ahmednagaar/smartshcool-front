@@ -16,6 +16,8 @@ interface DragItem {
   id: number;
   text: string;
   correctZone: number;
+  imageUrl?: string;
+  audioUrl?: string;
 }
 
 interface DropZone {
@@ -25,6 +27,7 @@ interface DropZone {
   colorClass: string;
   isHighlighted?: boolean;
   pulseActive?: boolean;
+  description?: string;
 }
 
 interface GameState {
@@ -35,6 +38,22 @@ interface GameState {
   score: number;
   multiplier: number;
 }
+
+interface SubjectInfo {
+  id: number;
+  name: string;
+  nameEn: string;
+  icon: string;
+}
+
+interface GameConfiguration {
+  subject: string;
+  title: string;
+  zones: DropZone[];
+  items: DragItem[];
+}
+
+type GameMode = 'SELECTION' | 'PLAYING' | 'RESULTS';
 
 @Component({
   selector: 'app-drag-drop-game',
@@ -53,7 +72,32 @@ interface GameState {
       <!-- Parallax Background -->
       <div class="parallax-bg" [style.transform]="'translate(' + parallaxX + 'px, ' + parallaxY + 'px)'"></div>
       
-      <div class="container max-w-6xl py-6 mx-auto relative z-10">
+      <!-- ========== SUBJECT SELECTION SCREEN ========== -->
+      <div *ngIf="gameMode === 'SELECTION'" class="container max-w-4xl py-12 mx-auto relative z-10">
+        <header class="text-center mb-10">
+          <h1 class="text-4xl font-black text-white mb-3 text-shadow">🎯 اختر المادة</h1>
+          <p class="text-white/70 text-lg">اختر المادة التي تريد التدرب عليها</p>
+        </header>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <button *ngFor="let subject of subjects; trackBy: trackBySubjectId"
+                  (click)="selectSubject(subject)"
+                  class="subject-card glass-card p-8 text-center transition-all hover:scale-105 cursor-pointer"
+                  [attr.aria-label]="'اختر مادة ' + subject.name">
+            <div class="text-6xl mb-4">{{ subject.icon }}</div>
+            <h3 class="text-2xl font-bold text-white">{{ subject.name }}</h3>
+          </button>
+        </div>
+        
+        <div class="text-center mt-8">
+          <button (click)="goBack()" class="btn-ghost text-white/70 hover:text-white">
+            ← رجوع
+          </button>
+        </div>
+      </div>
+
+      <!-- ========== GAME SCREEN ========== -->
+      <div *ngIf="gameMode === 'PLAYING'" class="container max-w-6xl py-6 mx-auto relative z-10">
         
         <!-- Header -->
         <header class="game-header flex justify-between items-center mb-6 p-4 rounded-2xl">
@@ -66,7 +110,7 @@ interface GameState {
           
           <div class="text-center flex-1">
             <h1 class="text-2xl md:text-3xl font-black text-white mb-1 text-shadow">
-              🎯 السحب والإفلات
+              {{ gameTitle }}
             </h1>
             <p class="text-white/70 text-sm">اسحب العناصر إلى التصنيف الصحيح</p>
           </div>
@@ -296,6 +340,23 @@ interface GameState {
       font-family: 'Cairo', sans-serif;
       position: relative;
       overflow: hidden;
+    }
+
+    /* ========== Subject Selection Cards ========== */
+    .subject-card {
+      border: 2px solid transparent;
+      background: rgba(255,255,255,0.1);
+      backdrop-filter: blur(15px);
+      border-radius: 20px;
+    }
+    .subject-card:hover {
+      border-color: var(--cyan);
+      box-shadow: 0 8px 32px rgba(0,217,255,0.3);
+    }
+    .subject-card:focus {
+      outline: none;
+      border-color: var(--cyan);
+      box-shadow: 0 0 0 3px rgba(0,217,255,0.3);
     }
 
     .game-container.high-contrast {
@@ -743,6 +804,13 @@ interface GameState {
   `]
 })
 export class DragDropGameComponent implements OnInit, OnDestroy {
+  // Subject Selection State
+  gameMode: GameMode = 'SELECTION';
+  subjects: SubjectInfo[] = [];
+  selectedSubject: SubjectInfo | null = null;
+  gameTitle = 'السحب والإفلات';
+
+  // Game State
   availableItems: DragItem[] = [];
   dropZones: DropZone[] = [];
   correctPlacements = 0;
@@ -782,7 +850,46 @@ export class DragDropGameComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.isMuted = this.audio.getMuted();
+    this.loadSubjects();
+  }
+
+  loadSubjects() {
+    this.api.getSubjects().subscribe({
+      next: (subjects) => {
+        this.subjects = subjects;
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        // Fallback subjects
+        this.subjects = [
+          { id: 1, name: 'لغة عربية', nameEn: 'Arabic', icon: '📚' },
+          { id: 2, name: 'رياضيات', nameEn: 'Math', icon: '🔢' },
+          { id: 3, name: 'علوم', nameEn: 'Science', icon: '🔬' }
+        ];
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  trackBySubjectId(index: number, subject: SubjectInfo): number {
+    return subject.id;
+  }
+
+  selectSubject(subject: SubjectInfo) {
+    this.selectedSubject = subject;
+    this.gameTitle = this.getGameTitleForSubject(subject);
+    this.gameMode = 'PLAYING';
     this.initializeGame();
+    this.cdr.markForCheck();
+  }
+
+  getGameTitleForSubject(subject: SubjectInfo): string {
+    switch (subject.nameEn) {
+      case 'Arabic': return '📚 تصنيف الكلمات';
+      case 'Math': return '🔢 تصنيف الأعداد';
+      case 'Science': return '🔬 تصنيف الكائنات';
+      default: return '🎯 السحب والإفلات';
+    }
   }
 
   ngOnDestroy() { }
@@ -859,21 +966,62 @@ export class DragDropGameComponent implements OnInit, OnDestroy {
   }
 
   loadMockData() {
-    this.dropZones = [
-      { id: 1, label: 'أعداد فردية', items: [], colorClass: 'blue', pulseActive: true },
-      { id: 2, label: 'أعداد زوجية', items: [], colorClass: 'green', pulseActive: true }
-    ];
-    const rawItems = [
-      { id: 1, text: '1', correctZone: 1 },
-      { id: 2, text: '2', correctZone: 2 },
-      { id: 3, text: '3', correctZone: 1 },
-      { id: 4, text: '4', correctZone: 2 },
-      { id: 5, text: '5', correctZone: 1 },
-      { id: 6, text: '6', correctZone: 2 },
-      { id: 7, text: '7', correctZone: 1 },
-      { id: 8, text: '8', correctZone: 2 }
-    ];
-    this.availableItems = this.shuffleArray(rawItems);
+    const subjectName = this.selectedSubject?.nameEn || 'Math';
+
+    switch (subjectName) {
+      case 'Arabic':
+        this.dropZones = [
+          { id: 1, label: 'أسماء', items: [], colorClass: 'blue', pulseActive: true },
+          { id: 2, label: 'أفعال', items: [], colorClass: 'green', pulseActive: true }
+        ];
+        this.availableItems = this.shuffleArray([
+          { id: 1, text: 'كتاب', correctZone: 1 },
+          { id: 2, text: 'يكتب', correctZone: 2 },
+          { id: 3, text: 'قلم', correctZone: 1 },
+          { id: 4, text: 'يقرأ', correctZone: 2 },
+          { id: 5, text: 'مدرسة', correctZone: 1 },
+          { id: 6, text: 'يلعب', correctZone: 2 },
+          { id: 7, text: 'سيارة', correctZone: 1 },
+          { id: 8, text: 'يأكل', correctZone: 2 }
+        ]);
+        break;
+
+      case 'Science':
+        this.dropZones = [
+          { id: 1, label: 'ثدييات', items: [], colorClass: 'blue', pulseActive: true },
+          { id: 2, label: 'طيور', items: [], colorClass: 'green', pulseActive: true }
+        ];
+        this.availableItems = this.shuffleArray([
+          { id: 1, text: 'أسد', correctZone: 1 },
+          { id: 2, text: 'نسر', correctZone: 2 },
+          { id: 3, text: 'فيل', correctZone: 1 },
+          { id: 4, text: 'بطريق', correctZone: 2 },
+          { id: 5, text: 'قطة', correctZone: 1 },
+          { id: 6, text: 'ببغاء', correctZone: 2 },
+          { id: 7, text: 'كلب', correctZone: 1 },
+          { id: 8, text: 'بومة', correctZone: 2 }
+        ]);
+        break;
+
+      case 'Math':
+      default:
+        this.dropZones = [
+          { id: 1, label: 'أعداد فردية', items: [], colorClass: 'blue', pulseActive: true },
+          { id: 2, label: 'أعداد زوجية', items: [], colorClass: 'green', pulseActive: true }
+        ];
+        this.availableItems = this.shuffleArray([
+          { id: 1, text: '1', correctZone: 1 },
+          { id: 2, text: '2', correctZone: 2 },
+          { id: 3, text: '3', correctZone: 1 },
+          { id: 4, text: '4', correctZone: 2 },
+          { id: 5, text: '5', correctZone: 1 },
+          { id: 6, text: '6', correctZone: 2 },
+          { id: 7, text: '7', correctZone: 1 },
+          { id: 8, text: '8', correctZone: 2 }
+        ]);
+        break;
+    }
+
     this.totalItems = this.availableItems.length;
     this.updateScore();
   }
@@ -1041,7 +1189,9 @@ export class DragDropGameComponent implements OnInit, OnDestroy {
 
   resetGame() {
     this.audio.playClick();
-    this.initializeGame();
+    this.gameMode = 'SELECTION';
+    this.selectedSubject = null;
+    this.cdr.markForCheck();
   }
 
   finishGame() {
