@@ -922,11 +922,15 @@ export class DragDropGameComponent implements OnInit, OnDestroy {
       multiplier: 1
     };
 
-    this.api.getQuestions().subscribe({
-      next: (questions) => {
-        const dragDropQuestions = questions.filter((q: any) => q.type === 5);
-        if (dragDropQuestions.length > 0) {
-          const question = dragDropQuestions[Math.floor(Math.random() * dragDropQuestions.length)];
+    if (!this.selectedSubject) {
+      this.loadMockData();
+      return;
+    }
+
+    this.api.getDragDropQuestions(this.selectedSubject.id).subscribe({
+      next: (questions: any[]) => {
+        if (questions && questions.length > 0) {
+          const question = questions[Math.floor(Math.random() * questions.length)];
           this.loadQuestionConfig(question);
         } else {
           this.loadMockData();

@@ -1,94 +1,124 @@
-<div class="bg-v0-gradient min-h-screen p-4 md:p-8" dir="rtl">
-    <div class="container max-w-6xl mx-auto py-4">
+<div
+  class="min-h-screen bg-gray-50 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-100 via-gray-50 to-orange-50 relative overflow-hidden font-cairo"
+  dir="rtl">
 
-        <!-- Back Button -->
-        <div class="flex justify-start mb-8">
-            <button (click)="goBack()"
-                class="btn-ghost group flex items-center gap-2 text-muted hover:text-foreground transition-colors px-4 py-2 rounded-lg hover:bg-white/50">
-                <lucide-icon [img]="icons.ArrowRight"
-                    class="w-5 h-5 transition-transform group-hover:translate-x-1"></lucide-icon>
-                <span class="text-lg font-medium">رجوع</span>
-            </button>
-        </div>
+  <!-- Background Mesh Gradients -->
+  <div
+    class="absolute top-0 right-0 w-[500px] h-[500px] bg-primary-light/10 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/3">
+  </div>
+  <div
+    class="absolute bottom-0 left-0 w-[500px] h-[500px] bg-secondary/10 rounded-full blur-[100px] translate-y-1/2 -translate-x-1/3">
+  </div>
 
-        <!-- Header -->
-        <div class="text-center mb-12 space-y-4 animate-fade-in-up">
-            <h2 class="text-3xl md:text-5xl font-bold text-foreground">اختر نوع الاختبار</h2>
-            <p class="text-xl text-muted max-w-2xl mx-auto">اختر المسار الذي يناسب صفك الدراسي للبدء في التدريب</p>
-        </div>
+  <!-- Header -->
+  <header class="relative z-10 p-6 flex items-center justify-between">
+    <button (click)="goBack()"
+      class="flex items-center gap-2 px-4 py-2 bg-white/60 backdrop-blur-md border border-white/40 rounded-xl hover:bg-white/80 transition-all duration-300 shadow-sm text-gray-700">
+      <lucide-icon [img]="ChevronRightIcon" class="w-5 h-5"></lucide-icon>
+      <span class="font-bold">رجوع</span>
+    </button>
+  </header>
 
-        <!-- Cards Grid -->
-        <div class="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+  <!-- Main Content -->
+  <main class="relative z-10 container mx-auto px-6 py-8 flex flex-col items-center justify-center min-h-[80vh]">
 
-            <!-- Nafes Test Card -->
-            <div class="test-card nafes bg-white rounded-3xl p-8 cursor-pointer relative overflow-hidden group"
-                (click)="selectTestType('nafes')">
-                <div
-                    class="absolute top-0 right-0 w-32 h-32 bg-blue-50 rounded-bl-full -mr-16 -mt-16 transition-transform group-hover:scale-150 duration-700 ease-out z-0">
-                </div>
-
-                <div class="relative z-10 flex flex-col h-full">
-                    <div
-                        class="card-icon-wrapper w-20 h-20 rounded-2xl bg-blue-100 flex items-center justify-center text-blue-600 mb-6">
-                        <lucide-icon [img]="icons.Target" class="w-10 h-10"></lucide-icon>
-                    </div>
-
-                    <h3 class="text-2xl md:text-3xl font-bold text-gray-900 mb-3">اختبار نافس</h3>
-
-                    <p class="text-muted text-lg mb-6 flex-grow leading-relaxed">
-                        اختبارات وطنية تقيس التحصيل التعليمي لطلبة المدارس
-                        <br>
-                        المواد: لغتي - الرياضيات - العلوم
-                    </p>
-
-                    <div class="flex flex-wrap gap-2 mb-8">
-                        <span class="grade-badge bg-blue-50 text-blue-700">الصف الثالث</span>
-                        <span class="grade-badge bg-blue-50 text-blue-700">الصف السادس</span>
-                        <span class="grade-badge bg-blue-50 text-blue-700">الصف الثالث متوسط</span>
-                    </div>
-
-                    <button
-                        class="card-action btn-primary w-full text-lg font-bold py-4 rounded-xl shadow-blue-200 shadow-lg">
-                        ابدأ التدريب
-                    </button>
-                </div>
-            </div>
-
-            <!-- Central Test Card -->
-            <div class="test-card central bg-white rounded-3xl p-8 cursor-pointer relative overflow-hidden group"
-                (click)="selectTestType('central')">
-                <div
-                    class="absolute top-0 right-0 w-32 h-32 bg-orange-50 rounded-bl-full -mr-16 -mt-16 transition-transform group-hover:scale-150 duration-700 ease-out z-0">
-                </div>
-
-                <div class="relative z-10 flex flex-col h-full">
-                    <div
-                        class="card-icon-wrapper w-20 h-20 rounded-2xl bg-orange-100 flex items-center justify-center text-orange-600 mb-6">
-                        <lucide-icon [img]="icons.BookOpen" class="w-10 h-10"></lucide-icon>
-                    </div>
-
-                    <h3 class="text-2xl md:text-3xl font-bold text-gray-900 mb-3">الاختبار المركزي</h3>
-
-                    <p class="text-muted text-lg mb-6 flex-grow leading-relaxed">
-                        اختبارات دورية لتعزيز المهارات الأساسية للطلاب
-                        <br>
-                        المواد: لغتي - الرياضيات - العلوم
-                    </p>
-
-                    <div class="flex flex-wrap gap-2 mb-8">
-                        <span class="grade-badge bg-orange-50 text-orange-700">الصف الثالث</span>
-                        <span class="grade-badge bg-orange-50 text-orange-700">الصف الرابع</span>
-                        <span class="grade-badge bg-orange-50 text-orange-700">الصف الخامس</span>
-                        <span class="grade-badge bg-orange-50 text-orange-700">الصف السادس</span>
-                    </div>
-
-                    <button
-                        class="card-action bg-white border-2 border-orange-500 text-orange-600 hover:bg-orange-50 w-full text-lg font-bold py-4 rounded-xl transition-colors">
-                        اختر المسار
-                    </button>
-                </div>
-            </div>
-
-        </div>
+    <div class="text-center mb-12 max-w-2xl mx-auto">
+      <h1 class="text-4xl md:text-5xl font-bold text-gray-900 mb-4 tracking-tight">اختر نوع الاختبار</h1>
+      <p class="text-lg text-gray-600">اختر المسار الذي يناسب صفك الدراسي للبدء في التدريب</p>
     </div>
+
+    <!-- Cards Container -->
+    <div class="grid md:grid-cols-2 gap-8 w-full max-w-5xl">
+
+      <!-- Nafes Card (Blue) -->
+      <div (click)="onSelectType('nafes')"
+        class="group relative bg-white/40 backdrop-blur-xl border border-white/60 rounded-[2rem] p-8 cursor-pointer transition-all duration-500 hover:transform hover:-translate-y-2 hover:shadow-[0_20px_40px_-15px_rgba(30,64,175,0.2)] overflow-hidden">
+        <!-- Card Gradient Overlay -->
+        <div
+          class="absolute inset-0 bg-gradient-to-br from-primary-light/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+        </div>
+
+        <div class="relative z-10 flex flex-col h-full">
+          <!-- Icon & Header -->
+          <div class="flex justify-between items-start mb-6">
+            <div
+              class="p-4 bg-gradient-to-br from-primary to-primary-light rounded-2xl shadow-lg shadow-primary/30 group-hover:scale-110 transition-transform duration-500">
+              <lucide-icon [img]="TargetIcon" class="w-10 h-10 text-white"></lucide-icon>
+            </div>
+          </div>
+
+          <!-- Content -->
+          <h2 class="text-3xl font-bold text-gray-900 mb-2 group-hover:text-primary transition-colors">اختبار نافس</h2>
+          <p class="text-gray-600 mb-6 leading-relaxed text-lg">اختبارات وطنية تقيس التحصيل التعليمي لطلبة المدارس</p>
+
+          <!-- Badges -->
+          <div class="flex flex-wrap gap-2 mb-8">
+            <span
+              class="px-3 py-1 bg-white/60 border border-primary/20 text-primary-dark rounded-full text-sm font-semibold">الصف
+              الثالث</span>
+            <span
+              class="px-3 py-1 bg-white/60 border border-primary/20 text-primary-dark rounded-full text-sm font-semibold">الصف
+              السادس</span>
+            <span
+              class="px-3 py-1 bg-white/60 border border-primary/20 text-primary-dark rounded-full text-sm font-semibold">الصف
+              التاسع</span>
+          </div>
+
+          <!-- Button -->
+          <div class="mt-auto">
+            <button
+              class="w-full py-4 bg-gradient-to-r from-primary to-primary-light text-white rounded-xl font-bold text-xl shadow-lg shadow-primary/20 group-hover:shadow-primary/40 transition-all duration-300 transform group-hover:translate-y-[-2px]">
+              ابدأ التدريب
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Central Card (Orange) -->
+      <div (click)="onSelectType('central')"
+        class="group relative bg-white/40 backdrop-blur-xl border border-white/60 rounded-[2rem] p-8 cursor-pointer transition-all duration-500 hover:transform hover:-translate-y-2 hover:shadow-[0_20px_40px_-15px_rgba(249,115,22,0.2)] overflow-hidden">
+        <!-- Card Gradient Overlay -->
+        <div
+          class="absolute inset-0 bg-gradient-to-br from-secondary-light/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+        </div>
+
+        <div class="relative z-10 flex flex-col h-full">
+          <!-- Icon & Header -->
+          <div class="flex justify-between items-start mb-6">
+            <div
+              class="p-4 bg-gradient-to-br from-secondary to-secondary-light rounded-2xl shadow-lg shadow-secondary/30 group-hover:scale-110 transition-transform duration-500">
+              <lucide-icon [img]="BookOpenIcon" class="w-10 h-10 text-white"></lucide-icon>
+            </div>
+          </div>
+
+          <!-- Content -->
+          <h2 class="text-3xl font-bold text-gray-900 mb-2 group-hover:text-secondary transition-colors">الاختبار
+            المركزي</h2>
+          <p class="text-gray-600 mb-6 leading-relaxed text-lg">اختبارات دورية لتعزيز المهارات الأساسية للطلاب</p>
+
+          <!-- Badges -->
+          <div class="flex flex-wrap gap-2 mb-8">
+            <span
+              class="px-3 py-1 bg-white/60 border border-secondary/20 text-secondary-dark rounded-full text-sm font-semibold text-orange-800">الصف
+              الثالث</span>
+            <span
+              class="px-3 py-1 bg-white/60 border border-secondary/20 text-secondary-dark rounded-full text-sm font-semibold text-orange-800">الصف
+              السادس</span>
+            <span
+              class="px-3 py-1 bg-white/60 border border-secondary/20 text-secondary-dark rounded-full text-sm font-semibold text-orange-800">الصف
+              التاسع</span>
+          </div>
+
+          <!-- Button -->
+          <div class="mt-auto">
+            <button
+              class="w-full py-4 bg-gradient-to-r from-secondary to-secondary-light text-white rounded-xl font-bold text-xl shadow-lg shadow-secondary/20 group-hover:shadow-secondary/40 transition-all duration-300 transform group-hover:translate-y-[-2px]">
+              اختر المسار
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
 </div>
