@@ -175,8 +175,11 @@ export class TraditionalQuizComponent implements OnInit {
 
     this.loading = true;
     this.api.getFilteredQuestions(grade, subject, testType).subscribe({
-      next: (data) => {
-        this.questions = data.map((q: any) => ({
+      next: (response: any) => {
+        // Handle both array and paginated response
+        const questionsList = Array.isArray(response) ? response : (response.data || response.items || []);
+
+        this.questions = questionsList.map((q: any) => ({
           id: q.id,
           text: q.text,
           options: typeof q.options === 'string' ? JSON.parse(q.options) : q.options,

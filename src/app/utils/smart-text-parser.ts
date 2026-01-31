@@ -139,8 +139,13 @@ export class SmartTextParser {
             }
         }
 
-        // Markdown format: starts with # or has checkbox-style options
-        if (trimmed.startsWith('#') || /^-\s+\[.\]/.test(trimmed) || /^-\s+.*✓/.test(trimmed)) {
+        // Markdown format: starts with # or has checkbox-style options or common markdown syntax
+        if (trimmed.startsWith('#') ||
+            trimmed.includes('**') ||
+            trimmed.includes('##') ||
+            /^-\s+\[.\]/.test(trimmed) ||
+            /^-\s+.*✓/.test(trimmed) ||
+            /^\d+\.\s/.test(trimmed)) {
             return 'markdown';
         }
 
@@ -164,8 +169,26 @@ export class SmartTextParser {
     static parsePipe(input: string, result: ParsingResult): void {
         const parts = input.split('|').map(p => p.trim());
 
+        let questionText = '';
+        let correctAnswer = '';
+        let optionsStr = '';
+
+        if (parts.length >= 3) {
+            // Assume last part is options, second to last is answer, rest is question
+            optionsStr = parts[parts.length - 1];
+            correctAnswer = parts[parts.length - 2];
+            questionText = parts.slice(0, parts.length - 2).join(' | ');
+        } else if (parts.length === 2) {
+            // Question | Answer
+            correctAnswer = parts[1];
+            questionText = parts[0];
+        } else {
+            // Question only
+            questionText = parts[0];
+        }
+
         // Part 1: Question Text
-        result.parsedData.text = parts[0] || '';
+        result.parsedData.text = questionText;
         if (!result.parsedData.text) {
             result.errors.push({
                 field: 'text',
@@ -180,9 +203,12 @@ export class SmartTextParser {
         }
 
         // Part 2: Correct Answer
-        if (parts.length > 1) {
-            result.parsedData.correctAnswer = parts[1];
+        if (correctAnswer) {
+            result.parsedData.correctAnswer = correctAnswer;
         } else {
+            // Only error if we expected an answer based on pipe count, OR if it's missing but required?
+            // Existing logic flagged error if parts.length < 2.
+            // With new logic, if parts.length == 1, correctAnswer is empty.
             result.errors.push({
                 field: 'correctAnswer',
                 message: 'الإجابة الصحيحة مفقودة (استخدم الرمز | للفصل)',
@@ -192,8 +218,8 @@ export class SmartTextParser {
         }
 
         // Part 3: Options (Optional)
-        if (parts.length > 2) {
-            const rawOptions = parts[2];
+        if (optionsStr) {
+            const rawOptions = optionsStr;
             if (rawOptions.includes('\n')) {
                 result.parsedData.options = rawOptions.split('\n')
                     .map(o => o.trim())
@@ -511,6 +537,12 @@ export class SmartTextParser {
                 message: 'نص السؤال مطلوب',
                 severity: 'error'
             });
+        } else if (data.text.length < 10) {
+            result.errors.push({
+                field: 'text',
+                message: 'نص السؤال يجب أن يكون 10 أحرف على الأقل',
+                severity: 'error'
+            });
         } else if (data.text.length > 500) {
             result.errors.push({
                 field: 'text',
@@ -550,7 +582,10 @@ export class SmartTextParser {
 
             // Check if correct answer is in options
             if (data.correctAnswer && data.options.length > 0) {
-                if (!data.options.includes(data.correctAnswer)) {
+                const normalizedAnswer = data.correctAnswer.trim().toLowerCase();
+                const normalizedOptions = data.options.map(o => o.trim().toLowerCase());
+
+                if (!normalizedOptions.includes(normalizedAnswer)) {
                     result.errors.push({
                         field: 'correctAnswer',
                         message: `الإجابة الصحيحة "${data.correctAnswer}" غير موجودة ضمن الخيارات`,
