@@ -692,7 +692,9 @@ export class AdminQuestionsComponent implements OnInit, OnDestroy {
       grade: this.filter.grade || undefined,
       subject: this.filter.subject || undefined,
       type: this.filter.type || undefined,
-      difficulty: this.filter.difficulty || undefined
+      difficulty: this.filter.difficulty || undefined,
+      sortBy: this.sortField,
+      sortOrder: this.sortDirection
     }).pipe(takeUntil(this.destroy$)).subscribe({
       next: response => {
         // ApiResponse<PaginatedResponse<QuestionGetDto>> -> response.data is the list
@@ -763,7 +765,16 @@ export class AdminQuestionsComponent implements OnInit, OnDestroy {
       payload.options = JSON.stringify(payload.options);
     }
 
-    payload.testType = payload.testType || 1;
+    // Convert string values to numbers (select elements bind as strings)
+    payload.grade = Number(payload.grade) || 3;
+    payload.subject = Number(payload.subject) || 1;
+    payload.type = Number(payload.type) || 1;
+    payload.difficulty = Number(payload.difficulty) || 1;
+    payload.testType = Number(payload.testType) || 1;
+
+    // Sanitize optional fields
+    if (!payload.mediaUrl) payload.mediaUrl = null;
+    if (!payload.adminNotes) payload.adminNotes = null;
 
     const request = this.isEditing
       ? this.api.updateQuestion(payload.id, payload)
@@ -777,7 +788,11 @@ export class AdminQuestionsComponent implements OnInit, OnDestroy {
         this.isSaving = false;
       },
       error: (err) => {
-        alert(this.isEditing ? 'فشل التحديث: ' + err.message : 'فشل الإضافة: ' + err.message);
+        console.error('❌ Save Question Error:', err);
+        console.error('❌ Error Response Body:', err.error);
+        console.error('❌ Payload Sent:', payload);
+        const errorMsg = err.error?.message || err.error?.errors?.join(', ') || err.message;
+        alert(this.isEditing ? 'فشل التحديث: ' + errorMsg : 'فشل الإضافة: ' + errorMsg);
         this.isSaving = false;
       }
     });
