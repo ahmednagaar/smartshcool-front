@@ -1,0 +1,152 @@
+<div class="max-w-3xl mx-auto p-6 space-y-6" dir="rtl">
+    <!-- Header -->
+    <div class="flex items-center gap-4">
+        <button routerLink="/admin/matching-questions"
+            class="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors">
+            <lucide-icon name="arrow-right" class="w-5 h-5 text-slate-600 dark:text-slate-400"></lucide-icon>
+        </button>
+        <h1 class="text-2xl font-bold text-slate-800 dark:text-white">
+            {{ isEditMode ? 'تعديل السؤال' : 'إضافة سؤال جديد' }}
+        </h1>
+    </div>
+
+    <!-- Form -->
+    <form [formGroup]="questionForm" (ngSubmit)="onSubmit()" class="space-y-6">
+
+        <!-- Basic Info Card -->
+        <div
+            class="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 space-y-6">
+            <h3
+                class="text-lg font-semibold text-slate-800 dark:text-gray-200 border-b pb-2 border-slate-100 dark:border-slate-700">
+                التصنيف
+            </h3>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Grade -->
+                <div class="space-y-2">
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">المرحلة الدراسية</label>
+                    <select formControlName="gradeId"
+                        class="w-full px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 dark:text-white focus:ring-2 focus:ring-indigo-500">
+                        <option [ngValue]="null">اختر الصف</option>
+                        <option [ngValue]="3">الصف الثالث</option>
+                        <option [ngValue]="4">الصف الرابع</option>
+                        <option [ngValue]="5">الصف الخامس</option>
+                        <option [ngValue]="6">الصف السادس</option>
+                    </select>
+                    <p *ngIf="submitted && questionForm.get('gradeId')?.errors?.['required']"
+                        class="text-red-500 text-xs">مطلوب</p>
+                </div>
+
+                <!-- Subject -->
+                <div class="space-y-2">
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">المادة</label>
+                    <select formControlName="subjectId"
+                        class="w-full px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 dark:text-white focus:ring-2 focus:ring-indigo-500">
+                        <option [ngValue]="null">اختر المادة</option>
+                        <option [ngValue]="1">لغتي الجميلة</option>
+                        <option [ngValue]="2">الرياضيات</option>
+                        <option [ngValue]="3">العلوم</option>
+                    </select>
+                    <p *ngIf="submitted && questionForm.get('subjectId')?.errors?.['required']"
+                        class="text-red-500 text-xs">مطلوب</p>
+                </div>
+
+                <!-- Difficulty -->
+                <div class="space-y-2">
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">الصعوبة</label>
+                    <select formControlName="difficultyLevel"
+                        class="w-full px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 dark:text-white focus:ring-2 focus:ring-indigo-500">
+                        <option [ngValue]="DifficultyLevel.Easy">سهل</option>
+                        <option [ngValue]="DifficultyLevel.Medium">متوسط</option>
+                        <option [ngValue]="DifficultyLevel.Hard">صعب</option>
+                    </select>
+                </div>
+
+                <!-- Display Order -->
+                <div class="space-y-2">
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">ترتيب العرض</label>
+                    <input type="number" formControlName="displayOrder"
+                        class="w-full px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 dark:text-white focus:ring-2 focus:ring-indigo-500">
+                </div>
+            </div>
+        </div>
+
+        <!-- Question Content Card -->
+        <div
+            class="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 space-y-6">
+            <h3
+                class="text-lg font-semibold text-slate-800 dark:text-gray-200 border-b pb-2 border-slate-100 dark:border-slate-700">
+                زوج المطابقة
+            </h3>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Left Item -->
+                <div class="space-y-2">
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                        الطرف الأول (السؤال)
+                    </label>
+                    <input type="text" formControlName="leftItemText" placeholder="مثال: 5 + 3"
+                        class="w-full px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 dark:text-white focus:ring-2 focus:ring-indigo-500">
+                    <p *ngIf="submitted && questionForm.get('leftItemText')?.errors?.['required']"
+                        class="text-red-500 text-xs">مطلوب</p>
+                </div>
+
+                <!-- Right Item -->
+                <div class="space-y-2">
+                    <label class="block text-sm font-medium text-green-700 dark:text-green-400">
+                        الطرف الثاني (الإجابة الصحيحة)
+                    </label>
+                    <input type="text" formControlName="rightItemText" placeholder="مثال: 8"
+                        class="w-full px-4 py-2 rounded-lg border border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/50 dark:text-white focus:ring-2 focus:ring-green-500">
+                    <p *ngIf="submitted && questionForm.get('rightItemText')?.errors?.['required']"
+                        class="text-red-500 text-xs">مطلوب</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Distractors Card -->
+        <div
+            class="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 space-y-6">
+            <div class="flex justify-between items-center border-b pb-2 border-slate-100 dark:border-slate-700">
+                <h3 class="text-lg font-semibold text-slate-800 dark:text-gray-200">
+                    المشتتات (إجابات خاطئة)
+                </h3>
+                <button type="button" (click)="addDistractor()"
+                    class="text-indigo-600 hover:text-indigo-700 text-sm font-medium flex items-center gap-1">
+                    <lucide-icon name="plus" class="w-4 h-4"></lucide-icon> إضافة مشتت
+                </button>
+            </div>
+
+            <p class="text-sm text-slate-500">أضف إجابات خاطئة قد تظهر كخيارات لهذا السؤال. ينصح بـ 1-3 عناصر.</p>
+
+            <div formArrayName="distractorItems" class="space-y-3">
+                <div *ngFor="let item of distractorItems.controls; let i = index" class="flex items-center gap-3">
+                    <span class="text-slate-400 text-sm w-6">{{i + 1}}.</span>
+                    <input [formControlName]="i" type="text" placeholder="إجابة خاطئة"
+                        class="flex-1 px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 dark:text-white focus:ring-2 focus:ring-indigo-500">
+
+                    <button type="button" (click)="removeDistractor(i)"
+                        class="text-red-500 hover:bg-red-50 p-2 rounded-lg" title="حذف">
+                        <lucide-icon name="trash-2" class="w-4 h-4"></lucide-icon>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex justify-end gap-3 pt-4">
+            <button type="button" routerLink="/admin/matching-questions"
+                class="px-6 py-2 border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-50 font-medium">
+                إلغاء
+            </button>
+            <button type="submit" [disabled]="isLoading"
+                class="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium flex items-center gap-2">
+                <lucide-icon *ngIf="!isLoading" name="save" class="w-4 h-4"></lucide-icon>
+                <span *ngIf="isLoading"
+                    class="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></span>
+                {{ isEditMode ? 'حفظ التعديلات' : 'حفظ السؤال' }}
+            </button>
+        </div>
+
+    </form>
+</div>

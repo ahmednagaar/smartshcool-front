@@ -439,6 +439,7 @@ export class AdminLayoutComponent {
       expanded: false,
       children: [
         { label: 'الأسئلة', icon: '❓', route: '/admin/questions' },
+        { label: 'أسئلة المطابقة', icon: '🧩', route: '/admin/matching-questions' },
         { label: 'الألعاب', icon: '🎮', route: '/admin/games' },
         { label: 'استيراد جماعي', icon: '📥', route: '/admin/import' }
       ]

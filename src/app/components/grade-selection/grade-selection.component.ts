@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 
 export type Grade = '3' | '4' | '5' | '6';
 
@@ -83,7 +83,7 @@ export class GradeSelectionComponent implements OnInit {
     { value: '6', label: 'الصف السادس', image: 'assets/images/grade-6-student.png' },
   ];
 
-  constructor(private router: Router, private route: import('@angular/router').ActivatedRoute) { }
+  constructor(private router: Router, private route: ActivatedRoute) { }
 
   ngOnInit() {
     // Check query param first, then session, then default

@@ -135,3 +135,82 @@ export interface LeaderboardEntry {
     points: number;
     badges: string[];
 }
+
+// Matching Game Interfaces
+export interface MatchingQuestion {
+    id: number;
+    gradeId: number;
+    subjectId: number;
+    leftItemText: string;
+    rightItemText: string;
+    distractorItems: string[]; // Front-end will receive this as array
+    difficultyLevel: DifficultyLevel;
+    displayOrder: number;
+    isActive: boolean;
+}
+
+export interface CreateMatchingQuestionDto {
+    gradeId: number;
+    subjectId: number;
+    leftItemText: string;
+    rightItemText: string;
+    distractorItems: string[];
+    difficultyLevel: DifficultyLevel;
+    displayOrder: number;
+}
+
+export interface StartMatchingGameDto {
+    studentId: number;
+    gradeId: number;
+    subjectId: number;
+}
+
+export interface GameLeftItem {
+    id: number;
+    text: string;
+}
+
+export interface GameRightItem {
+    id: string;
+    text: string;
+}
+
+export interface GameStartResponse {
+    sessionId: number;
+    leftItems: GameLeftItem[];
+    rightItems: GameRightItem[];
+}
+
+export interface ValidationMatchDto {
+    questionId: number;
+    rightItemId: string;
+}
+
+export interface SubmitMatchingGameDto {
+    sessionId: number;
+    matches: ValidationMatchDto[];
+    timeSpentSeconds: number;
+}
+
+export interface MatchResultDetail {
+    questionId: number;
+    isCorrect: boolean;
+    correctAnswer: string;
+}
+
+export interface GameResultDto {
+    sessionId: number;
+    score: number;
+    totalQuestions: number;
+    correctMatches: number;
+    timeSpentSeconds: number;
+    details: MatchResultDetail[];
+}
+
+export interface MatchingLeaderboardEntry {
+    rank: number;
+    studentName: string;
+    score: number;
+    timeSpent: number;
+    datePlayed: Date;
+}

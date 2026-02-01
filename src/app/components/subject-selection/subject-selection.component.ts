@@ -25,7 +25,7 @@ interface SubjectOption {
 
         <div class="text-center mb-10">
           <span class="step-badge mb-6">الخطوة الثانية</span>
-          <img src="assets/images/books-stack.png" alt="كتب" class="w-24 h-24 mx-auto mb-5 object-contain" onerror="this.style.display='none'" />
+          <img src="assets/images/science-subject.png" alt="كتب" class="w-24 h-24 mx-auto mb-5 object-contain" onerror="this.style.display='none'" />
           <h2 class="text-3xl md:text-4xl font-bold text-foreground mb-4">اختر المادة الدراسية</h2>
           <p class="text-muted text-lg">{{ gradeName }} - اختر المادة التي تريد التدرب عليها</p>
         </div>

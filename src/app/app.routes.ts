@@ -41,6 +41,8 @@ import { authGuard } from './guards/auth.guard';
 import { roleGuard } from './guards/role.guard';
 import { AdminAuditComponent } from './components/admin-audit/admin-audit.component';
 import { AdminSettingsComponent } from './components/admin-settings/admin-settings.component';
+import { AdminMatchingQuestionsListComponent } from './components/admin-matching-questions-list/admin-matching-questions-list.component';
+import { AdminMatchingQuestionFormComponent } from './components/admin-matching-question-form/admin-matching-question-form.component';
 
 // Parent Components
 import { ParentRegisterComponent } from './components/parent-register/parent-register.component';
@@ -114,6 +116,13 @@ export const routes: Routes = [
                 canActivate: [roleGuard],
                 data: { roles: ['SuperAdmin'] }
             },
+            { path: 'settings', component: AdminSettingsComponent, canActivate: [roleGuard], data: { roles: ['SuperAdmin'] } },
+
+            // Matching Game
+            { path: 'matching-questions', component: AdminMatchingQuestionsListComponent },
+            { path: 'matching-questions/new', component: AdminMatchingQuestionFormComponent },
+            { path: 'matching-questions/:id/edit', component: AdminMatchingQuestionFormComponent },
+
             { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
         ]
     },
