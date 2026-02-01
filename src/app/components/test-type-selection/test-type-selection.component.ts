@@ -19,6 +19,8 @@ export class TestTypeSelectionComponent {
 
   onSelectType(type: 'nafes' | 'central') {
     console.log(`Selected type: ${type}`);
+    // Save to session storage so subsequent components (GradeSelection, Quiz) can read it
+    sessionStorage.setItem('testType', type);
     this.router.navigate(['/grade'], { queryParams: { type } });
   }
 

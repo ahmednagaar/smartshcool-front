@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { catchError, map, tap, delay } from 'rxjs/operators';
-import { MOCK_QUESTIONS } from '../data/mock-questions';
+
 import {
     Student,
     Question,
@@ -20,7 +20,7 @@ import {
 })
 export class ApiService {
     private apiUrl = 'http://localhost:5000/api';
-    private useMockData = true; // Set to true for Vercel demo without backend
+
 
     constructor(private http: HttpClient) { }
 
@@ -37,27 +37,7 @@ export class ApiService {
         sortBy?: string;
         sortOrder?: string;
     }): Observable<any> {
-        if (this.useMockData) {
-            console.warn('⚠️ MOCK DATA MODE: Returning static questions');
-            let filtered = [...MOCK_QUESTIONS];
 
-            if (params) {
-                if (params.grade) filtered = filtered.filter(q => q.grade === Number(params.grade));
-                if (params.subject) filtered = filtered.filter(q => q.subject === Number(params.subject));
-                if (params.type) filtered = filtered.filter(q => q.type === Number(params.type));
-                if (params.testType) filtered = filtered.filter(q => q.testType === Number(params.testType));
-                if (params.difficulty) filtered = filtered.filter(q => q.difficulty === Number(params.difficulty));
-                if (params.search) filtered = filtered.filter(q => q.text.includes(params.search!) || q.correctAnswer.includes(params.search!));
-            }
-
-            return of({
-                data: filtered,
-                page: params?.page || 1,
-                pageSize: params?.pageSize || 20,
-                totalCount: filtered.length,
-                totalPages: 1
-            }).pipe(delay(500)); // Simulate network delay
-        }
 
         let url = `${this.apiUrl}/question`;
         if (params) {
@@ -339,26 +319,14 @@ export class ApiService {
 
     // NEW: Flexible Search for Wheel (Mixed questions)
     searchQuestions(grade: number, subject?: number, page: number = 1, pageSize: number = 50): Observable<any> {
-        if (this.useMockData) {
-            let filtered = [...MOCK_QUESTIONS];
-            if (grade) filtered = filtered.filter(q => q.grade === Number(grade));
-            if (subject) filtered = filtered.filter(q => q.subject === Number(subject));
 
-            return of({
-                items: filtered,
-                page: page,
-                pageSize: pageSize,
-                totalCount: filtered.length,
-                totalPages: 1
-            }).pipe(delay(500));
-        }
 
-        return this.http.post(`${this.apiUrl}/question/search`, {
+        // Use the existing GET endpoint which supports filtering
+        return this.getQuestions({
             grade: grade,
             subject: subject,
             page: page,
             pageSize: pageSize
-            // TestType, Difficulty left empty to fetch all
         });
     }
     // NEW: Get available subjects for games

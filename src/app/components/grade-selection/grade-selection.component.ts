@@ -83,17 +83,29 @@ export class GradeSelectionComponent implements OnInit {
     { value: '6', label: 'الصف السادس', image: 'assets/images/grade-6-student.png' },
   ];
 
-  constructor(private router: Router) { }
+  constructor(private router: Router, private route: import('@angular/router').ActivatedRoute) { }
 
   ngOnInit() {
-    this.testType = sessionStorage.getItem('testType') || 'central';
+    // Check query param first, then session, then default
+    this.route.queryParams.subscribe(params => {
+      if (params['type']) {
+        this.testType = params['type'];
+        sessionStorage.setItem('testType', this.testType);
+      } else {
+        this.testType = sessionStorage.getItem('testType') || 'central';
+      }
 
+      this.updateUI();
+    });
+  }
+
+  updateUI() {
     if (this.testType === 'nafes') {
       this.testTypeLabel = 'اختبار نافس - اختر الصف';
       // Nafes only has grades 3 and 6
       this.availableGrades = this.allGrades.filter(g => g.value === '3' || g.value === '6');
     } else {
-      this.testTypeLabel = 'الاختبار المركزي - اختر الصف';
+      this.testTypeLabel = 'المسابقة المركزية - اختر الصف';
       // Central has all grades 3-6
       this.availableGrades = this.allGrades;
     }
