@@ -11,12 +11,12 @@
         <!-- Wheel Preview -->
         <svg class="wheel-preview" viewBox="0 0 100 100">
             <circle cx="50" cy="50" r="48" fill="none" stroke="#373738" stroke-width="2" />
-            <ng-container *ngFor="let segment of scoreLevels">
-                <path [attr.d]="segment.path" [attr.fill]="segment.color" />
+            <ng-container *ngFor="let segment of visualSegments">
+                <path [attr.d]="segment.path" [attr.fill]="segment.colorCode" />
                 <text [attr.x]="segment.textX" [attr.y]="segment.textY" fill="white" font-size="8" font-family="Arial"
                     font-weight="bold" text-anchor="middle"
                     [attr.transform]="'rotate(' + segment.textRotate + ', ' + segment.textX + ', ' + segment.textY + ')'">{{
-                    segment.label }}</text>
+                    segment.displayText }}</text>
             </ng-container>
             <circle cx="50" cy="50" r="8" fill="#373738" />
         </svg>
@@ -34,7 +34,7 @@
 
         <p class="instructions-text">
             أدر العجلة للحصول على سؤال.<br>
-            كل لون يمثل عدداً من النقاط (+1 إلى +6).<br>
+            كل لون يمثل قيمة مختلفة (نقاط أو مميزات).<br>
             أجب على أكبر عدد من الأسئلة قبل انتهاء الوقت!
         </p>
 
@@ -56,20 +56,18 @@
             النقاط: <strong>{{ score }}</strong>
         </div>
 
-        <!-- Wheel Only (No Grid) -->
-
         <!-- Wheel -->
         <div class="wheel-container">
             <div class="wheel-pointer"></div>
             <div class="wheel" [class.spinning]="isSpinning" [style.transform]="'rotate(' + wheelRotation + 'deg)'"
                 (click)="spinWheel()">
                 <svg viewBox="0 0 100 100" style="width:100%; height:100%;">
-                    <ng-container *ngFor="let segment of scoreLevels">
-                        <path [attr.d]="segment.path" [attr.fill]="segment.color" />
+                    <ng-container *ngFor="let segment of visualSegments">
+                        <path [attr.d]="segment.path" [attr.fill]="segment.colorCode" />
                         <text [attr.x]="segment.textX" [attr.y]="segment.textY" fill="white" font-size="8"
                             font-family="Arial" font-weight="bold" text-anchor="middle"
                             [attr.transform]="'rotate(' + segment.textRotate + ', ' + segment.textX + ', ' + segment.textY + ')'">{{
-                            segment.label }}</text>
+                            segment.displayText }}</text>
                     </ng-container>
                 </svg>
                 <div class="wheel-center"></div>
@@ -79,14 +77,13 @@
 
     <!-- QUESTION MODAL -->
     <div class="question-overlay" *ngIf="gameState === 'question' && currentQuestion">
-        <div class="question-modal" [style.borderColor]="selectedScoreLevel?.color">
+        <div class="question-modal" [style.borderColor]="currentSpinResult?.colorCode || '#ccc'">
 
-            <div class="modal-header" [style.background]="selectedScoreLevel?.color">
-                <h3>سؤال {{ selectedScoreLevel?.points }} نقاط</h3>
-                <button class="close-btn" (click)="closeQuestion()">↩️</button>
+            <div class="modal-header" [style.background]="currentSpinResult?.colorCode || '#666'">
+                <h3>{{ currentSpinResult?.displayText || 'سؤال' }}</h3>
             </div>
 
-            <p class="question-text">{{ currentQuestion.text }}</p>
+            <p class="question-text">{{ currentQuestion.questionText }}</p>
 
             <div class="options-grid">
                 <button *ngFor="let option of currentQuestion.options" class="option-btn"

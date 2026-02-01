@@ -111,7 +111,10 @@ interface MatchItem {
   `,
   styles: [`
     .btn-ghost {
-      @apply flex items-center gap-2 px-4 py-2 hover:bg-black\\/5 rounded-lg transition-colors text-foreground;
+      @apply flex items-center gap-2 px-4 py-2 rounded-lg transition-colors text-slate-900;
+    }
+    .btn-ghost:hover {
+      background-color: rgba(0, 0, 0, 0.05);
     }
     .text-primary { color: var(--primary, #4f46e5); }
     .text-secondary { color: var(--secondary, #10b981); }

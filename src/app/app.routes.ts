@@ -43,6 +43,8 @@ import { AdminAuditComponent } from './components/admin-audit/admin-audit.compon
 import { AdminSettingsComponent } from './components/admin-settings/admin-settings.component';
 import { AdminMatchingQuestionsListComponent } from './components/admin-matching-questions-list/admin-matching-questions-list.component';
 import { AdminMatchingQuestionFormComponent } from './components/admin-matching-question-form/admin-matching-question-form.component';
+import { AdminWheelQuestionsListComponent } from './components/admin-wheel-questions/admin-wheel-questions-list.component';
+import { AdminWheelQuestionFormComponent } from './components/admin-wheel-questions/admin-wheel-question-form.component';
 
 // Parent Components
 import { ParentRegisterComponent } from './components/parent-register/parent-register.component';
@@ -122,6 +124,11 @@ export const routes: Routes = [
             { path: 'matching-questions', component: AdminMatchingQuestionsListComponent },
             { path: 'matching-questions/new', component: AdminMatchingQuestionFormComponent },
             { path: 'matching-questions/:id/edit', component: AdminMatchingQuestionFormComponent },
+
+            // Wheel Game
+            { path: 'wheel-questions', component: AdminWheelQuestionsListComponent },
+            { path: 'wheel-questions/new', component: AdminWheelQuestionFormComponent },
+            { path: 'wheel-questions/edit/:id', component: AdminWheelQuestionFormComponent },
 
             { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
         ]

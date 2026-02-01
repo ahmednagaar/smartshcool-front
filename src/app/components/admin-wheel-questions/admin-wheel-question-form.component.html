@@ -1,0 +1,170 @@
+<div class="container mx-auto px-4 py-8 max-w-4xl">
+    <!-- Header -->
+    <div class="flex items-center gap-4 mb-8">
+        <button [routerLink]="['/admin/wheel-questions']"
+            class="p-2 rounded-full hover:bg-slate-100 text-slate-500 transition-colors">
+            <lucide-icon name="arrow-right" class="w-6 h-6"></lucide-icon>
+        </button>
+        <div>
+            <h1 class="text-2xl font-bold text-slate-800">
+                {{ isEditMode ? 'تعديل سؤال' : 'إضافة سؤال جديد' }}
+            </h1>
+            <p class="text-slate-500 mt-1">
+                {{ isEditMode ? 'تعديل بيانات السؤال الحالي' : 'إدخال بيانات سؤال جديد للمسابقة' }}
+            </p>
+        </div>
+    </div>
+
+    <div *ngIf="loading" class="text-center py-12">
+        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+        <p class="mt-4 text-slate-500">جاري تحميل البيانات...</p>
+    </div>
+
+    <form *ngIf="!loading" (ngSubmit)="saveQuestion()" class="grid grid-cols-1 md:grid-cols-2 gap-6 pb-20">
+
+        <!-- Main Info Card -->
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 md:col-span-2 space-y-6">
+            <h2 class="text-lg font-semibold text-slate-800 border-b pb-2 mb-4">البيانات الأساسية</h2>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Grade -->
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">الصف الدراسي</label>
+                    <select [(ngModel)]="model.gradeId" name="gradeId"
+                        class="w-full px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 outline-none">
+                        <option [ngValue]="3">الصف الثالث</option>
+                        <option [ngValue]="4">الصف الرابع</option>
+                        <option [ngValue]="5">الصف الخامس</option>
+                        <option [ngValue]="6">الصف السادس</option>
+                    </select>
+                </div>
+
+                <!-- Subject -->
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">المادة</label>
+                    <select [(ngModel)]="model.subjectId" name="subjectId"
+                        class="w-full px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 outline-none">
+                        <option [ngValue]="1">لغة عربية</option>
+                        <option [ngValue]="2">رياضيات</option>
+                        <option [ngValue]="3">علوم</option>
+                    </select>
+                </div>
+
+                <!-- Difficulty -->
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">مستوى الصعوبة</label>
+                    <select [(ngModel)]="model.difficultyLevel" name="difficultyLevel"
+                        class="w-full px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 outline-none">
+                        <option [ngValue]="1">سهل</option>
+                        <option [ngValue]="2">متوسط</option>
+                        <option [ngValue]="3">صعب</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Question Text -->
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">نص السؤال <span
+                        class="text-red-500">*</span></label>
+                <textarea [(ngModel)]="model.questionText" name="questionText" rows="3" required
+                    class="w-full px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 outline-none"
+                    placeholder="اكتب نص السؤال هنا..."></textarea>
+            </div>
+
+            <!-- Category Tag -->
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">التصنيف (اختياري)</label>
+                <input type="text" [(ngModel)]="model.categoryTag" name="categoryTag"
+                    class="w-full px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 outline-none"
+                    placeholder="مثال: نحو، فلك، هندسة...">
+            </div>
+        </div>
+
+        <!-- Answers Card -->
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 md:col-span-2 space-y-6">
+            <h2 class="text-lg font-semibold text-slate-800 border-b pb-2 mb-4">الإجابات والخيارات</h2>
+
+            <!-- Correct Answer -->
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">الإجابة الصحيحة <span
+                        class="text-red-500">*</span></label>
+                <input type="text" [(ngModel)]="model.correctAnswer" name="correctAnswer" required
+                    class="w-full px-4 py-2 rounded-lg border border-green-300 focus:ring-2 focus:ring-green-500 outline-none bg-green-50"
+                    placeholder="اكتب الإجابة الصحيحة">
+            </div>
+
+            <!-- Wrong Answers -->
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-2">الإجابات الخاطئة (المشتتات)</label>
+                <div class="space-y-3">
+                    <div *ngFor="let wrong of model.wrongAnswers; let i = index; trackBy: trackByIndex"
+                        class="flex gap-2">
+                        <input type="text" [(ngModel)]="model.wrongAnswers[i]" [name]="'wrongAnswer' + i"
+                            class="flex-1 px-4 py-2 rounded-lg border border-red-200 focus:ring-2 focus:ring-red-200 outline-none bg-red-50"
+                            placeholder="إجابة خاطئة">
+                        <button type="button" (click)="removeWrongAnswer(i)"
+                            class="p-2 text-red-400 hover:text-red-600 hover:bg-red-100 rounded-lg transition-colors">
+                            <lucide-icon name="trash-2" class="w-5 h-5"></lucide-icon>
+                        </button>
+                    </div>
+                </div>
+                <button type="button" (click)="addWrongAnswer()"
+                    class="mt-3 text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1">
+                    <lucide-icon name="plus" class="w-4 h-4"></lucide-icon>
+                    إضافة خيار خاطئ آخر
+                </button>
+            </div>
+        </div>
+
+        <!-- Settings Card -->
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 md:col-span-2 space-y-6">
+            <h2 class="text-lg font-semibold text-slate-800 border-b pb-2 mb-4">إعدادات إضافية</h2>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Points -->
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">قيمة النقاط</label>
+                    <input type="number" [(ngModel)]="model.pointsValue" name="pointsValue"
+                        class="w-full px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+
+                <!-- Time Limit -->
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">وقت الإجابة (ثواني)</label>
+                    <input type="number" [(ngModel)]="model.timeLimit" name="timeLimit"
+                        class="w-full px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+
+                <!-- Hint -->
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-slate-700 mb-1">تلميح (اختياري)</label>
+                    <input type="text" [(ngModel)]="model.hintText" name="hintText"
+                        class="w-full px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 outline-none"
+                        placeholder="تلميح يظهر للطالب عند الطلب...">
+                </div>
+
+                <!-- Explanation -->
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-slate-700 mb-1">الشرح (يظهر بعد الإجابة)</label>
+                    <textarea [(ngModel)]="model.explanation" name="explanation" rows="2"
+                        class="w-full px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 outline-none"
+                        placeholder="شرح سبب الإجابة الصحيحة..."></textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- Submit Action -->
+        <div class="md:col-span-2 flex justify-end gap-4 mt-4">
+            <button type="button" [routerLink]="['/admin/wheel-questions']"
+                class="px-6 py-2.5 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors">
+                إلغاء
+            </button>
+            <button type="submit" [disabled]="saving"
+                class="px-8 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 transition-colors shadow-lg shadow-blue-200">
+                <lucide-icon name="save" class="w-5 h-5"></lucide-icon>
+                <span>{{ saving ? 'جاري الحفظ...' : 'حفظ السؤال' }}</span>
+            </button>
+        </div>
+
+    </form>
+</div>

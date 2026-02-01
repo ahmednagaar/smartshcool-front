@@ -33,6 +33,11 @@ export enum DifficultyLevel {
     Hard = 3
 }
 
+export enum TestType {
+    Nafes = 1,
+    Central = 2
+}
+
 export interface Game {
     id: number;
     title: string;
