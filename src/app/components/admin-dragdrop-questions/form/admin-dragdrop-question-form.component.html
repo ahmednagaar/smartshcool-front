@@ -1,0 +1,285 @@
+<div class="container mx-auto p-6 bg-slate-50 min-h-screen">
+    <!-- Header -->
+    <div class="mb-8">
+        <button routerLink="/admin/dragdrop-questions"
+            class="text-slate-500 hover:text-slate-800 flex items-center gap-1 mb-2">
+            <i-lucide name="arrow-right" class="w-4 h-4"></i-lucide>
+            عودة للقائمة
+        </button>
+        <h1 class="text-3xl font-bold text-slate-800">{{ isEditMode ? 'تعديل لعبة' : 'لعبة جديدة' }}</h1>
+    </div>
+
+    <div class="flex gap-6">
+        <!-- Steps Sidebar -->
+        <div class="w-64 shrink-0">
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 sticky top-6">
+                <div class="space-y-4">
+                    <div *ngFor="let step of steps; let i = index"
+                        class="flex items-center gap-3 p-3 rounded-lg transition-colors cursor-pointer"
+                        [ngClass]="{'bg-indigo-50 text-indigo-700': currentStep === i + 1, 'text-slate-500 hover:bg-slate-50': currentStep !== i + 1}"
+                        (click)="goToStep(i + 1)">
+                        <div class="w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm"
+                            [ngClass]="getStepIconClass(i + 1)">
+                            {{ i + 1 }}
+                        </div>
+                        <span class="font-medium">{{ step }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Form Content -->
+        <div class="flex-1">
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-8 min-h-[600px] relative">
+
+                <!-- Step 1: Basic Info -->
+                <div *ngIf="currentStep === 1" class="space-y-6 animate-fadeIn">
+                    <h2 class="text-xl font-bold text-slate-800 mb-6">المعلومات الأساسية</h2>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">عنوان اللعبة <span
+                                    class="text-red-500">*</span></label>
+                            <input type="text" [(ngModel)]="question.gameTitle"
+                                class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                                placeholder="مثال: تصنيف الكائنات الحية">
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-1">الصف <span
+                                        class="text-red-500">*</span></label>
+                                <select [(ngModel)]="question.grade"
+                                    class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                                    <option *ngFor="let g of grades" [ngValue]="g.value">{{g.label}}</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-1">المادة <span
+                                        class="text-red-500">*</span></label>
+                                <select [(ngModel)]="question.subject"
+                                    class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                                    <option *ngFor="let s of subjects" [ngValue]="s.value">{{s.label}}</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="col-span-2">
+                            <label class="block text-sm font-medium text-slate-700 mb-1">التعليمات</label>
+                            <textarea [(ngModel)]="question.instructions" rows="3"
+                                class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                                placeholder="اكتب تعليمات للطالب تظهر في بداية اللعبة..."></textarea>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">الوقت المحدد (ثانية)</label>
+                            <input type="number" [(ngModel)]="question.timeLimit"
+                                class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                                placeholder="60">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">نقاط كل إجابة صحيحة</label>
+                            <input type="number" [(ngModel)]="question.pointsPerCorrectItem"
+                                class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                                placeholder="10">
+                        </div>
+
+                        <div class="col-span-2 flex items-center gap-2 mt-2">
+                            <input type="checkbox" id="feedback" [(ngModel)]="question.showImmediateFeedback"
+                                class="w-5 h-5 text-indigo-600 rounded focus:ring-indigo-500">
+                            <label for="feedback" class="text-slate-700 font-medium cursor-pointer">إظهار النتيجة فوراً
+                                عند الإفلات (ملاحظات فورية)</label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 2: Theme Selection -->
+                <div *ngIf="currentStep === 2" class="space-y-6 animate-fadeIn">
+                    <h2 class="text-xl font-bold text-slate-800 mb-6">اختر المظهر (الثيم)</h2>
+
+                    <div *ngIf="loadingThemes" class="text-center py-8">
+                        <div class="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-indigo-600 mx-auto">
+                        </div>
+                    </div>
+
+                    <div *ngIf="!loadingThemes" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div *ngFor="let theme of themes" (click)="selectTheme(theme.id)"
+                            class="cursor-pointer border-2 rounded-xl overflow-hidden transition-all duration-300 hover:shadow-lg relative group"
+                            [ngClass]="{'border-indigo-600 ring-2 ring-indigo-200': question.uiTheme === theme.id, 'border-slate-200': question.uiTheme !== theme.id}">
+
+                            <!-- Checkmark for selected -->
+                            <div *ngIf="question.uiTheme === theme.id"
+                                class="absolute top-2 right-2 bg-indigo-600 text-white rounded-full p-1 z-10">
+                                <i-lucide name="check" class="w-4 h-4"></i-lucide>
+                            </div>
+
+                            <!-- Preview Area (Simulated) -->
+                            <div class="h-32 w-full relative flex items-center justify-center"
+                                [style.background-color]="theme.backgroundPattern && theme.backgroundPattern.includes('bg-') ? '' : theme.primaryColor">
+                                <!-- Fallback if no image -->
+                                <div class="text-white text-center">
+                                    <h3 class="font-bold text-lg drop-shadow-md">{{ theme.name }}</h3>
+                                    <div class="flex gap-2 justify-center mt-2">
+                                        <span class="w-6 h-6 rounded-full border-2 border-white"
+                                            [style.background-color]="theme.primaryColor"></span>
+                                        <span class="w-6 h-6 rounded-full border-2 border-white"
+                                            [style.background-color]="theme.secondaryColor"></span>
+                                    </div>
+                                </div>
+                                <!-- Actual Image if available -->
+                                <img *ngIf="theme.previewImageUrl" [src]="theme.previewImageUrl"
+                                    class="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity"
+                                    alt="">
+                            </div>
+
+                            <div class="p-4 bg-white">
+                                <p class="text-sm text-slate-500">{{ theme.description }}</p>
+                                <div class="mt-2 text-xs text-slate-400">خط: {{ theme.font }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 3: Zones -->
+                <div *ngIf="currentStep === 3" class="space-y-6 animate-fadeIn">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-bold text-slate-800">تكوين المجموعات (Silos)</h2>
+                        <button (click)="addZone()"
+                            class="text-indigo-600 hover:bg-indigo-50 px-3 py-1 rounded-lg text-sm font-medium flex items-center gap-1">
+                            <i-lucide name="plus" class="w-4 h-4"></i-lucide> إضافة مجموعة
+                        </button>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div *ngFor="let zone of question.zones; let i = index"
+                            class="bg-white border border-slate-200 rounded-lg p-4 flex gap-4 items-start relative group">
+                            <div
+                                class="flex items-center justify-center w-8 h-8 rounded-full bg-slate-100 text-slate-500 shrink-0 mt-2">
+                                {{ i + 1 }}
+                            </div>
+
+                            <div class="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs text-slate-500 mb-1">اسم المجموعة</label>
+                                    <input type="text" [(ngModel)]="zone.label"
+                                        class="w-full p-2 border border-slate-300 rounded focus:ring-1 focus:ring-indigo-500"
+                                        placeholder="مثال: ثدييات">
+                                </div>
+                                <div>
+                                    <label class="block text-xs text-slate-500 mb-1">لون المجموعة</label>
+                                    <div class="flex gap-2">
+                                        <input type="color" [(ngModel)]="zone.colorCode"
+                                            class="h-10 w-10 p-1 rounded border border-slate-300 cursor-pointer">
+                                        <input type="text" [(ngModel)]="zone.colorCode"
+                                            class="flex-1 p-2 border border-slate-300 rounded focus:ring-1 focus:ring-indigo-500 uppercase">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button (click)="removeZone(i)" class="text-slate-400 hover:text-red-500 p-2"
+                                *ngIf="question.zones.length > 2">
+                                <i-lucide name="trash" class="w-5 h-5"></i-lucide>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div *ngIf="question.zones.length < 2"
+                        class="text-amber-600 bg-amber-50 p-3 rounded-lg text-sm border border-amber-200 flex items-center gap-2">
+                        <i-lucide name="alert-triangle" class="w-4 h-4"></i-lucide>
+                        يجب إضافة مجموعتين على الأقل.
+                    </div>
+                </div>
+
+                <!-- Step 4: Items -->
+                <div *ngIf="currentStep === 4" class="space-y-6 animate-fadeIn">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-bold text-slate-800">العناصر (Items)</h2>
+                        <button (click)="addItem()"
+                            class="bg-indigo-600 text-white hover:bg-indigo-700 px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 shadow-sm">
+                            <i-lucide name="plus" class="w-4 h-4"></i-lucide> إضافة عنصر جديد
+                        </button>
+                    </div>
+
+                    <div *ngIf="question.items.length === 0"
+                        class="text-center py-8 bg-slate-50 rounded-lg border border-dashed border-slate-300">
+                        <p class="text-slate-500">أضف عناصر ليقوم الطالب بسحبها إلى المجموعات</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 gap-4 max-h-[500px] overflow-y-auto pr-2">
+                        <div *ngFor="let item of question.items; let i = index"
+                            class="bg-white border border-slate-200 rounded-lg p-4 flex gap-4 items-start shadow-sm">
+                            <div
+                                class="flex items-center justify-center w-6 h-6 rounded-full bg-indigo-100 text-indigo-600 text-xs font-bold shrink-0 mt-2">
+                                {{ i + 1 }}
+                            </div>
+
+                            <div class="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs text-slate-500 mb-1">نص العنصر</label>
+                                    <input type="text" [(ngModel)]="item.text"
+                                        class="w-full p-2 border border-slate-300 rounded focus:ring-1 focus:ring-indigo-500"
+                                        placeholder="مثال: أرنب">
+                                </div>
+                                <div>
+                                    <label class="block text-xs text-slate-500 mb-1">المجموعة الصحيحة</label>
+                                    <select [(ngModel)]="item.correctZoneIndex"
+                                        class="w-full p-2 border border-slate-300 rounded focus:ring-1 focus:ring-indigo-500">
+                                        <option [ngValue]="-1" disabled>اختر المجموعة</option>
+                                        <option *ngFor="let z of question.zones; let zIdx = index" [ngValue]="zIdx">
+                                            {{ z.label || 'مجموعة ' + (zIdx + 1) }}
+                                        </option>
+                                    </select>
+                                </div>
+                                <!-- Optional Media Inputs -->
+                                <!-- Simple placeholder for Phase 2 MVP -->
+                            </div>
+
+                            <button (click)="removeItem(i)" class="text-slate-400 hover:text-red-500 mt-2">
+                                <i-lucide name="trash" class="w-4 h-4"></i-lucide>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 5: Review -->
+                <div *ngIf="currentStep === 5" class="space-y-6 animate-fadeIn">
+                    <h2 class="text-xl font-bold text-slate-800 mb-6">مراجعة وحفظ</h2>
+
+                    <div class="bg-indigo-50 p-6 rounded-xl border border-indigo-100">
+                        <h3 class="text-lg font-bold text-indigo-900 mb-4">{{ question.gameTitle }}</h3>
+                        <div class="grid grid-cols-2 gap-4 text-sm text-indigo-800 mb-4">
+                            <p><span class="opacity-75">الصف:</span> {{ getGradeLabel(question.grade) }}</p>
+                            <p><span class="opacity-75">المادة:</span> {{ getSubjectLabel(question.subject) }}</p>
+                            <p><span class="opacity-75">الثيم:</span> {{ getThemeName(question.uiTheme) }}</p>
+                            <p><span class="opacity-75">عدد المجموعات:</span> {{ question.zones.length }}</p>
+                            <p><span class="opacity-75">عدد العناصر:</span> {{ question.items.length }}</p>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end mt-8">
+                        <button (click)="saveGame()" [disabled]="isSaving"
+                            class="bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-lg font-bold shadow-lg flex items-center gap-2 transform active:scale-95 transition-all">
+                            <div *ngIf="isSaving"
+                                class="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full">
+                            </div>
+                            <span>{{ isSaving ? 'جاري الحفظ...' : 'حفظ اللعبة' }}</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Navigation Buttons -->
+                <div class="absolute bottom-6 left-8 flex gap-3" *ngIf="currentStep < 5">
+                    <button *ngIf="currentStep > 1" (click)="goToStep(currentStep - 1)"
+                        class="px-6 py-2 border border-slate-300 rounded-lg text-slate-600 hover:bg-slate-50 font-medium">
+                        السابق
+                    </button>
+                    <button (click)="nextStep()"
+                        class="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium shadow-md">
+                        {{ currentStep === 4 ? 'مراجعة' : 'التالي' }}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

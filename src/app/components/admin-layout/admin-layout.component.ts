@@ -441,6 +441,8 @@ export class AdminLayoutComponent {
         { label: 'الأسئلة', icon: '❓', route: '/admin/questions' },
         { label: 'أسئلة المطابقة', icon: '🧩', route: '/admin/matching-questions' },
         { label: 'أسئلة العجلة', icon: '🎡', route: '/admin/wheel-questions' },
+        { label: 'أسئلة السحب والإفلات', icon: '🖐️', route: '/admin/dragdrop-questions' },
+        { label: 'أسئلة البطاقات', icon: '🃏', route: '/admin/flipcard-questions' },
         { label: 'الألعاب', icon: '🎮', route: '/admin/games' },
         { label: 'استيراد جماعي', icon: '📥', route: '/admin/import' }
       ]

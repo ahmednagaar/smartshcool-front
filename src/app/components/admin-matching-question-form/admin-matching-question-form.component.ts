@@ -2,9 +2,19 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormArray, Validators, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { MatchingQuestionService } from '../../services/matching-question.service';
-import { MatchingQuestion, DifficultyLevel, CreateMatchingQuestionDto } from '../../models/models';
-import { LucideAngularModule, Save, ArrowLeft, ArrowRight, Plus, Trash2, LUCIDE_ICONS, LucideIconProvider } from 'lucide-angular';
+import { MatchingGameService } from '../../services/matching-game.service';
+import {
+  MatchingGameDto,
+  CreateMatchingGameDto,
+  UpdateMatchingGameDto,
+  DifficultyLevel,
+  GradeLevel,
+  SubjectType,
+  MatchingMode,
+  MatchingTimerMode,
+  MatchingContentType
+} from '../../models/matching-game.model';
+import { LucideAngularModule, Save, ArrowLeft, ArrowRight, Plus, Trash2, Settings, List, CheckCircle, LUCIDE_ICONS, LucideIconProvider } from 'lucide-angular';
 
 @Component({
   selector: 'app-admin-matching-question-form',
@@ -12,57 +22,80 @@ import { LucideAngularModule, Save, ArrowLeft, ArrowRight, Plus, Trash2, LUCIDE_
   imports: [CommonModule, ReactiveFormsModule, RouterModule, LucideAngularModule],
   templateUrl: './admin-matching-question-form.component.html',
   styleUrl: './admin-matching-question-form.component.css',
-  providers: [{ provide: LUCIDE_ICONS, useValue: new LucideIconProvider({ Save, ArrowLeft, ArrowRight, Plus, Trash2 }) }]
+  providers: [{ provide: LUCIDE_ICONS, useValue: new LucideIconProvider({ Save, ArrowLeft, ArrowRight, Plus, Trash2, Settings, List, CheckCircle }) }]
 })
 export class AdminMatchingQuestionFormComponent implements OnInit {
-  questionForm: FormGroup;
+  gameForm: FormGroup;
   isEditMode: boolean = false;
-  questionId: number | null = null;
+  gameId: number | null = null;
   isLoading: boolean = false;
   submitted: boolean = false;
 
+  currentStep: number = 1; // 1: Settings, 2: Pairs, 3: Review
+
   readonly DifficultyLevel = DifficultyLevel;
+  readonly GradeLevel = GradeLevel;
+  readonly SubjectType = SubjectType;
+  readonly MatchingMode = MatchingMode;
+  readonly MatchingTimerMode = MatchingTimerMode;
+  readonly MatchingContentType = MatchingContentType;
 
   constructor(
     private fb: FormBuilder,
-    private matchingService: MatchingQuestionService,
+    private matchingService: MatchingGameService,
     private router: Router,
     private route: ActivatedRoute
   ) {
-    this.questionForm = this.fb.group({
+    this.gameForm = this.fb.group({
+      // Step 1: Game Settings
+      gameTitle: ['', [Validators.required, Validators.maxLength(100)]],
+      instructions: ['طابق العناصر التالية:', [Validators.required, Validators.maxLength(500)]],
       gradeId: [null, Validators.required],
       subjectId: [null, Validators.required],
-      leftItemText: ['', [Validators.required, Validators.maxLength(200)]],
-      rightItemText: ['', [Validators.required, Validators.maxLength(200)]],
       difficultyLevel: [DifficultyLevel.Medium, Validators.required],
-      displayOrder: [1, Validators.required],
-      // Dynamic distractors
-      distractorItems: this.fb.array([])
+
+      // Advanced Settings
+      matchingMode: [MatchingMode.Both, Validators.required],
+      uiTheme: ['default'],
+      showConnectingLines: [true],
+      enableAudio: [true],
+      enableHints: [true],
+      maxHints: [3, [Validators.min(0)]],
+      timerMode: [MatchingTimerMode.None],
+      timeLimitSeconds: [60],
+      pointsPerMatch: [10],
+      wrongMatchPenalty: [2],
+      isActive: [true],
+      displayOrder: [1],
+      category: ['General'],
+
+      // Step 2: Pairs
+      pairs: this.fb.array([])
     });
   }
 
-  get distractorItems(): FormArray {
-    return this.questionForm.get('distractorItems') as FormArray;
+  get pairs(): FormArray {
+    return this.gameForm.get('pairs') as FormArray;
   }
 
   ngOnInit(): void {
     this.route.params.subscribe(params => {
       if (params['id']) {
         this.isEditMode = true;
-        this.questionId = +params['id'];
-        this.loadQuestion(this.questionId);
+        this.gameId = +params['id'];
+        this.loadGame(this.gameId);
       } else {
-        // Add 1 default distractor field for new questions
-        this.addDistractor();
+        // Add 4 default empty pairs for new game
+        for (let i = 0; i < 4; i++) this.addPair();
       }
     });
   }
 
-  loadQuestion(id: number): void {
+  loadGame(id: number): void {
     this.isLoading = true;
-    this.matchingService.getById(id).subscribe({
-      next: (q) => {
-        this.patchForm(q);
+    this.matchingService.getGameById(id).subscribe({
+      next: (game) => {
+        this.patchForm(game);
         this.isLoading = false;
       },
       error: (err) => {
@@ -73,57 +106,112 @@ export class AdminMatchingQuestionFormComponent implements OnInit {
     });
   }
 
-  patchForm(q: MatchingQuestion): void {
-    this.questionForm.patchValue({
-      gradeId: q.gradeId,
-      subjectId: q.subjectId,
-      leftItemText: q.leftItemText,
-      rightItemText: q.rightItemText,
-      difficultyLevel: q.difficultyLevel,
-      displayOrder: q.displayOrder
+  patchForm(game: MatchingGameDto): void {
+    this.gameForm.patchValue({
+      gameTitle: game.gameTitle,
+      instructions: game.instructions,
+      gradeId: game.gradeId,
+      subjectId: game.subjectId,
+      difficultyLevel: game.difficultyLevel,
+      matchingMode: game.matchingMode,
+      uiTheme: game.uiTheme,
+      showConnectingLines: game.showConnectingLines,
+      enableAudio: game.enableAudio,
+      enableHints: game.enableHints,
+      maxHints: game.maxHints,
+      timerMode: game.timerMode,
+      timeLimitSeconds: game.timeLimitSeconds,
+      pointsPerMatch: game.pointsPerMatch,
+      wrongMatchPenalty: game.wrongMatchPenalty,
+      isActive: game.isActive,
+      displayOrder: game.displayOrder,
+      category: game.category
     });
 
-    // Clear existing distractors
-    this.distractorItems.clear();
-
-    // Add distractors from data
-    if (q.distractorItems && q.distractorItems.length > 0) {
-      q.distractorItems.forEach(d => {
-        this.distractorItems.push(this.fb.control(d, Validators.required));
+    this.pairs.clear();
+    if (game.pairs && game.pairs.length > 0) {
+      game.pairs.forEach(p => {
+        this.addPair(p);
       });
     } else {
-      // Add at least one empty
-      this.addDistractor();
+      for (let i = 0; i < 4; i++) this.addPair();
     }
   }
 
-  addDistractor(): void {
-    this.distractorItems.push(this.fb.control('', Validators.required));
+  addPair(pairData: any = null): void {
+    const pairGroup = this.fb.group({
+      questionText: [pairData?.questionText || '', [Validators.required]],
+      questionImageUrl: [pairData?.questionImageUrl || ''],
+      questionAudioUrl: [pairData?.questionAudioUrl || ''],
+      questionType: [pairData?.questionType || MatchingContentType.Text],
+
+      answerText: [pairData?.answerText || '', [Validators.required]],
+      answerImageUrl: [pairData?.answerImageUrl || ''],
+      answerAudioUrl: [pairData?.answerAudioUrl || ''],
+      answerType: [pairData?.answerType || MatchingContentType.Text],
+
+      explanation: [pairData?.explanation || '']
+    });
+    this.pairs.push(pairGroup);
   }
 
-  removeDistractor(index: number): void {
-    this.distractorItems.removeAt(index);
+  removePair(index: number): void {
+    if (this.pairs.length <= 4) {
+      alert('يجب أن تحتوي اللعبة على 4 أزواج على الأقل');
+      return;
+    }
+    this.pairs.removeAt(index);
+  }
+
+  nextStep(): void {
+    if (this.currentStep === 1) {
+      // Validate Step 1 fields
+      const controls = ['gameTitle', 'gradeId', 'subjectId'];
+      let valid = true;
+      controls.forEach(c => {
+        if (this.gameForm.get(c)?.invalid) {
+          this.gameForm.get(c)?.markAsTouched();
+          valid = false;
+        }
+      });
+      if (!valid) return;
+    }
+    this.currentStep++;
+  }
+
+  prevStep(): void {
+    this.currentStep--;
   }
 
   onSubmit(): void {
     this.submitted = true;
-    if (this.questionForm.invalid) return;
+    if (this.gameForm.invalid) {
+      // Mark all as touched to show errors
+      this.gameForm.markAllAsTouched();
+      return;
+    }
+
+    if (this.pairs.length < 4) {
+      alert('يجب إضافة 4 أزواج على الأقل');
+      return;
+    }
 
     this.isLoading = true;
-    const formValue = this.questionForm.value;
+    const formValue = this.gameForm.value;
 
-    const dto: CreateMatchingQuestionDto = {
-      gradeId: +formValue.gradeId,
-      subjectId: +formValue.subjectId,
-      leftItemText: formValue.leftItemText,
-      rightItemText: formValue.rightItemText,
-      difficultyLevel: +formValue.difficultyLevel,
-      displayOrder: formValue.displayOrder,
-      distractorItems: formValue.distractorItems
+    // Construct DTO
+    const dto: CreateMatchingGameDto = {
+      ...formValue,
+      pairs: formValue.pairs.map((p: any) => ({
+        ...p,
+        questionType: +p.questionType,
+        answerType: +p.answerType
+      }))
     };
 
-    if (this.isEditMode && this.questionId) {
-      this.matchingService.update(this.questionId, dto).subscribe({
+    if (this.isEditMode && this.gameId) {
+      const updateDto: UpdateMatchingGameDto = { ...dto, id: this.gameId, isActive: formValue.isActive, displayOrder: formValue.displayOrder };
+      this.matchingService.updateGame(this.gameId, updateDto).subscribe({
         next: () => {
           this.isLoading = false;
           this.router.navigate(['/admin/matching-questions']);
@@ -134,7 +222,7 @@ export class AdminMatchingQuestionFormComponent implements OnInit {
         }
       });
     } else {
-      this.matchingService.create(dto).subscribe({
+      this.matchingService.createGame(dto).subscribe({
         next: () => {
           this.isLoading = false;
           this.router.navigate(['/admin/matching-questions']);

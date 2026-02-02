@@ -1,0 +1,454 @@
+/* ========== Variables ========== */
+:host {
+    --primary: #1e40af;
+    --cyan: #00D9FF;
+    --purple: #8B5CF6;
+    --green: #10B981;
+    --orange: #F59E0B;
+}
+
+/* ========== Game Container ========== */
+.game-container {
+    background: linear-gradient(135deg, #1e3a8a 0%, #7c3aed 50%, #f97316 100%);
+    font-family: 'Cairo', sans-serif;
+    position: relative;
+    overflow: hidden;
+}
+
+.game-container.high-contrast {
+    background: #000 !important;
+}
+
+.high-contrast .glass-card {
+    background: #fff !important;
+    color: #000 !important;
+    border: 3px solid #fff !important;
+}
+
+.high-contrast .text-white {
+    color: #fff !important;
+}
+
+/* ========== Parallax Background ========== */
+.parallax-bg {
+    position: fixed;
+    inset: -50px;
+    background:
+        radial-gradient(circle at 20% 30%, rgba(0, 217, 255, 0.15) 0%, transparent 40%),
+        radial-gradient(circle at 80% 70%, rgba(245, 158, 11, 0.15) 0%, transparent 40%);
+    pointer-events: none;
+    transition: transform 0.1s ease-out;
+    z-index: 0;
+}
+
+/* ========== Header ========== */
+.game-header {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.text-shadow {
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
+.score-badge {
+    background: linear-gradient(135deg, var(--cyan), var(--purple));
+    padding: 8px 16px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 4px 15px rgba(0, 217, 255, 0.3);
+    position: relative;
+}
+
+.score-value {
+    font-size: 24px;
+    font-weight: 900;
+    color: white;
+}
+
+.score-label {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+/* ========== Glass Card ========== */
+.glass-card {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 20px;
+}
+
+.glass-shimmer {
+    position: relative;
+    overflow: hidden;
+}
+
+.glass-shimmer::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(120deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    transform: translateX(-100%);
+    animation: shimmer 3s infinite;
+}
+
+@keyframes shimmer {
+    100% {
+        transform: translateX(100%);
+    }
+}
+
+/* ========== Store Card ========== */
+.store-card {
+    border: 2px dashed rgba(255, 255, 255, 0.3);
+}
+
+/* ========== Item Card ========== */
+.item-card {
+    background: white;
+    padding: 16px;
+    border-radius: 12px;
+    cursor: grab;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    border: 2px solid transparent;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.item-card:hover {
+    transform: translateY(-4px) scale(1.02);
+    border-color: var(--cyan);
+    box-shadow: 0 8px 25px rgba(0, 217, 255, 0.2);
+}
+
+.item-card:focus {
+    outline: none;
+    border-color: var(--cyan);
+    box-shadow: 0 0 0 3px rgba(0, 217, 255, 0.3);
+}
+
+.item-card:active {
+    cursor: grabbing;
+}
+
+.drag-handle {
+    color: #ccc;
+    font-size: 18px;
+}
+
+/* ========== Drag Preview ========== */
+.drag-preview {
+    background: linear-gradient(135deg, var(--cyan), var(--purple));
+    color: white;
+    padding: 16px 24px;
+    border-radius: 12px;
+    font-weight: bold;
+    font-size: 18px;
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+    transform: rotate(3deg);
+}
+
+/* ========== Drag Placeholder ========== */
+.drag-placeholder {
+    background: rgba(0, 217, 255, 0.1);
+    border: 2px dashed var(--cyan);
+    border-radius: 12px;
+    min-height: 56px;
+    animation: dash-animate 1s linear infinite;
+}
+
+@keyframes dash-animate {
+    0% {
+        border-color: var(--cyan);
+    }
+
+    50% {
+        border-color: var(--purple);
+    }
+
+    100% {
+        border-color: var(--cyan);
+    }
+}
+
+/* ========== Zone Cards ========== */
+.zone-card {
+    transition: all 0.3s ease;
+}
+
+.zone-content {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.zone-empty {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px dashed rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    color: rgba(255, 255, 255, 0.5);
+    margin: 8px;
+    padding: 20px;
+}
+
+.zone-item {
+    background: white;
+    padding: 14px 18px;
+    border-radius: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.item-correct {
+    background: linear-gradient(135deg, #10B981, #059669) !important;
+    color: white !important;
+}
+
+.result-icon {
+    width: 28px;
+    height: 28px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+}
+
+.empty-store {
+    text-align: center;
+    color: rgba(255, 255, 255, 0.5);
+    padding: 40px;
+}
+
+/* ========== Modal ========== */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(8px);
+    padding: 20px;
+}
+
+.modal-content {
+    background: linear-gradient(135deg, #1e3a8a, #7c3aed);
+    border-radius: 24px;
+    padding: 40px;
+    max-width: 420px;
+    width: 100%;
+    text-align: center;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.4);
+    position: relative;
+    z-index: 102;
+}
+
+.result-icon-large {
+    font-size: 80px;
+    margin-bottom: 16px;
+    animation: bounce 1s ease infinite;
+}
+
+.result-title {
+    font-size: 28px;
+    font-weight: 900;
+    color: white;
+    margin-bottom: 8px;
+}
+
+.result-subtitle {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 16px;
+    margin-bottom: 24px;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--cyan), var(--purple));
+    color: white;
+    font-weight: bold;
+    padding: 14px 28px;
+    border-radius: 12px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+}
+
+.btn-secondary {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    font-weight: bold;
+    padding: 14px 28px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* ========== Animations ========== */
+@keyframes bounce {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+@keyframes bounce-subtle {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-5px);
+    }
+}
+
+.animate-bounce-subtle {
+    animation: bounce-subtle 2s ease-in-out infinite;
+}
+
+@keyframes spring {
+    0% {
+        transform: scale(0.8);
+    }
+
+    50% {
+        transform: scale(1.05);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
+
+.animate-spring {
+    animation: spring 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes shake {
+
+    0%,
+    100% {
+        transform: translateX(0);
+    }
+
+    20%,
+    60% {
+        transform: translateX(-6px);
+    }
+
+    40%,
+    80% {
+        transform: translateX(6px);
+    }
+}
+
+.animate-shake {
+    animation: shake 0.5s ease-in-out;
+}
+
+@keyframes pop {
+    0% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.2);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
+
+.animate-pop {
+    animation: pop 0.3s ease;
+}
+
+@keyframes bounce-in {
+    0% {
+        transform: scale(0.5);
+        opacity: 0;
+    }
+
+    60% {
+        transform: scale(1.05);
+        opacity: 1;
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
+
+.animate-bounce-in {
+    animation: bounce-in 0.5s ease forwards;
+}
+
+@keyframes scale-in {
+    0% {
+        transform: scale(0);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
+
+.animate-scale-in {
+    animation: scale-in 0.3s ease forwards;
+}
+
+@keyframes fade-in {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+.animate-fade-in {
+    animation: fade-in 0.3s ease;
+}
+
+/* CDK Drag Animations */
+.cdk-drag-animating {
+    transition: transform 300ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.cdk-drag-placeholder {
+    opacity: 0;
+}

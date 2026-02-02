@@ -38,6 +38,22 @@ export enum TestType {
     Central = 2
 }
 
+// Added Global Enums
+export enum GradeLevel {
+    Grade3 = 3,
+    Grade4 = 4,
+    Grade5 = 5,
+    Grade6 = 6
+}
+
+export enum SubjectType {
+    Arabic = 1,
+    Math = 2,
+    Science = 3,
+    Islamic = 4,
+    English = 5
+}
+
 export interface Game {
     id: number;
     title: string;
@@ -141,7 +157,7 @@ export interface LeaderboardEntry {
     badges: string[];
 }
 
-// Matching Game Interfaces
+// Matching Game Interfaces (Legacy/Question-based - kept for compile safety until full cleanup)
 export interface MatchingQuestion {
     id: number;
     gradeId: number;

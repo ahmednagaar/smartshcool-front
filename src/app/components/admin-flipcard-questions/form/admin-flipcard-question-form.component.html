@@ -1,0 +1,300 @@
+<div class="max-w-5xl mx-auto p-6">
+    <!-- Header -->
+    <div class="mb-8 flex items-center justify-between">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900">{{ isEditMode ? 'Edit' : 'Create New' }} Flip Card Game</h1>
+            <p class="text-gray-500">Configure game settings and content pairs</p>
+        </div>
+        <a routerLink="../../list" class="text-gray-500 hover:text-gray-700 flex items-center gap-1">
+            Cancel
+        </a>
+    </div>
+
+    <!-- Wizard Steps -->
+    <div class="mb-8">
+        <div class="flex items-center justify-between relative">
+            <div class="absolute left-0 top-1/2 transform -translate-y-1/2 w-full h-1 bg-gray-200 -z-10"></div>
+
+            <!-- Step 1 -->
+            <button type="button" (click)="setStep(1)" [class.bg-indigo-600]="currentStep >= 1"
+                [class.bg-gray-200]="currentStep < 1" [class.text-white]="currentStep >= 1"
+                [class.text-gray-500]="currentStep < 1"
+                class="w-10 h-10 rounded-full flex items-center justify-center font-bold z-10 transition-colors">
+                1
+            </button>
+
+            <!-- Step 2 -->
+            <button type="button" (click)="setStep(2)" [class.bg-indigo-600]="currentStep >= 2"
+                [class.bg-gray-200]="currentStep < 2" [class.text-white]="currentStep >= 2"
+                [class.text-gray-500]="currentStep < 2"
+                class="w-10 h-10 rounded-full flex items-center justify-center font-bold z-10 transition-colors">
+                2
+            </button>
+
+            <!-- Step 3 -->
+            <button type="button" (click)="setStep(3)" [class.bg-indigo-600]="currentStep >= 3"
+                [class.bg-gray-200]="currentStep < 3" [class.text-white]="currentStep >= 3"
+                [class.text-gray-500]="currentStep < 3"
+                class="w-10 h-10 rounded-full flex items-center justify-center font-bold z-10 transition-colors">
+                3
+            </button>
+        </div>
+        <div class="flex justify-between text-xs text-gray-500 mt-2 font-medium">
+            <span>Basic Info</span>
+            <span>Settings</span>
+            <span>Content Pairs</span>
+        </div>
+    </div>
+
+    <!-- Form Content -->
+    <form [formGroup]="questionForm" (ngSubmit)="onSubmit()"
+        class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 min-h-[400px]">
+
+        <!-- STEP 1: Basic Info -->
+        <div *ngIf="currentStep === 1" class="space-y-6 animate-fade-in">
+            <h2 class="text-xl font-semibold text-gray-800 border-b pb-2">Basic Information</h2>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="col-span-2">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Game Title</label>
+                    <input formControlName="gameTitle" type="text"
+                        class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 py-2 px-3 border"
+                        placeholder="e.g. Animal Matching">
+                    <p *ngIf="questionForm.get('gameTitle')?.touched && questionForm.get('gameTitle')?.invalid"
+                        class="text-red-500 text-xs mt-1">Title is required.</p>
+                </div>
+
+                <div class="col-span-2">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Instructions</label>
+                    <textarea formControlName="instructions" rows="3"
+                        class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 py-2 px-3 border"
+                        placeholder="How to play..."></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Grade Level</label>
+                    <select formControlName="gradeId"
+                        class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 py-2 px-3 border">
+                        <option [ngValue]="null">Select Grade</option>
+                        <option [ngValue]="GradeLevel.Grade3">Grade 3</option>
+                        <option [ngValue]="GradeLevel.Grade4">Grade 4</option>
+                        <option [ngValue]="GradeLevel.Grade5">Grade 5</option>
+                        <option [ngValue]="GradeLevel.Grade6">Grade 6</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Subject</label>
+                    <select formControlName="subjectId"
+                        class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 py-2 px-3 border">
+                        <option [ngValue]="null">Select Subject</option>
+                        <option [ngValue]="SubjectType.Arabic">Arabic</option>
+                        <option [ngValue]="SubjectType.Math">Math</option>
+                        <option [ngValue]="SubjectType.Science">Science</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Game Mode</label>
+                    <div class="flex gap-4">
+                        <button type="button" (click)="questionForm.patchValue({gameMode: FlipCardGameMode.Classic})"
+                            [class.ring-2]="questionForm.get('gameMode')?.value === FlipCardGameMode.Classic"
+                            class="flex-1 p-4 border rounded-lg text-center hover:bg-gray-50 focus:outline-none ring-indigo-500">
+                            <div class="font-bold">Classic Memory</div>
+                            <div class="text-xs text-gray-500">Flip cards to find pairs</div>
+                        </button>
+                        <button type="button" (click)="questionForm.patchValue({gameMode: FlipCardGameMode.Match})"
+                            [class.ring-2]="questionForm.get('gameMode')?.value === FlipCardGameMode.Match"
+                            class="flex-1 p-4 border rounded-lg text-center hover:bg-gray-50 focus:outline-none ring-indigo-500">
+                            <div class="font-bold">Match Mode</div>
+                            <div class="text-xs text-gray-500">Drag to connect pairs</div>
+                        </button>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                    <div class="flex items-center">
+                        <input formControlName="isActive" type="checkbox"
+                            class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                        <span class="ml-2 text-sm text-gray-700">Active (Visible to students)</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- STEP 2: Settings -->
+        <div *ngIf="currentStep === 2" class="space-y-6 animate-fade-in">
+            <h2 class="text-xl font-semibold text-gray-800 border-b pb-2">Game Settings</h2>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Timer Mode</label>
+                    <select formControlName="timerMode"
+                        class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 py-2 px-3 border">
+                        <option [ngValue]="FlipCardTimerMode.None">No Timer</option>
+                        <option [ngValue]="FlipCardTimerMode.CountUp">Count Up (Time Attack)</option>
+                        <option [ngValue]="FlipCardTimerMode.CountDown">Count Down (Time Limit)</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Time Limit (Seconds)</label>
+                    <input formControlName="timeLimitSeconds" type="number"
+                        class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 py-2 px-3 border">
+                    <p class="text-xs text-gray-500 mt-1">Only applies if Timer Mode is set.</p>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">UI Theme</label>
+                    <select formControlName="uiTheme"
+                        class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 py-2 px-3 border">
+                        <option *ngFor="let t of themes" [value]="t.id">{{t.name}}</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Card Back Design</label>
+                    <select formControlName="cardBackDesign"
+                        class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 py-2 px-3 border">
+                        <option *ngFor="let c of cardBacks" [value]="c.id">{{c.name}}</option>
+                    </select>
+                </div>
+
+                <div class="col-span-2">
+                    <div class="flex items-center gap-6">
+                        <div class="flex items-center">
+                            <input formControlName="showHints" type="checkbox"
+                                class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                            <span class="ml-2 text-sm text-gray-700">Allow Hints</span>
+                        </div>
+                        <div>
+                            <label class="text-sm font-medium text-gray-700 mr-2">Max Hints:</label>
+                            <input formControlName="maxHints" type="number"
+                                class="w-20 border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 py-1 px-2 border text-sm">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- STEP 3: Pairs -->
+        <div *ngIf="currentStep === 3" class="space-y-6 animate-fade-in">
+            <div class="flex justify-between items-center border-b pb-2">
+                <h2 class="text-xl font-semibold text-gray-800">Content Pairs</h2>
+                <button type="button" (click)="addPair()"
+                    class="text-sm bg-indigo-50 text-indigo-700 hover:bg-indigo-100 px-3 py-1 rounded-lg flex items-center gap-1">
+                    <lucide-icon name="plus" class="w-4 h-4"></lucide-icon> Add Pair
+                </button>
+            </div>
+
+            <div formArrayName="pairs" class="space-y-4">
+                <div *ngFor="let pair of pairs.controls; let i=index" [formGroupName]="i"
+                    class="bg-gray-50 p-4 rounded-xl border border-gray-200 relative">
+                    <button type="button" (click)="removePair(i)"
+                        class="absolute top-2 right-2 text-gray-400 hover:text-red-500">
+                        <lucide-icon name="trash-2" class="w-4 h-4"></lucide-icon>
+                    </button>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Card 1 -->
+                        <div class="space-y-3">
+                            <div class="font-medium text-sm text-indigo-600">Card 1</div>
+                            <div class="flex gap-2 mb-2">
+                                <button type="button"
+                                    (click)="pair.get('card1Type')?.setValue(FlipCardContentType.Text)"
+                                    [class.bg-white]="pair.get('card1Type')?.value === FlipCardContentType.Text"
+                                    [class.shadow-sm]="pair.get('card1Type')?.value === FlipCardContentType.Text"
+                                    class="p-1 rounded text-gray-500 hover:text-indigo-600 transition-all border border-transparent"
+                                    [class.border-gray-200]="pair.get('card1Type')?.value === FlipCardContentType.Text">
+                                    <lucide-icon name="type" class="w-4 h-4"></lucide-icon>
+                                </button>
+                                <button type="button"
+                                    (click)="pair.get('card1Type')?.setValue(FlipCardContentType.Image)"
+                                    [class.bg-white]="pair.get('card1Type')?.value === FlipCardContentType.Image"
+                                    [class.shadow-sm]="pair.get('card1Type')?.value === FlipCardContentType.Image"
+                                    class="p-1 rounded text-gray-500 hover:text-indigo-600 transition-all border border-transparent"
+                                    [class.border-gray-200]="pair.get('card1Type')?.value === FlipCardContentType.Image">
+                                    <lucide-icon name="image" class="w-4 h-4"></lucide-icon>
+                                </button>
+                            </div>
+
+                            <!-- Inputs based on type -->
+                            <div *ngIf="pair.get('card1Type')?.value === FlipCardContentType.Text">
+                                <input formControlName="card1Text" type="text" placeholder="Enter text..."
+                                    class="w-full border-gray-300 rounded shadow-sm py-1.5 px-3 border text-sm">
+                            </div>
+
+                            <div *ngIf="pair.get('card1Type')?.value === FlipCardContentType.Image">
+                                <input formControlName="card1ImageUrl" type="text" placeholder="Image URL..."
+                                    class="w-full border-gray-300 rounded shadow-sm py-1.5 px-3 border text-sm mb-2">
+                                <input formControlName="card1Text" type="text" placeholder="Alt text..."
+                                    class="w-full border-gray-300 rounded shadow-sm py-1.5 px-3 border text-sm">
+                            </div>
+                        </div>
+
+                        <!-- Card 2 -->
+                        <div class="space-y-3">
+                            <div class="font-medium text-sm text-pink-600">Card 2</div>
+                            <div class="flex gap-2 mb-2">
+                                <button type="button"
+                                    (click)="pair.get('card2Type')?.setValue(FlipCardContentType.Text)"
+                                    [class.bg-white]="pair.get('card2Type')?.value === FlipCardContentType.Text"
+                                    [class.shadow-sm]="pair.get('card2Type')?.value === FlipCardContentType.Text"
+                                    class="p-1 rounded text-gray-500 hover:text-indigo-600 transition-all border border-transparent"
+                                    [class.border-gray-200]="pair.get('card2Type')?.value === FlipCardContentType.Text">
+                                    <lucide-icon name="type" class="w-4 h-4"></lucide-icon>
+                                </button>
+                                <button type="button"
+                                    (click)="pair.get('card2Type')?.setValue(FlipCardContentType.Image)"
+                                    [class.bg-white]="pair.get('card2Type')?.value === FlipCardContentType.Image"
+                                    [class.shadow-sm]="pair.get('card2Type')?.value === FlipCardContentType.Image"
+                                    class="p-1 rounded text-gray-500 hover:text-indigo-600 transition-all border border-transparent"
+                                    [class.border-gray-200]="pair.get('card2Type')?.value === FlipCardContentType.Image">
+                                    <lucide-icon name="image" class="w-4 h-4"></lucide-icon>
+                                </button>
+                            </div>
+
+                            <!-- Inputs based on type -->
+                            <div *ngIf="pair.get('card2Type')?.value === FlipCardContentType.Text">
+                                <input formControlName="card2Text" type="text" placeholder="Enter text..."
+                                    class="w-full border-gray-300 rounded shadow-sm py-1.5 px-3 border text-sm">
+                            </div>
+
+                            <div *ngIf="pair.get('card2Type')?.value === FlipCardContentType.Image">
+                                <input formControlName="card2ImageUrl" type="text" placeholder="Image URL..."
+                                    class="w-full border-gray-300 rounded shadow-sm py-1.5 px-3 border text-sm mb-2">
+                                <input formControlName="card2Text" type="text" placeholder="Alt text..."
+                                    class="w-full border-gray-300 rounded shadow-sm py-1.5 px-3 border text-sm">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div *ngIf="pairs.length === 0"
+                    class="text-center py-8 text-gray-500 border-2 border-dashed border-gray-200 rounded-xl">
+                    No pairs added yet. Click "Add Pair" to start.
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="mt-8 pt-6 border-t border-gray-100 flex justify-between">
+            <button type="button" (click)="prevStep()" [disabled]="currentStep === 1"
+                class="px-5 py-2 rounded-lg text-gray-600 hover:bg-gray-100 font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
+                <lucide-icon name="chevron-left" class="w-4 h-4"></lucide-icon> Back
+            </button>
+
+            <button *ngIf="currentStep < 3" type="button" (click)="nextStep()"
+                class="px-5 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 font-medium flex items-center gap-2">
+                Next <lucide-icon name="chevron-right" class="w-4 h-4"></lucide-icon>
+            </button>
+
+            <button *ngIf="currentStep === 3" type="submit" [disabled]="loading || questionForm.invalid"
+                class="px-6 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 font-medium flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                <lucide-icon name="save" class="w-4 h-4"></lucide-icon>
+                {{ isEditMode ? 'Update Game' : 'Create Game' }}
+            </button>
+        </div>
+    </form>
+</div>

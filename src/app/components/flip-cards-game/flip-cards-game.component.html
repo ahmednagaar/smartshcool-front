@@ -1,0 +1,176 @@
+<!-- Main Game Container -->
+<div class="game-container" dir="rtl" cdkDropListGroup>
+
+    <!-- Decorative Sparkles Background -->
+    <div class="sparkles-bg"></div>
+
+    <!-- Header Section -->
+    <header class="game-header">
+        <h1 class="game-title">{{ gameData?.question?.gameTitle || 'لعبة مطابقة البطاقات' }}</h1>
+
+        <!-- Progress Bar -->
+        <div class="progress-container">
+            <div class="progress-bar" [style.width.%]="(matchedPairs / totalPairs) * 100"></div>
+        </div>
+
+        <!-- Stats & Stars -->
+        <div class="flex justify-center items-center gap-8 mb-4">
+            <div class="text-white text-lg font-bold">
+                <span>الزمن: {{ timerSeconds }}s</span>
+            </div>
+            <div class="star-ratings">
+                <span *ngFor="let star of [0,1,2]" class="star" [class.active]="star < stars" role="img">
+                    ★
+                </span>
+            </div>
+            <div class="text-white text-lg font-bold">
+                <span>النقاط: {{ score }}</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Loading State -->
+    <div *ngIf="isLoading" class="loading-state">
+        <div class="loading-spinner">🎮</div>
+        <p>جاري تحميل اللعبة...</p>
+    </div>
+
+    <!-- Start Screen (if needed, usually auto-starts) -->
+    <div *ngIf="!isLoading && gameState === 'start'" class="start-screen">
+        <div class="start-card">
+            <div class="start-icon">🧠</div>
+            <h2>هل أنت مستعد؟</h2>
+            <p>طابق الإجابات بالأسئلة الصحيحة</p>
+            <!-- We usually auto-start, but if not -->
+        </div>
+    </div>
+
+    <!-- Playing State -->
+    <div *ngIf="!isLoading && (gameState === 'playing' || gameState === 'complete')" class="w-full">
+
+        <!-- CLASSIC MODE GRID -->
+        <div *ngIf="gameData?.gameMode === FlipCardGameMode.Classic" class="classic-grid">
+            <div *ngFor="let card of cards" class="memory-card" [class.flipped]="card.isFlipped || card.isMatched"
+                [class.matched]="card.isMatched" [class.shake]="card.shake" (click)="flipCard(card)">
+
+                <div class="memory-face card-front">
+                    <!-- Content -->
+                    <div *ngIf="card.type === FlipCardContentType.Text" class="text-xl font-bold text-center p-2">{{
+                        card.text }}</div>
+                    <div *ngIf="card.type === FlipCardContentType.Image">
+                        <img [src]="card.imageUrl" alt="Card Image" class="max-w-full max-h-full">
+                        <p *ngIf="card.text" class="text-sm mt-2">{{ card.text }}</p>
+                    </div>
+                    <div *ngIf="card.type === FlipCardContentType.Audio">
+                        <span class="text-2xl">🔊</span>
+                        <p>Listen</p>
+                    </div>
+                </div>
+
+                <div class="memory-face card-back">
+                    <span>?</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- MATCH MODE GRID -->
+        <div *ngIf="gameData?.gameMode === FlipCardGameMode.Match" class="game-grid">
+
+            <!-- RIGHT SECTION (Questions/Targets in RTL layou, but functionally drag SOURCE to TARGET) -->
+            <!-- In our logic: Drag Left (Answer) to Right (Question). -->
+            <!-- Visual RTL: Right is first? Grid layout: 1fr auto 1fr. -->
+            <!-- Let's put Answers on Right (Source) and Questions on Left (Target) for RTL flow? -->
+            <!-- Traditionally RTL: Flow is Right to Left. So Source on Right? -->
+            <!-- Let's stick to logical columns. -->
+
+            <!-- Answers Column (Source) -->
+            <section class="game-section answers-section">
+                <h2 class="section-title">الإجابات</h2>
+                <div class="cards-container">
+                    <div *ngFor="let card of leftCards" class="card-wrapper">
+                        <div *ngIf="!card.isMatched" cdkDrag [cdkDragData]="card"
+                            class="flip-card answer-card draggable">
+
+                            <div class="flip-card-inner">
+                                <div class="flip-card-front">
+                                    <!-- Content -->
+                                    <div *ngIf="card.type === FlipCardContentType.Text" class="text-lg font-bold">{{
+                                        card.text }}</div>
+                                    <div *ngIf="card.type === FlipCardContentType.Image">
+                                        <img [src]="card.imageUrl" class="h-16 object-contain">
+                                    </div>
+                                    <div class="drag-hint">اسحبني!</div>
+                                </div>
+                            </div>
+
+                            <!-- Preview -->
+                            <div *cdkDragPreview class="drag-preview">
+                                <span>{{ card.text || 'Image' }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Divider -->
+            <div class="center-divider">
+                <div class="divider-line"></div>
+            </div>
+
+            <!-- Questions Column (Target) -->
+            <section class="game-section questions-section">
+                <h2 class="section-title">الأسئلة</h2>
+                <div class="cards-container">
+                    <div *ngFor="let card of rightCards" class="card-wrapper" cdkDropList [cdkDropListData]="card"
+                        (cdkDropListDropped)="onDrop($event, card)">
+
+                        <div class="flip-card question-card" [class.matched]="card.isMatched" [class.shake]="card.shake"
+                            [class.celebrate]="card.celebrate">
+
+                            <div class="flip-card-inner">
+                                <div class="flip-card-front">
+                                    <div *ngIf="card.type === FlipCardContentType.Text" class="text-lg font-bold">{{
+                                        card.text }}</div>
+                                    <div *ngIf="card.type === FlipCardContentType.Image">
+                                        <img [src]="card.imageUrl" class="h-16 object-contain">
+                                    </div>
+
+                                    <div *ngIf="card.isMatched" class="match-badge">✓</div>
+                                    <div *ngIf="!card.isMatched" class="drop-hint">ضع الإجابة هنا</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+    </div>
+
+    <!-- Victory Modal -->
+    <div *ngIf="gameState === 'complete'" class="victory-overlay">
+        <div class="victory-modal">
+            <div class="victory-icon">🏆</div>
+            <h2>أحسنت!</h2>
+            <p>أكملت اللعبة بنجاح!</p>
+
+            <div class="stats">
+                <div class="stat">
+                    <span class="stat-value">{{ score }}</span>
+                    <span class="stat-label">نقاط</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-value">{{ timerSeconds }}s</span>
+                    <span class="stat-label">ثانية</span>
+                </div>
+            </div>
+
+            <button class="replay-button" (click)="playAgain()">
+                العب مرة أخرى 🔄
+            </button>
+            <button class="exit-button" (click)="exit()">
+                خروج
+            </button>
+        </div>
+    </div>
+</div>

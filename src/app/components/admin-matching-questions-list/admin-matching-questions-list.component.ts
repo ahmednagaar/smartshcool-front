@@ -2,12 +2,13 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
-import { MatchingQuestionService } from '../../services/matching-question.service';
-import { MatchingQuestion, DifficultyLevel } from '../../models/models';
+import { MatchingGameService } from '../../services/matching-game.service';
+import { MatchingGameDto, DifficultyLevel } from '../../models/matching-game.model';
+import { GradeLevel, SubjectType } from '../../models/models';
 import { LucideAngularModule, Plus, Trash2, Edit, FileInput, Search, LUCIDE_ICONS, LucideIconProvider } from 'lucide-angular';
 
 @Component({
-  selector: 'app-admin-matching-questions-list',
+  selector: 'app-admin-matching-questions-list', // Keeping selector same to avoid breakage if used elsewhere, though typically routed.
   standalone: true,
   imports: [CommonModule, FormsModule, RouterModule, LucideAngularModule],
   templateUrl: './admin-matching-questions-list.component.html',
@@ -15,15 +16,18 @@ import { LucideAngularModule, Plus, Trash2, Edit, FileInput, Search, LUCIDE_ICON
   providers: [{ provide: LUCIDE_ICONS, useValue: new LucideIconProvider({ Plus, Trash2, Edit, FileInput, Search }) }]
 })
 export class AdminMatchingQuestionsListComponent implements OnInit {
-  questions: MatchingQuestion[] = [];
+  games: MatchingGameDto[] = [];
   totalCount: number = 0;
 
   // Filters
   page: number = 1;
   pageSize: number = 10;
-  grade?: number;
-  subject?: number;
-  searchStr: string = '';
+  grade?: GradeLevel;
+  subject?: SubjectType;
+  searchStr: string = ''; // Not supported by backend search yet? Backend GetGames has Grade/Subject but not SearchQuery?
+  // Backend `GetAvailableGamesAsync` has Grade/Subject. NO Search string.
+  // I will ignore searchStr for backend call or implement backend search later.
+  // For now, I'll remove search param from effective call.
 
   isLoading: boolean = false;
 
@@ -31,30 +35,29 @@ export class AdminMatchingQuestionsListComponent implements OnInit {
   protected readonly Math = Math;
 
   constructor(
-    private matchingService: MatchingQuestionService,
+    private matchingService: MatchingGameService,
     private router: Router
   ) { }
 
   ngOnInit(): void {
-    this.loadQuestions();
+    this.loadGames();
   }
 
-  loadQuestions(): void {
+  loadGames(): void {
     this.isLoading = true;
-    this.matchingService.search(
+    this.matchingService.getGames(
       this.page,
       this.pageSize,
       this.grade,
-      this.subject,
-      this.searchStr
+      this.subject
     ).subscribe({
       next: (res) => {
-        this.questions = res.data || [];
+        this.games = res.items || [];
         this.totalCount = res.totalCount;
         this.isLoading = false;
       },
       error: (err) => {
-        console.error('Failed to load questions', err);
+        console.error('Failed to load games', err);
         this.isLoading = false;
       }
     });
@@ -62,20 +65,19 @@ export class AdminMatchingQuestionsListComponent implements OnInit {
 
   onFilterChange(): void {
     this.page = 1;
-    this.loadQuestions();
+    this.loadGames();
   }
 
   onPageChange(newPage: number): void {
     this.page = newPage;
-    this.loadQuestions();
+    this.loadGames();
   }
 
-  deleteQuestion(id: number): void {
-    if (confirm('Are you sure you want to delete this question?')) {
-      this.matchingService.delete(id).subscribe({
+  deleteGame(id: number): void {
+    if (confirm('هل أنت متأكد من حذف هذه اللعبة؟')) {
+      this.matchingService.deleteGame(id).subscribe({
         next: () => {
-          // alert('Deleted successfully');
-          this.loadQuestions();
+          this.loadGames();
         },
         error: (err) => console.error(err)
       });
@@ -84,10 +86,16 @@ export class AdminMatchingQuestionsListComponent implements OnInit {
 
   getDifficultyName(level: DifficultyLevel): string {
     switch (level) {
-      case DifficultyLevel.Easy: return 'Easy';
-      case DifficultyLevel.Medium: return 'Medium';
-      case DifficultyLevel.Hard: return 'Hard';
-      default: return 'Unknown';
+      case DifficultyLevel.Easy: return 'سهل';
+      case DifficultyLevel.Medium: return 'متوسط';
+      case DifficultyLevel.Hard: return 'صعب';
+      default: return 'غير معروف';
     }
+  }
+
+  getSubjectName(id: SubjectType): string {
+    // Map based on value
+    const map: any = { 1: 'لغتي', 2: 'رياضيات', 3: 'علوم', 4: 'إسلامية', 5: 'إنجليزي' };
+    return map[id] || 'مادة';
   }
 }

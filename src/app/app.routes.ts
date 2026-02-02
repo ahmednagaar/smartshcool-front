@@ -46,6 +46,12 @@ import { AdminMatchingQuestionFormComponent } from './components/admin-matching-
 import { AdminWheelQuestionsListComponent } from './components/admin-wheel-questions/admin-wheel-questions-list.component';
 import { AdminWheelQuestionFormComponent } from './components/admin-wheel-questions/admin-wheel-question-form.component';
 
+import { AdminDragDropQuestionsListComponent } from './components/admin-dragdrop-questions/list/admin-dragdrop-questions-list.component';
+import { AdminDragDropQuestionFormComponent } from './components/admin-dragdrop-questions/form/admin-dragdrop-question-form.component';
+
+import { AdminFlipCardQuestionsListComponent } from './components/admin-flipcard-questions/list/admin-flipcard-questions-list.component';
+import { AdminFlipCardQuestionFormComponent } from './components/admin-flipcard-questions/form/admin-flipcard-question-form.component';
+
 // Parent Components
 import { ParentRegisterComponent } from './components/parent-register/parent-register.component';
 import { ParentLoginComponent } from './components/parent-login/parent-login.component';
@@ -129,6 +135,16 @@ export const routes: Routes = [
             { path: 'wheel-questions', component: AdminWheelQuestionsListComponent },
             { path: 'wheel-questions/new', component: AdminWheelQuestionFormComponent },
             { path: 'wheel-questions/edit/:id', component: AdminWheelQuestionFormComponent },
+
+            // Drag & Drop Game
+            { path: 'dragdrop-questions', component: AdminDragDropQuestionsListComponent },
+            { path: 'dragdrop-questions/new', component: AdminDragDropQuestionFormComponent },
+            { path: 'dragdrop-questions/edit/:id', component: AdminDragDropQuestionFormComponent },
+
+            // Flip Card Game
+            { path: 'flipcard-questions', component: AdminFlipCardQuestionsListComponent },
+            { path: 'flipcard-questions/new', component: AdminFlipCardQuestionFormComponent },
+            { path: 'flipcard-questions/edit/:id', component: AdminFlipCardQuestionFormComponent },
 
             { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
         ]
