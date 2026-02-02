@@ -154,32 +154,43 @@ import { Subscription, timer } from 'rxjs';
         <div *ngIf="gameComplete" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
            <div class="bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full text-center relative overflow-hidden">
                <!-- Confetti Background (simulated with CSS or image) -->
-               <div class="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-purple-500/5"></div>
+               <div class="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-purple-500/5 pointer-events-none"></div>
                
-               <div class="text-6xl mb-4 animate-bounce">🏆</div>
-               <h3 class="text-3xl font-black text-slate-800 mb-2">ممتاز!</h3>
-               <p class="text-slate-500 text-lg mb-8">لقد أكملت اللعبة بنجاح</p>
-               
-               <div class="grid grid-cols-2 gap-4 mb-8">
-                  <div class="bg-slate-50 p-4 rounded-2xl">
-                     <div class="text-sm text-slate-500 font-bold">النقاط</div>
-                     <div class="text-2xl font-black text-indigo-600">{{ totalScore }}</div>
-                  </div>
-                  <div class="bg-slate-50 p-4 rounded-2xl">
-                     <div class="text-sm text-slate-500 font-bold">الوقت</div>
-                     <div class="text-2xl font-black text-indigo-600">{{ formatTime(timeSpent) }}</div>
-                  </div>
-               </div>
+               <!-- Modal Content with relative z-index -->
+               <div class="relative z-10">
+                 <div class="text-6xl mb-4 animate-bounce">🏆</div>
+                 <h3 class="text-3xl font-black text-slate-800 mb-2">ممتاز!</h3>
+                 <p class="text-slate-500 text-lg mb-8">لقد أكملت اللعبة بنجاح</p>
+                 
+                 <div class="grid grid-cols-2 gap-4 mb-8">
+                    <div class="bg-slate-50 p-4 rounded-2xl">
+                       <div class="text-sm text-slate-500 font-bold">النقاط</div>
+                       <div class="text-2xl font-black text-indigo-600">{{ totalScore }}</div>
+                    </div>
+                    <div class="bg-slate-50 p-4 rounded-2xl">
+                       <div class="text-sm text-slate-500 font-bold">الوقت</div>
+                       <div class="text-2xl font-black text-indigo-600">{{ formatTime(timeSpent) }}</div>
+                    </div>
+                 </div>
 
-               <div class="flex gap-2 text-yellow-500 justify-center text-3xl mb-8">
-                  <span *ngFor="let star of [1,2,3]" [class.grayscale]="star > starRating">⭐</span>
-               </div>
+                 <div class="flex gap-2 text-yellow-500 justify-center text-3xl mb-8">
+                    <span *ngFor="let star of [1,2,3]" [class.grayscale]="star > starRating">⭐</span>
+                 </div>
 
-               <button (click)="submitAndExit()" [disabled]="isSubmitting" 
-                  class="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold py-4 rounded-xl shadow-lg hover:shadow-xl transition-all active:scale-95 disabled:opacity-70 disabled:active:scale-100 flex items-center justify-center gap-2">
-                  <span *ngIf="isSubmitting" class="animate-spin">⌛</span>
-                  <span>النتائج والمتابعة</span>
-               </button>
+                 <!-- Action Buttons -->
+                 <div class="flex flex-col gap-3">
+                   <button (click)="playNextGame()" [disabled]="isSubmitting" 
+                      class="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold py-4 rounded-xl shadow-lg hover:shadow-xl transition-all active:scale-95 disabled:opacity-70 flex items-center justify-center gap-2">
+                      <span *ngIf="isSubmitting" class="animate-spin">⌛</span>
+                      <span>🎮 اللعبة التالية</span>
+                   </button>
+                   
+                   <button (click)="submitAndExit()" [disabled]="isSubmitting" 
+                      class="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold py-4 rounded-xl shadow-lg hover:shadow-xl transition-all active:scale-95 disabled:opacity-70 flex items-center justify-center gap-2">
+                      <span>النتائج والمتابعة</span>
+                   </button>
+                 </div>
+               </div>
            </div>
         </div>
 
@@ -241,6 +252,12 @@ export class MatchingGameComponent implements OnInit, OnDestroy {
   feedbackMessage = '';
   feedbackType: 'success' | 'error' = 'success';
   starRating = 0;
+
+  // Cumulative stats across all groups
+  cumulativeScore = 0;
+  cumulativeTimeSpent = 0;
+  gamesPlayed = 0;
+  totalMatchedPairs = 0;
 
   constructor(
     private router: Router,
@@ -483,7 +500,85 @@ export class MatchingGameComponent implements OnInit, OnDestroy {
   }
 
   submitAndExit() {
-    this.router.navigate(['/result']);
+    console.log('submitAndExit called');
+    this.isSubmitting = true;
+
+    try {
+      // Add current game to cumulative totals
+      const finalScore = this.cumulativeScore + this.totalScore;
+      const finalTime = this.cumulativeTimeSpent + this.timeSpent;
+      const finalMatchedPairs = this.totalMatchedPairs + this.matchedPairs;
+      const finalGamesPlayed = this.gamesPlayed + 1;
+
+      console.log('Final cumulative stats:', {
+        finalScore,
+        finalTime,
+        finalMatchedPairs,
+        finalGamesPlayed
+      });
+
+      // Save cumulative game results to sessionStorage for the result screen
+      sessionStorage.setItem('quizScore', finalScore.toString());
+      sessionStorage.setItem('quizTotal', finalMatchedPairs.toString());
+      sessionStorage.setItem('timeSpent', finalTime.toString());
+      sessionStorage.setItem('starRating', this.starRating.toString());
+      sessionStorage.setItem('gameType', 'matching');
+      sessionStorage.setItem('gamesPlayed', finalGamesPlayed.toString());
+
+      console.log('sessionStorage set, navigating to /result');
+      this.router.navigate(['/result']).then(
+        (success) => {
+          console.log('Navigation result:', success);
+          if (!success) {
+            console.error('Navigation failed');
+            this.isSubmitting = false;
+          }
+        },
+        (error) => {
+          console.error('Navigation error:', error);
+          this.isSubmitting = false;
+        }
+      );
+    } catch (error) {
+      console.error('Error in submitAndExit:', error);
+      this.isSubmitting = false;
+    }
+  }
+
+  playNextGame() {
+    console.log('playNextGame called');
+    this.isSubmitting = true;
+
+    // Accumulate current game scores BEFORE resetting
+    this.cumulativeScore += this.totalScore;
+    this.cumulativeTimeSpent += this.timeSpent;
+    this.totalMatchedPairs += this.matchedPairs;
+    this.gamesPlayed++;
+
+    console.log('Cumulative stats:', {
+      cumulativeScore: this.cumulativeScore,
+      cumulativeTimeSpent: this.cumulativeTimeSpent,
+      gamesPlayed: this.gamesPlayed,
+      totalMatchedPairs: this.totalMatchedPairs
+    });
+
+    // Reset ONLY current game state for smooth transition (NOT cumulative)
+    this.gameComplete = false;
+    this.matchedPairIds = [];
+    this.matchedPairs = 0;
+    this.totalScore = 0;
+    this.wrongAttempts = 0;
+    this.timeSpent = 0;
+    this.timeRemaining = 0;
+    this.starRating = 0;
+    this.selectedQuestion = null;
+    this.selectedAnswer = null;
+    this.feedbackMessage = '';
+    this.stopTimer();
+
+    // Re-initialize the game which will fetch next set of questions
+    this.initializeGame();
+    this.isSubmitting = false;
   }
 
   goBack() {
