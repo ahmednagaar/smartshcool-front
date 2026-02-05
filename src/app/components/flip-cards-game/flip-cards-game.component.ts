@@ -69,7 +69,41 @@ export class FlipCardsGameComponent implements OnInit, OnDestroy {
       if (id) {
         this.startGame(+id);
       } else {
+        // No ID provided in route - start with grade/subject from sessionStorage
+        this.startGameByGradeSubject();
+      }
+    });
+  }
+
+  startGameByGradeSubject(): void {
+    this.isLoading = true;
+
+    // Read grade and subject from sessionStorage (like Matching/DragDrop games)
+    const gradeId = parseInt(sessionStorage.getItem('selectedGrade') || '3');
+    const subjectMap: any = { 'arabic': 1, 'math': 2, 'science': 3, 'islamic': 4, 'english': 5 };
+    const subjectStr = sessionStorage.getItem('selectedSubject') || 'science';
+    const subjectId = subjectMap[subjectStr] || 3;
+
+    const dto: StartFlipCardGameDto = {
+      studentId: 1,
+      gradeId: gradeId,
+      subjectId: subjectId
+      // questionId not set - backend will return random question
+    };
+
+    this.gameService.startSession(dto).subscribe({
+      next: (data) => {
+        this.gameData = data;
+        this.totalPairs = data.totalPairs;
+        this.initGameModes(data);
+        this.startTimer();
+        this.gameState = 'playing';
         this.isLoading = false;
+      },
+      error: (err) => {
+        console.error('Failed to start game - no questions available', err);
+        this.isLoading = false;
+        // Stay on start screen, could show error message
       }
     });
   }
@@ -80,10 +114,15 @@ export class FlipCardsGameComponent implements OnInit, OnDestroy {
 
   startGame(questionId: number): void {
     this.isLoading = true;
+    const gradeId = parseInt(sessionStorage.getItem('selectedGrade') || '3');
+    const subjectMap: any = { 'arabic': 1, 'math': 2, 'science': 3, 'islamic': 4, 'english': 5 };
+    const subjectStr = sessionStorage.getItem('selectedSubject') || 'science';
+    const subjectId = subjectMap[subjectStr] || 3;
+
     const dto: StartFlipCardGameDto = {
-      studentId: 1, // Mock
-      gradeId: 1,
-      subjectId: 1,
+      studentId: 1,
+      gradeId: gradeId,
+      subjectId: subjectId,
       questionId: questionId
     };
 
@@ -102,6 +141,8 @@ export class FlipCardsGameComponent implements OnInit, OnDestroy {
       }
     });
   }
+
+
 
   private initGameModes(data: GameStartResponseDto): void {
     const allCards = data.question.cards.map(c => ({

@@ -10,9 +10,10 @@ import {
 } from '../models/drag-drop.model';
 
 export interface StartGameRequestDto {
-    questionId: number;
+    questionId?: number;  // Optional - if not provided, backend gets random by grade/subject
     grade: GradeLevel;
     subject: SubjectType;
+    difficulty?: number;  // Optional filter (DifficultyLevel enum)
 }
 
 export interface GameSessionDto {

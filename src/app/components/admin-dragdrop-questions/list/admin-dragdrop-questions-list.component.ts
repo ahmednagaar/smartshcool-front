@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { LucideAngularModule, PlusCircle, Search, Edit3, Trash2, Layers, Puzzle, MoreVertical, ClipboardList } from 'lucide-angular';
+import { LucideAngularModule, PlusCircle, Search, Edit3, Trash2, Layers, Puzzle, MoreVertical, ClipboardList, LUCIDE_ICONS, LucideIconProvider } from 'lucide-angular';
 import { DragDropQuestionService } from '../../../services/drag-drop-question.service';
 import { DragDropQuestionDto, GradeLevel, SubjectType, PaginationParams } from '../../../models/drag-drop.model';
 import Swal from 'sweetalert2';
@@ -16,7 +16,7 @@ import Swal from 'sweetalert2';
         FormsModule,
         LucideAngularModule
     ],
-    providers: [{ provide: 'LUCIDE_ICONS', useValue: { PlusCircle, Search, Edit3, Trash2, Layers, Puzzle, MoreVertical, ClipboardList } }],
+    providers: [{ provide: LUCIDE_ICONS, useValue: new LucideIconProvider({ PlusCircle, Search, Edit3, Trash2, Layers, Puzzle, MoreVertical, ClipboardList }) }],
     templateUrl: './admin-dragdrop-questions-list.component.html',
     styles: []
 })

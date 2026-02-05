@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { LucideAngularModule, ArrowRight, Check, Plus, Trash, AlertTriangle } from 'lucide-angular';
+import { LucideAngularModule, ArrowRight, Check, Plus, Trash, AlertTriangle, LUCIDE_ICONS, LucideIconProvider } from 'lucide-angular';
 import { DragDropQuestionService } from '../../../services/drag-drop-question.service';
 import {
     CreateDragDropQuestionDto,
@@ -19,6 +19,7 @@ import Swal from 'sweetalert2';
     selector: 'app-admin-dragdrop-question-form',
     standalone: true,
     imports: [CommonModule, RouterModule, FormsModule, LucideAngularModule],
+    providers: [{ provide: LUCIDE_ICONS, useValue: new LucideIconProvider({ ArrowRight, Check, Plus, Trash, AlertTriangle }) }],
     templateUrl: './admin-dragdrop-question-form.component.html',
     styles: [`
     .animate-fadeIn { animation: fadeIn 0.3s ease-out; }

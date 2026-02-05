@@ -191,21 +191,23 @@ export class DragDropGameComponent implements OnInit {
   ngOnInit(): void {
     this.route.queryParams.subscribe(params => {
       const questionId = params['questionId'] ? +params['questionId'] : null;
-      if (questionId) {
-        this.startGame(questionId);
-      } else {
-        // Fallback to Grade 3 Science
-        this.startGame(1);
-      }
+      this.startGame(questionId);
     });
   }
 
-  startGame(questionId: number) {
+  startGame(questionId: number | null) {
     this.isLoading = true;
+
+    // Read grade and subject from sessionStorage (like Matching Game)
+    const gradeId = parseInt(sessionStorage.getItem('selectedGrade') || '3') as GradeLevel;
+    const subjectMap: any = { 'arabic': 1, 'math': 2, 'science': 3, 'islamic': 4, 'english': 5 };
+    const subjectStr = sessionStorage.getItem('selectedSubject') || 'science';
+    const subjectId = (subjectMap[subjectStr] || SubjectType.Science) as SubjectType;
+
     const req: StartGameRequestDto = {
-      questionId: questionId,
-      grade: GradeLevel.Grade3,
-      subject: SubjectType.Science
+      questionId: questionId ?? undefined,  // Only include if provided
+      grade: gradeId,
+      subject: subjectId
     };
 
     this.gameService.startSession(req).subscribe({
@@ -233,10 +235,11 @@ export class DragDropGameComponent implements OnInit {
       },
       error: (err) => {
         console.error(err);
-        Swal.fire('خطأ', 'تعذر بدء اللعبة', 'error').then(() => this.goBack());
+        Swal.fire('خطأ', 'تعذر بدء اللعبة - لا توجد أسئلة متاحة لهذه المادة والصف', 'error').then(() => this.goBack());
       }
     });
   }
+
 
   drop(event: CdkDragDrop<DragDropItemDto[]>, zoneId: number) {
     if (event.previousContainer === event.container) {

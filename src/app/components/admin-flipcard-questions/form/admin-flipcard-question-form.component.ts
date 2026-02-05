@@ -62,15 +62,22 @@ export class AdminFlipCardQuestionFormComponent implements OnInit {
             gameMode: [FlipCardGameMode.Classic, [Validators.required]],
             difficultyLevel: [1],
             isActive: [true],
+            category: ['عام'],  // Backend requires this field
 
             // Step 2: Settings
             timerMode: [FlipCardTimerMode.None, [Validators.required]],
-            timeLimitSeconds: [null], // Conditional validation?
+            timeLimitSeconds: [null],
             showHints: [true],
             maxHints: [3],
             uiTheme: ['modern'],
             cardBackDesign: ['standard'],
             customCardBackUrl: [''],
+
+            // Additional backend-required fields with defaults
+            pointsPerMatch: [10],
+            movePenalty: [0],
+            enableAudio: [false],
+            enableExplanations: [false],
 
             // Step 3: Pairs
             pairs: this.fb.array([])
@@ -201,7 +208,8 @@ export class AdminFlipCardQuestionFormComponent implements OnInit {
         if (this.isEditMode && this.questionId) {
             const updateDto: UpdateFlipCardQuestionDto = {
                 ...formValue,
-                id: this.questionId
+                id: this.questionId,
+                numberOfPairs: formValue.pairs.length  // Calculate from pairs array
             };
 
             this.questionService.update(this.questionId, updateDto).subscribe({
@@ -217,6 +225,7 @@ export class AdminFlipCardQuestionFormComponent implements OnInit {
         } else {
             const createDto: CreateFlipCardQuestionDto = {
                 ...formValue,
+                numberOfPairs: formValue.pairs.length,  // Calculate from pairs array
                 displayOrder: 0 // Default
             };
 
