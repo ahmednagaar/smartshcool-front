@@ -77,10 +77,10 @@ export class GradeSelectionComponent implements OnInit {
   availableGrades: GradeOption[] = [];
 
   private allGrades: GradeOption[] = [
-    { value: '3', label: 'الصف الثالث', image: 'assets/images/grade-3-student.png' },
+    { value: '3', label: 'الصف الثالث', image: 'assets/images/grade 3.png' },
     { value: '4', label: 'الصف الرابع', image: 'assets/images/grade-4-student.png' },
     { value: '5', label: 'الصف الخامس', image: 'assets/images/grade-5-student.png' },
-    { value: '6', label: 'الصف السادس', image: 'assets/images/grade-6-student.png' },
+    { value: '6', label: 'الصف السادس', image: 'assets/images/grade 6.png' },
   ];
 
   constructor(private router: Router, private route: ActivatedRoute) { }
