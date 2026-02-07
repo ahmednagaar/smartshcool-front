@@ -185,16 +185,20 @@ export class FlipCardsGameComponent implements OnInit, OnDestroy {
     const card1 = this.currentFlipped[0];
     const card2 = this.currentFlipped[1];
 
-    this.gameService.recordMatch({
-      sessionId: this.gameData!.id,
-      pairId: card1.pairId,
-      card1FlippedAtMs: 0,
-      card2FlippedAtMs: 0,
-      attemptsBeforeMatch: 0,
-      hintUsed: false
-    }).subscribe({
-      next: (result) => {
-        if (result.isCorrect && card1.pairId === card2.pairId) {
+    // Check if cards match by comparing pairId
+    const isMatch = card1.pairId === card2.pairId;
+
+    if (isMatch) {
+      // Correct match - call recordMatch API
+      this.gameService.recordMatch({
+        sessionId: this.gameData!.id,
+        pairId: card1.pairId,
+        card1FlippedAtMs: Date.now(),
+        card2FlippedAtMs: Date.now() + 100,
+        attemptsBeforeMatch: this.moves,
+        hintUsed: false
+      }).subscribe({
+        next: (result) => {
           card1.isMatched = true;
           card2.isMatched = true;
           card1.celebrate = true;
@@ -208,7 +212,35 @@ export class FlipCardsGameComponent implements OnInit, OnDestroy {
           if (this.matchedPairs >= this.totalPairs) {
             this.finishGame();
           }
-        } else {
+        },
+        error: (err) => {
+          console.error('Error recording match', err);
+          this.currentFlipped = [];
+          this.isProcessing = false;
+        }
+      });
+    } else {
+      // Wrong match - call recordWrongMatch API and reset cards
+      this.gameService.recordWrongMatch({
+        sessionId: this.gameData!.id,
+        card1Id: card1.id,
+        card2Id: card2.id
+      }).subscribe({
+        next: () => {
+          card1.shake = true;
+          card2.shake = true;
+          setTimeout(() => {
+            card1.isFlipped = false;
+            card2.isFlipped = false;
+            card1.shake = false;
+            card2.shake = false;
+            this.currentFlipped = [];
+            this.isProcessing = false;
+          }, 1000);
+        },
+        error: (err) => {
+          console.error('Error recording wrong match', err);
+          // Still reset cards even on error
           card1.shake = true;
           card2.shake = true;
           setTimeout(() => {
@@ -220,34 +252,64 @@ export class FlipCardsGameComponent implements OnInit, OnDestroy {
             this.isProcessing = false;
           }, 1000);
         }
-      }
-    });
+      });
+    }
   }
 
   // ========== MATCH MODE LOGIC ==========
   onDrop(event: CdkDragDrop<CardViewModel[]> | any, targetCard: CardViewModel): void {
     const sourceCard: CardViewModel = event.item.data;
+    this.moves++;
 
     if (sourceCard.pairId === targetCard.pairId) {
-      sourceCard.isMatched = true;
-      targetCard.isMatched = true;
-      targetCard.celebrate = true;
-      this.matchedPairs++;
+      // Correct match - call recordMatch API
+      this.gameService.recordMatch({
+        sessionId: this.gameData!.id,
+        pairId: sourceCard.pairId,
+        card1FlippedAtMs: Date.now(),
+        card2FlippedAtMs: Date.now() + 100,
+        attemptsBeforeMatch: this.moves,
+        hintUsed: false
+      }).subscribe({
+        next: (result) => {
+          sourceCard.isMatched = true;
+          targetCard.isMatched = true;
+          targetCard.celebrate = true;
+          this.matchedPairs++;
+          this.score = result.totalScore;
 
-      if (this.matchedPairs >= this.totalPairs) {
-        this.finishGame();
-      }
+          if (this.matchedPairs >= this.totalPairs) {
+            this.finishGame();
+          }
+        },
+        error: (err) => {
+          console.error('Error recording match', err);
+        }
+      });
     } else {
-      targetCard.shake = true;
-      setTimeout(() => targetCard.shake = false, 500);
+      // Wrong match - call recordWrongMatch API
+      this.gameService.recordWrongMatch({
+        sessionId: this.gameData!.id,
+        card1Id: sourceCard.id,
+        card2Id: targetCard.id
+      }).subscribe({
+        next: () => {
+          targetCard.shake = true;
+          setTimeout(() => targetCard.shake = false, 500);
+        },
+        error: (err) => {
+          console.error('Error recording wrong match', err);
+          targetCard.shake = true;
+          setTimeout(() => targetCard.shake = false, 500);
+        }
+      });
     }
   }
 
   // ========== TIMER & UTILS ==========
   startTimer(): void {
     this.timerSeconds = 0;
-    if (this.gameData?.question.timerMode === FlipCardTimerMode.None) return;
-
+    // Always start timer for time tracking
     this.timerInterval = setInterval(() => {
       this.timerSeconds++;
     }, 1000);
