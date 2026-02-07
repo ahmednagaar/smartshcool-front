@@ -438,7 +438,7 @@ export class AdminLayoutComponent {
       icon: '📝',
       expanded: false,
       children: [
-        { label: 'الأسئلة', icon: '❓', route: '/admin/questions' },
+        { label: 'أسئلة الاختبار التقليدي', icon: '❓', route: '/admin/questions' },
         { label: 'أسئلة المطابقة', icon: '🧩', route: '/admin/matching-questions' },
         { label: 'أسئلة العجلة', icon: '🎡', route: '/admin/wheel-questions' },
         { label: 'أسئلة السحب والإفلات', icon: '🖐️', route: '/admin/dragdrop-questions' },
