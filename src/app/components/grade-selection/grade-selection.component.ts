@@ -76,11 +76,18 @@ export class GradeSelectionComponent implements OnInit {
   testTypeLabel: string = '';
   availableGrades: GradeOption[] = [];
 
-  private allGrades: GradeOption[] = [
+  // Nafes grades (3 and 6 only) with new boy+girl images
+  private nafesGrades: GradeOption[] = [
     { value: '3', label: 'الصف الثالث', image: 'assets/images/grade3.png' },
+    { value: '6', label: 'الصف السادس', image: 'assets/images/grade6.png' },
+  ];
+
+  // Central grades (all 4 grades) with old student images
+  private centralGrades: GradeOption[] = [
+    { value: '3', label: 'الصف الثالث', image: 'assets/images/grade-3-student.png' },
     { value: '4', label: 'الصف الرابع', image: 'assets/images/grade-4-student.png' },
     { value: '5', label: 'الصف الخامس', image: 'assets/images/grade-5-student.png' },
-    { value: '6', label: 'الصف السادس', image: 'assets/images/grade6.png' },
+    { value: '6', label: 'الصف السادس', image: 'assets/images/grade-6-student.png' },
   ];
 
   constructor(private router: Router, private route: ActivatedRoute) { }
@@ -102,12 +109,12 @@ export class GradeSelectionComponent implements OnInit {
   updateUI() {
     if (this.testType === 'nafes') {
       this.testTypeLabel = 'اختبار نافس - اختر الصف';
-      // Nafes only has grades 3 and 6
-      this.availableGrades = this.allGrades.filter(g => g.value === '3' || g.value === '6');
+      // Nafes uses new images (boy+girl)
+      this.availableGrades = this.nafesGrades;
     } else {
       this.testTypeLabel = 'المسابقة المركزية - اختر الصف';
-      // Central has all grades 3-6
-      this.availableGrades = this.allGrades;
+      // Central uses old images
+      this.availableGrades = this.centralGrades;
     }
   }
 
