@@ -3,12 +3,13 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { CreateWheelQuestionDto, WheelQuestion } from '../models/wheel-game.model';
 import { PaginatedResponse } from '../models/api-response.model';
+import { environment } from '../../environments/environment';
 
 @Injectable({
     providedIn: 'root'
 })
 export class WheelQuestionService {
-    private apiUrl = 'http://localhost:5000/api/WheelQuestion';
+    private apiUrl = `${environment.apiUrl}/WheelQuestion`;
 
     constructor(private http: HttpClient) { }
 

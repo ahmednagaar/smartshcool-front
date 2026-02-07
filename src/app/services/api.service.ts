@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { catchError, map, tap, delay } from 'rxjs/operators';
+import { environment } from '../../environments/environment';
 
 import {
     Student,
@@ -19,7 +20,7 @@ import {
     providedIn: 'root'
 })
 export class ApiService {
-    private apiUrl = 'http://localhost:5000/api';
+    private apiUrl = environment.apiUrl;
 
 
     constructor(private http: HttpClient) { }

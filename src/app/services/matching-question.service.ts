@@ -7,12 +7,13 @@ import {
     DifficultyLevel
 } from '../models/models';
 import { PaginatedResponse } from '../models/api-response.model';
+import { environment } from '../../environments/environment';
 
 @Injectable({
     providedIn: 'root'
 })
 export class MatchingQuestionService {
-    private apiUrl = 'http://localhost:5000/api/MatchingQuestion';
+    private apiUrl = `${environment.apiUrl}/MatchingQuestion`;
 
     constructor(private http: HttpClient) { }
 

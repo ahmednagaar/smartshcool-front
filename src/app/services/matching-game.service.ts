@@ -15,13 +15,14 @@ import {
     GradeLevel,
     SubjectType
 } from '../models/matching-game.model';
+import { environment } from '../../environments/environment';
 
 @Injectable({
     providedIn: 'root'
 })
 export class MatchingGameService {
-    private apiUrl = 'http://localhost:5000/api/MatchingGame';
-    private apiUrlAdmin = 'http://localhost:5000/api/MatchingGameAdmin';
+    private apiUrl = `${environment.apiUrl}/MatchingGame`;
+    private apiUrlAdmin = `${environment.apiUrl}/MatchingGameAdmin`;
 
     constructor(private http: HttpClient) { }
 

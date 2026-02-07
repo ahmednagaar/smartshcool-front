@@ -13,12 +13,13 @@ import {
     WheelLeaderboardEntry,
     StudentStatistics
 } from '../models/wheel-game.model';
+import { environment } from '../../environments/environment';
 
 @Injectable({
     providedIn: 'root'
 })
 export class WheelGameService {
-    private apiUrl = 'http://localhost:5000/api/WheelGame';
+    private apiUrl = `${environment.apiUrl}/WheelGame`;
 
     constructor(private http: HttpClient) { }
 

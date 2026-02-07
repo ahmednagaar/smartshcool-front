@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-admin-login',
@@ -98,7 +99,7 @@ export class AdminLoginComponent {
     this.loading = true;
     this.errorMessage = '';
 
-    this.http.post<any>('http://localhost:5000/api/admin/login', this.credentials).subscribe({
+    this.http.post<any>(`${environment.apiUrl}/admin/login`, this.credentials).subscribe({
       next: (response) => {
         console.log('✅ Login Response:', response);
         // Store tokens (Handle both camelCase and PascalCase from API)

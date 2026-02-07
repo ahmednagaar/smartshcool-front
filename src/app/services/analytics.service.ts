@@ -2,12 +2,13 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { v4 as uuidv4 } from 'uuid';
 import { firstValueFrom } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 @Injectable({
     providedIn: 'root'
 })
 export class AnalyticsService {
-    private apiUrl = 'http://localhost:5000/api/analytics';
+    private apiUrl = `${environment.apiUrl}/analytics`;
     private visitorIdKey = 'nafes_visitor_id';
 
     constructor(private http: HttpClient) {
