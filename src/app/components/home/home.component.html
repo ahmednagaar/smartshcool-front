@@ -63,77 +63,95 @@
             </div>
 
             <!-- About Platform Section -->
-            <section class="mt-12 animate-fade-in" style="animation-delay: 0.2s" aria-labelledby="about-heading">
-                <!-- Platform Description Card -->
-                <div class="card-v0 p-6 md:p-8 text-center mb-6 md:mb-8">
-                    <div
-                        class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-100/50 text-emerald-700 text-sm font-semibold mb-4">
-                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                        عن المنصة
-                    </div>
-                    <p id="about-heading" class="text-lg md:text-xl text-muted leading-relaxed max-w-3xl mx-auto">
-                        منصّة تعليمية إلكترونية تهدف إلى دعم الطلاب والطالبات في المرحلة الابتدائية للاستعداد للاختبارات
-                        المركزية واختبارات نافس، من خلال تدريبات منتظمة في المواد الأساسية وفق المنهج الدراسي المعتمد
-                    </p>
-                </div>
+            <section class="mt-16 md:mt-20 space-y-10 md:space-y-12 animate-fade-in" style="animation-delay: 0.2s"
+                aria-labelledby="about-heading">
 
-                <!-- Features Grid -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6" role="list" aria-label="مميزات المنصة">
+                <!-- Decorative Divider -->
+                <div class="w-full h-px bg-gradient-to-r from-transparent via-blue-200 to-transparent opacity-50"></div>
+
+                <!-- Features Grid (Reordered: Priority 7) -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6" role="list" aria-label="مميزات المنصة">
                     <!-- Feature 1: Weekly Update -->
-                    <div class="card-v0 p-6 text-center hover:-translate-y-1 transition-all duration-300"
-                        role="listitem">
-                        <div class="flex justify-center mb-4">
-                            <div class="w-14 h-14 rounded-full bg-blue-100 flex items-center justify-center">
-                                <svg class="w-7 h-7 text-blue-600" fill="none" stroke="currentColor"
+                    <div class="card-v0 p-6 md:p-8 text-center hover:-translate-y-1 transition-all duration-300 animate-fade-in"
+                        style="animation-delay: 0.3s" role="listitem">
+                        <div class="flex justify-center mb-6">
+                            <div
+                                class="w-16 h-16 rounded-full bg-gradient-to-br from-blue-50 to-blue-100 shadow-sm flex items-center justify-center transform transition-transform duration-300">
+                                <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor"
                                     viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                 </svg>
                             </div>
                         </div>
-                        <h3 class="text-lg font-bold text-foreground mb-2">تحديث أسبوعي</h3>
-                        <p class="text-sm md:text-base text-muted leading-relaxed">
+                        <h3 class="text-lg md:text-xl font-bold text-foreground mb-3">تحديث أسبوعي</h3>
+                        <p class="text-base text-muted leading-relaxed">
                             يتم تحديث الأسئلة أسبوعيًا لضمان تغطية كاملة للمنهج الدراسي
                         </p>
                     </div>
 
                     <!-- Feature 2: Skill Assessment -->
-                    <div class="card-v0 p-6 text-center hover:-translate-y-1 transition-all duration-300"
-                        role="listitem">
-                        <div class="flex justify-center mb-4">
-                            <div class="w-14 h-14 rounded-full bg-purple-100 flex items-center justify-center">
-                                <svg class="w-7 h-7 text-purple-600" fill="none" stroke="currentColor"
+                    <div class="card-v0 p-6 md:p-8 text-center hover:-translate-y-1 transition-all duration-300 animate-fade-in"
+                        style="animation-delay: 0.4s" role="listitem">
+                        <div class="flex justify-center mb-6">
+                            <div
+                                class="w-16 h-16 rounded-full bg-gradient-to-br from-purple-50 to-purple-100 shadow-sm flex items-center justify-center transform transition-transform duration-300">
+                                <svg class="w-8 h-8 text-purple-600" fill="none" stroke="currentColor"
                                     viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
                             </div>
                         </div>
-                        <h3 class="text-lg font-bold text-foreground mb-2">قياس المهارات</h3>
-                        <p class="text-sm md:text-base text-muted leading-relaxed">
+                        <h3 class="text-lg md:text-xl font-bold text-foreground mb-3">قياس المهارات</h3>
+                        <p class="text-base text-muted leading-relaxed">
                             الأسئلة مصممة لقياس مهارات الفهم والتطبيق والتحليل
                         </p>
                     </div>
 
                     <!-- Feature 3: Flexible Access -->
-                    <div class="card-v0 p-6 text-center hover:-translate-y-1 transition-all duration-300"
-                        role="listitem">
-                        <div class="flex justify-center mb-4">
-                            <div class="w-14 h-14 rounded-full bg-orange-100 flex items-center justify-center">
-                                <svg class="w-7 h-7 text-orange-600" fill="none" stroke="currentColor"
+                    <div class="card-v0 p-6 md:p-8 text-center hover:-translate-y-1 transition-all duration-300 animate-fade-in"
+                        style="animation-delay: 0.5s" role="listitem">
+                        <div class="flex justify-center mb-6">
+                            <div
+                                class="w-16 h-16 rounded-full bg-gradient-to-br from-orange-50 to-orange-100 shadow-sm flex items-center justify-center transform transition-transform duration-300">
+                                <svg class="w-8 h-8 text-orange-600" fill="none" stroke="currentColor"
                                     viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                                 </svg>
                             </div>
                         </div>
-                        <h3 class="text-lg font-bold text-foreground mb-2">مرونة الاستخدام</h3>
-                        <p class="text-sm md:text-base text-muted leading-relaxed">
+                        <h3 class="text-lg md:text-xl font-bold text-foreground mb-3">مرونة الاستخدام</h3>
+                        <p class="text-base text-muted leading-relaxed">
                             الاسم إلزامي فقط لطالبات المدرسة، بينما يمكن لبقية المستخدمين استخدام المنصّة دون إدخال
                             الاسم
                         </p>
                     </div>
                 </div>
+
+                <!-- Platform Description Card (Reordered) -->
+                <div class="card-v0 p-8 md:p-10 text-center relative overflow-hidden border-t-4 border-emerald-500 shadow-lg animate-fade-in"
+                    style="animation-delay: 0.6s">
+                    <div
+                        class="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-transparent via-emerald-100 to-transparent opacity-50">
+                    </div>
+
+                    <div
+                        class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-50 text-emerald-700 text-sm font-semibold mb-6 border border-emerald-100 shadow-sm">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse relative">
+                            <span
+                                class="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75 animate-ping"></span>
+                        </span>
+                        عن المنصة
+                    </div>
+                    <p id="about-heading"
+                        class="text-lg md:text-xl text-muted leading-relaxed max-w-3xl mx-auto font-medium">
+                        منصّة تعليمية إلكترونية تهدف إلى دعم الطلاب والطالبات في المرحلة الابتدائية للاستعداد للاختبارات
+                        المركزية واختبارات نافس، من خلال تدريبات منتظمة في المواد الأساسية وفق المنهج الدراسي المعتمد
+                    </p>
+                </div>
+
             </section>
 
             <!-- Footer Links -->
