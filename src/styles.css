@@ -44,6 +44,24 @@ body {
     --foreground: #0f172a;
 }
 
+.dark {
+    --primary: #3b82f6;
+    --primary-light: #60a5fa;
+    --primary-dark: #2563eb;
+    --secondary: #fb923c;
+    --secondary-light: #fdba74;
+    --accent: #34d399;
+    --accent-light: #6ee7b7;
+    --background: #0f172a;
+    --card: #1e293b;
+    --muted: #94a3b8;
+    --muted-light: #cbd5e1;
+    --border: #334155;
+    --foreground: #f8fafc;
+    --nafes-cream: #0f172a;
+    /* Override cream background */
+}
+
 /* Utility Classes */
 .container {
     max-width: 1200px;

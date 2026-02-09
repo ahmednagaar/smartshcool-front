@@ -32,24 +32,36 @@
             style="top: 45%; right: 5%; animation-delay: 13s; opacity: 0.1; color: #9333ea;">🎯</span>
     </div>
     <!-- Header -->
-    <header class="header-v0 relative z-10 px-4">
+    <!-- Header (Sticky & Glassmorphic) -->
+    <!-- Header (Static) -->
+    <header class="header-v0 relative z-10 px-4 transition-colors duration-300">
         <div class="container mx-auto">
-            <div class="header-content flex items-center justify-between">
+            <div class="header-content flex items-center justify-between py-6">
                 <div class="space-y-1">
-                    <h1 class="text-2xl md:text-3xl font-bold text-foreground">التدريب على الاختبارات المركزية واختبارات
-                        نافس</h1>
+                    <h1 class="text-xl md:text-3xl font-bold text-foreground transition-colors">التدريب على الاختبارات
+                        المركزية واختبارات نافس</h1>
                     <p class="text-muted text-sm md:text-base mt-1">بإشراف الدكتورة لطيفة خلف العنزي</p>
                 </div>
 
-                <!-- Visitor Badge with Real Data -->
-                <div class="visitor-badge flex items-center gap-3 px-4 py-2 rounded-full shadow-sm"
-                    aria-label="Visitor Counter">
-                    <lucide-icon [img]="icons.Users" class="text-primary w-5 h-5"></lucide-icon>
-                    <div class="flex flex-col items-center leading-none">
-                        <span class="visitor-badge-count font-bold text-lg text-primary animate-number">
-                            {{ (visitorCount$ | async) | number }}
-                        </span>
-                        <span class="visitor-badge-label text-xs text-muted-foreground">زائر</span>
+                <div class="flex items-center gap-4">
+                    <!-- Theme Toggle -->
+                    <button (click)="toggleTheme()"
+                        class="w-10 h-10 rounded-full flex items-center justify-center transition-colors bg-white/50 hover:bg-white dark:bg-slate-800/50 dark:hover:bg-slate-700 shadow-sm border border-gray-100 dark:border-slate-700 text-yellow-500 dark:text-blue-400 backdrop-blur-sm"
+                        aria-label="Toggle Dark Mode">
+                        <lucide-icon [img]="isDarkMode ? icons.Moon : icons.Sun"
+                            class="w-5 h-5 transition-transform duration-500 rotate-0 dark:rotate-180"></lucide-icon>
+                    </button>
+
+                    <!-- Visitor Badge -->
+                    <div
+                        class="visitor-badge flex items-center gap-3 px-4 py-2 rounded-full shadow-sm bg-white/80 dark:bg-slate-800/80 border border-blue-100 dark:border-slate-700 backdrop-blur-sm">
+                        <lucide-icon [img]="icons.Users" class="text-primary w-5 h-5"></lucide-icon>
+                        <div class="flex flex-col items-center leading-none">
+                            <span class="visitor-badge-count font-bold text-lg text-primary animate-number">
+                                {{ (visitorCount$ | async) | number }}
+                            </span>
+                            <span class="visitor-badge-label text-xs text-muted-foreground">زائر</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -188,36 +200,213 @@
 
             </section>
 
-            <!-- Footer Links -->
-            <footer class="mt-16">
-                <nav class="flex flex-wrap items-center justify-center gap-6 md:gap-12" aria-label="Footer Navigation">
-                    <a routerLink="/admin/login"
-                        class="group flex items-center gap-3 text-muted hover:text-primary transition-colors py-2 px-4 rounded-lg hover:bg-white/50">
-                        <span class="p-2 bg-gray-100 rounded-lg group-hover:bg-blue-100 transition-colors">
-                            <lucide-icon [img]="icons.Lock"
-                                class="w-5 h-5 text-gray-500 group-hover:text-blue-600"></lucide-icon>
-                        </span>
-                        <span class="font-medium">دخول المشرف</span>
-                    </a>
+            <!-- How It Works Section (New) -->
+            <section class="py-16 relative overflow-hidden mt-12">
+                <div class="container mx-auto px-4">
+                    <h2 class="text-3xl font-bold text-center mb-16 text-blue-900">كيف تبدأ رحلة التفوق؟</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-8 relative max-w-5xl mx-auto">
+                        <!-- Connecting Line (Desktop) -->
+                        <div
+                            class="hidden md:block absolute top-12 left-16 right-16 h-0.5 bg-gradient-to-r from-blue-200 via-blue-400 to-blue-200 z-0 dashed-line">
+                        </div>
 
-                    <a routerLink="/parent/login"
-                        class="group flex items-center gap-3 text-muted hover:text-primary transition-colors py-2 px-4 rounded-lg hover:bg-white/50">
-                        <span class="p-2 bg-gray-100 rounded-lg group-hover:bg-orange-100 transition-colors">
-                            <lucide-icon [img]="icons.Users"
-                                class="w-5 h-5 text-gray-500 group-hover:text-orange-600"></lucide-icon>
-                        </span>
-                        <span class="font-medium">بوابة ولي الأمر</span>
-                    </a>
-                </nav>
+                        <!-- Step 1 -->
+                        <div class="relative z-10 flex flex-col items-center text-center group">
+                            <div
+                                class="w-24 h-24 bg-white rounded-full shadow-lg border-4 border-blue-50 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                                <span class="text-3xl font-bold text-blue-600">1</span>
+                            </div>
+                            <h3 class="text-xl font-bold mb-3">سجّل حسابك</h3>
+                            <p class="text-muted leading-relaxed">أنشئ حسابك المجاني في أقل من دقيقة وابدأ رحلتك
+                                التعليمية</p>
+                        </div>
 
-                <div class="mt-10 flex flex-col items-center gap-4 text-muted">
-                    <a href="https://wa.me/966507134468" target="_blank" rel="noopener noreferrer"
-                        class="flex items-center gap-2 hover:text-primary transition-colors font-semibold dir-ltr"
-                        aria-label="Contact support on WhatsApp">
-                        <lucide-icon [img]="icons.Phone" class="w-4 h-4"></lucide-icon>
-                        <span>0507134468</span>
-                    </a>
-                    <p class="text-sm opacity-75">جميع الحقوق محفوظة © {{ currentYear }}</p>
+                        <!-- Step 2 -->
+                        <div class="relative z-10 flex flex-col items-center text-center group">
+                            <div
+                                class="w-24 h-24 bg-white rounded-full shadow-lg border-4 border-blue-50 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                                <span class="text-3xl font-bold text-blue-600">2</span>
+                            </div>
+                            <h3 class="text-xl font-bold mb-3">اختر مرحلتك</h3>
+                            <p class="text-muted leading-relaxed">حدد الصف الدراسي والمادة التي ترغب في التدرب عليها</p>
+                        </div>
+
+                        <!-- Step 3 -->
+                        <div class="relative z-10 flex flex-col items-center text-center group">
+                            <div
+                                class="w-24 h-24 bg-white rounded-full shadow-lg border-4 border-blue-50 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                                <lucide-icon [img]="icons.CheckCircle" class="w-10 h-10 text-emerald-500"></lucide-icon>
+                            </div>
+                            <h3 class="text-xl font-bold mb-3">ابدأ التدريب</h3>
+                            <p class="text-muted leading-relaxed">حل الأسئلة واكتشف نقاط قوتك وضعفك مع تقارير فورية</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Testimonials Section (New) -->
+            <section class="py-20 bg-blue-50/50 relative overflow-hidden">
+                <div class="absolute inset-0 bg-grid-pattern opacity-5"></div>
+                <div class="container mx-auto px-4 relative z-10">
+                    <h2 class="text-3xl font-bold text-center mb-12 text-blue-900">قصص نجاح نعتز بها</h2>
+
+                    <div class="max-w-4xl mx-auto relative">
+                        <!-- Navigation Buttons -->
+                        <button (click)="prevTestimonial()"
+                            class="absolute right-0 top-1/2 -translate-y-1/2 -mr-4 md:-mr-12 w-10 h-10 rounded-full bg-white shadow-md flex items-center justify-center hover:bg-blue-50 text-blue-600 transition-colors z-20"
+                            aria-label="Previous testimonial">
+                            <lucide-icon [img]="icons.ChevronUp" class="w-6 h-6 rotate-90"></lucide-icon>
+                        </button>
+                        <button (click)="nextTestimonial()"
+                            class="absolute left-0 top-1/2 -translate-y-1/2 -ml-4 md:-ml-12 w-10 h-10 rounded-full bg-white shadow-md flex items-center justify-center hover:bg-blue-50 text-blue-600 transition-colors z-20"
+                            aria-label="Next testimonial">
+                            <lucide-icon [img]="icons.ChevronDown" class="w-6 h-6 rotate-90"></lucide-icon>
+                        </button>
+
+                        <!-- Card -->
+                        <div
+                            class="bg-white rounded-3xl p-8 md:p-12 shadow-xl border border-blue-50 text-center transition-all duration-500 transform">
+                            <!-- Stars -->
+                            <div class="flex justify-center gap-1 mb-6 text-yellow-400">
+                                <lucide-icon [img]="icons.Star" class="w-6 h-6 fill-current"
+                                    *ngFor="let _ of [1,2,3,4,5]"></lucide-icon>
+                            </div>
+
+                            <p class="text-xl md:text-2xl font-medium leading-relaxed mb-8 text-gray-700">
+                                "{{ testimonials[currentTestimonialIndex].content }}"
+                            </p>
+
+                            <div class="flex flex-col items-center animate-fade-in">
+                                <div
+                                    class="w-14 h-14 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-xl mb-3 shadow-md">
+                                    {{ testimonials[currentTestimonialIndex].name.charAt(0) }}
+                                </div>
+                                <h4 class="font-bold text-lg text-foreground">{{
+                                    testimonials[currentTestimonialIndex].name }}</h4>
+                                <span
+                                    class="text-sm text-blue-600 font-medium bg-blue-50 px-3 py-1 rounded-full mt-1">{{
+                                    testimonials[currentTestimonialIndex].role }}</span>
+                            </div>
+                        </div>
+
+                        <!-- Dots -->
+                        <div class="flex justify-center gap-2 mt-8">
+                            <button *ngFor="let t of testimonials; let i = index" (click)="currentTestimonialIndex = i"
+                                class="w-2.5 h-2.5 rounded-full transition-all duration-300"
+                                [class.bg-blue-600]="i === currentTestimonialIndex"
+                                [class.w-6]="i === currentTestimonialIndex"
+                                [class.bg-blue-200]="i !== currentTestimonialIndex">
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- FAQ Section (New) -->
+            <section class="py-20">
+                <div class="container mx-auto px-4">
+                    <h2 class="text-3xl font-bold text-center mb-12 text-blue-900">الأسئلة الشائعة</h2>
+                    <div class="max-w-3xl mx-auto space-y-4">
+                        <div *ngFor="let faq of faqs; let i = index"
+                            class="border border-gray-100 rounded-2xl overflow-hidden bg-white shadow-sm hover:shadow-md transition-shadow duration-300">
+                            <button (click)="toggleFaq(i)"
+                                class="w-full flex items-center justify-between p-5 md:p-6 text-right hover:bg-gray-50 transition-colors">
+                                <span class="font-bold text-lg text-gray-800">{{ faq.question }}</span>
+                                <div class="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center transition-transform duration-300"
+                                    [class.rotate-180]="faq.isOpen">
+                                    <lucide-icon [img]="icons.ChevronDown" class="w-5 h-5 text-blue-600"></lucide-icon>
+                                </div>
+                            </button>
+                            <div class="overflow-hidden transition-all duration-300"
+                                [style.max-height]="faq.isOpen ? '200px' : '0'">
+                                <div class="p-6 pt-0 text-muted leading-relaxed border-t border-gray-50">
+                                    {{ faq.answer }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Mega Footer (New) -->
+            <footer class="bg-slate-900 text-white pt-16 pb-8 mt-12 rounded-t-3xl overflow-hidden">
+                <div class="container mx-auto px-4">
+                    <div class="grid grid-cols-1 md:grid-cols-12 gap-12 mb-12">
+                        <!-- Brand -->
+                        <div class="md:col-span-4 space-y-6">
+                            <h3
+                                class="text-3xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent inline-block">
+                                نافس</h3>
+                            <p class="text-slate-400 leading-relaxed">
+                                منصتك الأولى للتدريب والاستعداد للاختبارات المركزية واختبارات نافس. نساعدك في بناء
+                                مستقبل مشرق بثقة وتميز.
+                            </p>
+                            <div class="flex gap-4">
+                                <a href="#"
+                                    class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center hover:bg-blue-600 transition-colors text-slate-300 hover:text-white">
+                                    <lucide-icon [img]="icons.Twitter" class="w-5 h-5"></lucide-icon>
+                                </a>
+                                <a href="#"
+                                    class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center hover:bg-pink-600 transition-colors text-slate-300 hover:text-white">
+                                    <lucide-icon [img]="icons.Instagram" class="w-5 h-5"></lucide-icon>
+                                </a>
+                                <a href="#"
+                                    class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center hover:bg-blue-700 transition-colors text-slate-300 hover:text-white">
+                                    <lucide-icon [img]="icons.Linkedin" class="w-5 h-5"></lucide-icon>
+                                </a>
+                            </div>
+                        </div>
+
+                        <!-- Links Column 1 -->
+                        <div class="md:col-span-2 space-y-4">
+                            <h4 class="font-bold text-lg text-slate-200">المنصة</h4>
+                            <ul class="space-y-3 text-slate-400">
+                                <li><a href="#" class="hover:text-blue-400 transition-colors">عن نافس</a></li>
+                                <li><a href="#" class="hover:text-blue-400 transition-colors">المميزات</a></li>
+                                <li><a href="#" class="hover:text-blue-400 transition-colors">باقات الاشتراك</a></li>
+                                <li><a href="#" class="hover:text-blue-400 transition-colors">اتصل بنا</a></li>
+                            </ul>
+                        </div>
+
+                        <!-- Links Column 2 -->
+                        <div class="md:col-span-2 space-y-4">
+                            <h4 class="font-bold text-lg text-slate-200">التسجيل</h4>
+                            <ul class="space-y-3 text-slate-400">
+                                <li><a routerLink="/login" class="hover:text-blue-400 transition-colors">تسجيل طالب</a>
+                                </li>
+                                <li><a routerLink="/parent/login" class="hover:text-blue-400 transition-colors">بوابة
+                                        ولي الأمر</a></li>
+                                <li><a routerLink="/admin/login" class="hover:text-blue-400 transition-colors">دخول
+                                        المشرف</a></li>
+                            </ul>
+                        </div>
+
+                        <!-- Newsletter -->
+                        <div class="md:col-span-4 space-y-4">
+                            <h4 class="font-bold text-lg text-slate-200">النشرة البريدية</h4>
+                            <p class="text-slate-400 text-sm">اشترك ليصلك كل جديد عن الاختبارات والتدريبات</p>
+                            <div class="relative">
+                                <input type="email" placeholder="البريد الإلكتروني"
+                                    class="w-full bg-slate-800 border border-slate-700 rounded-lg py-3 px-4 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all text-slate-200 placeholder-slate-500">
+                                <button
+                                    class="absolute left-1.5 top-1.5 bottom-1.5 bg-blue-600 hover:bg-blue-700 text-white px-4 rounded-md text-sm font-semibold transition-colors">
+                                    اشترك
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Divider -->
+                    <div
+                        class="border-t border-slate-800 pt-8 flex flex-col md:flex-row items-center justify-between gap-4 text-center md:text-right">
+                        <div class="text-slate-500 text-sm">
+                            جميع الحقوق محفوظة © {{ currentYear }} منصة نافس
+                        </div>
+                        <div class="flex gap-6 text-sm text-slate-500">
+                            <a href="#" class="hover:text-slate-300 transition-colors">سياسة الخصوصية</a>
+                            <a href="#" class="hover:text-slate-300 transition-colors">شروط الاستخدام</a>
+                        </div>
+                    </div>
                 </div>
             </footer>
         </div>

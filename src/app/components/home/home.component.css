@@ -241,3 +241,31 @@
   transform: translateY(-4px) scale(1.02);
   /* Preserve existing transform */
 }
+
+/* ========== V2 ENHANCEMENTS ========== */
+.dashed-line {
+  background: repeating-linear-gradient(to right, #bfdbfe 0, #bfdbfe 10px, transparent 10px, transparent 20px);
+  height: 2px;
+}
+
+.bg-grid-pattern {
+  background-image: radial-gradient(#3b82f6 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+/* Footer Enhancements */
+.dir-ltr {
+  direction: ltr;
+}
+
+/* Smooth Accordion */
+/* Dark Mode Transitions */
+.dark .header-v0,
+.dark body {
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Toggle Icon Rotation */
+.rotate-180 {
+  transform: rotate(180deg);
+}
