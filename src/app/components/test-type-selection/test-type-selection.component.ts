@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
-import { LucideAngularModule, Target, BookOpen, ChevronRight } from 'lucide-angular';
+import { LucideAngularModule, Target, BookOpen, ChevronLeft } from 'lucide-angular';
 import { Router } from '@angular/router';
 
 @Component({
@@ -13,7 +13,7 @@ import { Router } from '@angular/router';
 export class TestTypeSelectionComponent {
   readonly TargetIcon = Target;
   readonly BookOpenIcon = BookOpen;
-  readonly ChevronRightIcon = ChevronRight;
+  readonly ChevronLeftIcon = ChevronLeft;
 
   constructor(private router: Router, private location: Location) { }
 

@@ -1181,13 +1181,34 @@ body {
 .grade-card-bg {
     position: absolute;
     inset: 0;
-    background-size: cover;
-    background-position: center;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center bottom;
     transition: transform 0.5s ease;
 }
 
 .grade-card-v2:hover .grade-card-bg {
     transform: scale(1.05);
+}
+
+/* Mobile: ensure full image visibility for grade cards */
+@media (max-width: 640px) {
+    .grade-card-bg {
+        background-size: contain;
+        background-position: center center;
+    }
+
+    .grade-card-v2 {
+        min-height: 300px;
+    }
+}
+
+/* Tablet */
+@media (min-width: 641px) and (max-width: 1024px) {
+    .grade-card-bg {
+        background-size: contain;
+        background-position: center bottom;
+    }
 }
 
 /* Button */

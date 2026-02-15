@@ -65,7 +65,7 @@ interface QuestionFilter {
         </div>
 
         <!-- Action Buttons -->
-        <div class="flex flex-wrap items-center gap-3 mb-6">
+        <div class="action-buttons-row flex flex-wrap items-center gap-3 mb-6">
           <button (click)="navigateToAddQuestion()" 
                   class="bg-nafes-gold text-white px-6 py-3 rounded-xl font-bold hover:bg-opacity-90 transition shadow-lg flex items-center gap-2 hover:scale-105 active:scale-95">
             <span class="text-xl">+</span> إضافة سؤال جديد
@@ -600,6 +600,25 @@ interface QuestionFilter {
       -webkit-line-clamp: 2;
       -webkit-box-orient: vertical;
       overflow: hidden;
+    }
+    
+    /* iPad (768px-1024px): Keep action buttons side by side */
+    @media (min-width: 768px) and (max-width: 1024px) {
+      .action-buttons-row {
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        align-items: center;
+        gap: 8px;
+      }
+      .action-buttons-row button,
+      .action-buttons-row a {
+        white-space: nowrap;
+        flex-shrink: 0;
+        font-size: 0.85rem;
+        padding-left: 1rem;
+        padding-right: 1rem;
+      }
     }
   `]
 })

@@ -344,4 +344,49 @@ export class ApiService {
             pageSize: 20
         });
     }
+
+    // Content Overview - Real game controller endpoints
+    getDragDropQuestionsList(params?: any): Observable<any> {
+        let url = `${this.apiUrl}/DragDropQuestion`;
+        if (params) {
+            const searchParams = new URLSearchParams();
+            Object.keys(params).forEach(k => { if (params[k] != null) searchParams.set(k, params[k]); });
+            url += `?${searchParams.toString()}`;
+        }
+        return this.http.get<any>(url, { headers: this.getAuthHeaders() });
+    }
+
+    getMatchingGamesList(params?: any): Observable<any> {
+        let url = `${this.apiUrl}/MatchingGameAdmin`;
+        if (params) {
+            const searchParams = new URLSearchParams();
+            Object.keys(params).forEach(k => { if (params[k] != null) searchParams.set(k, params[k]); });
+            url += `?${searchParams.toString()}`;
+        }
+        return this.http.get<any>(url, { headers: this.getAuthHeaders() });
+    }
+
+    getFlipCardQuestionsList(params?: any): Observable<any> {
+        let url = `${this.apiUrl}/FlipCardQuestion/paginated`;
+        if (params) {
+            const searchParams = new URLSearchParams();
+            Object.keys(params).forEach(k => { if (params[k] != null) searchParams.set(k, params[k]); });
+            url += `?${searchParams.toString()}`;
+        }
+        return this.http.get<any>(url, { headers: this.getAuthHeaders() });
+    }
+
+    getFlipCardQuestionsCount(): Observable<any> {
+        return this.http.get<any>(`${this.apiUrl}/FlipCardQuestion/count`, { headers: this.getAuthHeaders() });
+    }
+
+    getWheelQuestionsList(params?: any): Observable<any> {
+        let url = `${this.apiUrl}/WheelQuestion`;
+        if (params) {
+            const searchParams = new URLSearchParams();
+            Object.keys(params).forEach(k => { if (params[k] != null) searchParams.set(k, params[k]); });
+            url += `?${searchParams.toString()}`;
+        }
+        return this.http.get<any>(url, { headers: this.getAuthHeaders() });
+    }
 }
