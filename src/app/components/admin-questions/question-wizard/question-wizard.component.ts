@@ -31,7 +31,6 @@ interface QuestionDraft {
     correctAnswer: string;
     correctAnswerIndex: number | null;
     mediaUrl: string;
-    connectingPairs: { right: string; left: string }[];
     savedId?: number;
 }
 
@@ -53,7 +52,7 @@ export class QuestionWizardComponent implements OnInit {
 
     // Wizard state
     currentStep = 1;
-    totalSteps = 5;
+    totalSteps = 4;
     isEditMode = false;
     editQuestionId: number | null = null;
     isSaving = false;
@@ -62,8 +61,8 @@ export class QuestionWizardComponent implements OnInit {
     questionQueue: QuestionDraft[] = [];
     currentDraft: QuestionDraft = this.createEmptyDraft();
 
-    // Step validation
-    stepValidity: boolean[] = [false, false, false, true, true];
+    // Step validation (4 steps: metadata, content, preview, save)
+    stepValidity: boolean[] = [false, false, true, true];
 
     // Options data
     grades = [
@@ -92,31 +91,10 @@ export class QuestionWizardComponent implements OnInit {
             icon: '🔘',
             description: 'سؤال مع عدة خيارات وإجابة صحيحة واحدة',
             example: 'ما هي عاصمة المملكة العربية السعودية؟'
-        },
-        {
-            value: 2,
-            label: 'صح أم خطأ',
-            icon: '✅',
-            description: 'عبارة يحدد الطالب صحتها أو خطأها',
-            example: 'الشمس تشرق من الغرب.'
-        },
-        {
-            value: 4,
-            label: 'أكمل الفراغ',
-            icon: '✏️',
-            description: 'جملة ناقصة يكمل الطالب الكلمة المفقودة',
-            example: 'عاصمة المملكة العربية السعودية هي _____'
-        },
-        {
-            value: 3,
-            label: 'وصل المتشابهات',
-            icon: '🔗',
-            description: 'ربط عناصر العمود الأيمن بالأيسر',
-            example: 'صل كل مادة بوحدة قياسها'
         }
     ];
 
-    stepLabels = ['نوع السؤال', 'التفاصيل', 'المحتوى', 'المعاينة', 'الحفظ'];
+    stepLabels = ['التفاصيل', 'المحتوى', 'المعاينة', 'الحفظ'];
 
     constructor(
         private api: ApiService,
@@ -125,6 +103,9 @@ export class QuestionWizardComponent implements OnInit {
     ) { }
 
     ngOnInit() {
+        // Auto-select Multiple Choice since it's the only type
+        this.currentDraft.type = 1;
+
         const id = this.route.snapshot.paramMap.get('id');
         if (id) {
             this.isEditMode = true;
@@ -136,7 +117,7 @@ export class QuestionWizardComponent implements OnInit {
     // ── Draft factory ─────────────────────────────
     createEmptyDraft(): QuestionDraft {
         return {
-            type: null,
+            type: 1,           // Always Multiple Choice
             grade: null,
             subject: null,
             difficulty: null,
@@ -145,18 +126,12 @@ export class QuestionWizardComponent implements OnInit {
             options: ['', '', '', ''],
             correctAnswer: '',
             correctAnswerIndex: null,
-            mediaUrl: '',
-            connectingPairs: [
-                { right: '', left: '' },
-                { right: '', left: '' },
-                { right: '', left: '' }
-            ]
+            mediaUrl: ''
         };
     }
 
     // ── Edit mode ─────────────────────────────────
     loadQuestionForEdit() {
-        // Get question data from router state (passed by the list page)
         const navState = history.state as any;
         if (navState?.question) {
             const q = navState.question;
@@ -177,7 +152,7 @@ export class QuestionWizardComponent implements OnInit {
             }
 
             this.currentDraft = {
-                type: q.type,
+                type: 1, // Always MCQ
                 grade: q.grade,
                 subject: q.subject,
                 difficulty: q.difficulty,
@@ -186,33 +161,14 @@ export class QuestionWizardComponent implements OnInit {
                 options,
                 correctAnswer: q.correctAnswer || '',
                 correctAnswerIndex,
-                mediaUrl: q.mediaUrl || '',
-                connectingPairs: this.parseConnectingPairs(q)
+                mediaUrl: q.mediaUrl || ''
             };
 
-            this.stepValidity = [true, true, true, true, true];
+            this.stepValidity = [true, true, true, true];
         } else {
-            // No state passed — go back
             this.toastError('لم يتم العثور على بيانات السؤال');
             this.router.navigate(['/admin/questions']);
         }
-    }
-
-    parseConnectingPairs(q: any): { right: string; left: string }[] {
-        // If the question is connecting type, try to parse pairs
-        if (q.type === 3 && q.options) {
-            try {
-                const opts = typeof q.options === 'string' ? JSON.parse(q.options) : q.options;
-                if (Array.isArray(opts)) {
-                    return opts.map((o: string) => ({ right: o, left: '' }));
-                }
-            } catch { /* ignore */ }
-        }
-        return [
-            { right: '', left: '' },
-            { right: '', left: '' },
-            { right: '', left: '' }
-        ];
     }
 
     // ── Navigation ────────────────────────────────
@@ -251,26 +207,7 @@ export class QuestionWizardComponent implements OnInit {
         return 'bg-gray-200 text-gray-500';
     }
 
-    // ── Type selection (Step 1) ───────────────────
-    selectType(typeValue: number) {
-        this.currentDraft.type = typeValue;
-        // Reset answer fields when type changes
-        this.currentDraft.correctAnswer = '';
-        this.currentDraft.correctAnswerIndex = null;
-        if (typeValue === 1) {
-            this.currentDraft.options = ['', '', '', ''];
-        } else {
-            this.currentDraft.options = [];
-        }
-        this.currentDraft.connectingPairs = [
-            { right: '', left: '' },
-            { right: '', left: '' },
-            { right: '', left: '' }
-        ];
-        this.validateStep1();
-    }
-
-    // ── MCQ Options (Step 3) ──────────────────────
+    // ── MCQ Options ──────────────────────────────
     addOption() {
         if (this.currentDraft.options.length < 6) {
             this.currentDraft.options.push('');
@@ -292,108 +229,44 @@ export class QuestionWizardComponent implements OnInit {
     selectCorrectOption(index: number) {
         this.currentDraft.correctAnswerIndex = index;
         this.currentDraft.correctAnswer = this.currentDraft.options[index];
-        this.validateStep3();
+        this.validateStep2();
     }
 
     getOptionLabel(index: number): string {
         return ['أ', 'ب', 'ج', 'د', 'هـ', 'و'][index] || String(index + 1);
     }
 
-    // ── True/False (Step 3) ───────────────────────
-    selectTrueFalse(answer: string) {
-        this.currentDraft.correctAnswer = answer;
-        this.validateStep3();
-    }
-
-    // ── Connecting Pairs (Step 3) ─────────────────
-    addConnectingPair() {
-        if (this.currentDraft.connectingPairs.length < 6) {
-            this.currentDraft.connectingPairs.push({ right: '', left: '' });
-        }
-    }
-
-    removeConnectingPair() {
-        if (this.currentDraft.connectingPairs.length > 2) {
-            this.currentDraft.connectingPairs.pop();
-        }
-    }
-
     // ── Validation ────────────────────────────────
     validateStep1() {
-        this.stepValidity[0] = this.currentDraft.type !== null;
-    }
-
-    validateStep2() {
-        this.stepValidity[1] =
+        this.stepValidity[0] =
             this.currentDraft.grade !== null &&
             this.currentDraft.subject !== null &&
             this.currentDraft.difficulty !== null;
     }
 
-    validateStep3() {
+    validateStep2() {
         const hasText = this.currentDraft.text.trim().length >= 10;
-        let hasAnswer = false;
-
-        switch (this.currentDraft.type) {
-            case 1: // MCQ
-                const validOptions = this.currentDraft.options.filter(o => o.trim()).length;
-                hasAnswer = validOptions >= 2 && this.currentDraft.correctAnswerIndex !== null
-                    && !!this.currentDraft.options[this.currentDraft.correctAnswerIndex]?.trim();
-                break;
-            case 2: // True/False
-                hasAnswer = !!this.currentDraft.correctAnswer;
-                break;
-            case 4: // Fill blank
-                hasAnswer = this.currentDraft.correctAnswer.trim().length > 0;
-                break;
-            case 3: // Connecting
-                const validPairs = this.currentDraft.connectingPairs
-                    .filter(p => p.right.trim() && p.left.trim()).length;
-                hasAnswer = validPairs >= 2;
-                break;
-        }
-
-        this.stepValidity[2] = hasText && hasAnswer;
+        const validOptions = this.currentDraft.options.filter(o => o.trim()).length;
+        const hasAnswer = validOptions >= 2 && this.currentDraft.correctAnswerIndex !== null
+            && !!this.currentDraft.options[this.currentDraft.correctAnswerIndex]?.trim();
+        this.stepValidity[1] = hasText && hasAnswer;
     }
 
     onContentChange() {
-        this.validateStep3();
+        this.validateStep2();
     }
 
     onMetaChange() {
-        this.validateStep2();
+        this.validateStep1();
     }
 
     // ── Save ──────────────────────────────────────
     buildOptionsJson(): string | null {
-        switch (this.currentDraft.type) {
-            case 1: { // MCQ
-                const validOptions = this.currentDraft.options.filter(o => o.trim());
-                return validOptions.length >= 2 ? JSON.stringify(validOptions) : null;
-            }
-            case 2: // True/False
-                return JSON.stringify(['صواب', 'خطأ']);
-            case 3: { // Connecting
-                const rightItems = this.currentDraft.connectingPairs
-                    .filter(p => p.right.trim())
-                    .map(p => p.right.trim());
-                return rightItems.length > 0 ? JSON.stringify(rightItems) : null;
-            }
-            case 4: // Fill blank
-                return null;
-            default:
-                return null;
-        }
+        const validOptions = this.currentDraft.options.filter(o => o.trim());
+        return validOptions.length >= 2 ? JSON.stringify(validOptions) : null;
     }
 
     buildCorrectAnswer(): string {
-        if (this.currentDraft.type === 3) {
-            // For connecting, store left items as correct answer
-            const leftItems = this.currentDraft.connectingPairs
-                .filter(p => p.left.trim())
-                .map(p => p.left.trim());
-            return leftItems.join('|');
-        }
         return this.currentDraft.correctAnswer;
     }
 
@@ -444,8 +317,14 @@ export class QuestionWizardComponent implements OnInit {
             this.currentDraft.difficulty = prevDifficulty;
             this.currentDraft.testType = prevTestType;
 
-            this.currentStep = 1;
-            this.stepValidity = [false, false, false, true, true];
+            // Skip to step 2 (content) since metadata is pre-filled
+            this.currentStep = 2;
+            this.stepValidity = [
+                !!(prevGrade && prevSubject && prevDifficulty),
+                false,
+                true,
+                true
+            ];
         }
     }
 
@@ -453,29 +332,6 @@ export class QuestionWizardComponent implements OnInit {
         await this.saveCurrentQuestion();
         if (!this.isSaving) {
             this.router.navigate(['/admin/questions']);
-        }
-    }
-
-    async saveAndStartType(typeValue: number) {
-        await this.saveCurrentQuestion();
-        if (!this.isSaving) {
-            const prevGrade = this.currentDraft.grade;
-            const prevSubject = this.currentDraft.subject;
-            const prevDifficulty = this.currentDraft.difficulty;
-            const prevTestType = this.currentDraft.testType;
-
-            this.currentDraft = this.createEmptyDraft();
-            this.currentDraft.type = typeValue;
-            this.currentDraft.grade = prevGrade;
-            this.currentDraft.subject = prevSubject;
-            this.currentDraft.difficulty = prevDifficulty;
-            this.currentDraft.testType = prevTestType;
-
-            // Skip to step 3 since type and meta are set
-            this.currentStep = 3;
-            this.stepValidity[0] = true;
-            this.stepValidity[1] = !!(prevGrade && prevSubject && prevDifficulty);
-            this.stepValidity[2] = false;
         }
     }
 
