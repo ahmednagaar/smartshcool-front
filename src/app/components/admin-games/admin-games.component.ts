@@ -223,14 +223,14 @@ export class AdminGamesComponent implements OnInit {
     // FlipCard (has dedicated count endpoint)
     this.api.getFlipCardQuestionsCount().subscribe({
       next: (res: any) => {
-        this.contentOverview.flipcards.count = res.count || res || 0;
+        this.contentOverview.flipcards.count = typeof res === 'number' ? res : (res.count ?? res.totalCount ?? 0);
         this.contentOverview.flipcards.loading = false;
       },
       error: () => {
         // Fallback to paginated
         this.api.getFlipCardQuestionsList({ page: 1, pageSize: 1 }).subscribe({
           next: (r: any) => {
-            this.contentOverview.flipcards.count = r.totalCount || r.length || 0;
+            this.contentOverview.flipcards.count = typeof r === 'number' ? r : (r.totalCount ?? r.count ?? r.length ?? 0);
             this.contentOverview.flipcards.loading = false;
           },
           error: () => { this.contentOverview.flipcards.loading = false; }
