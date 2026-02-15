@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../services/api.service';
 import { SmartQuestionEditorComponent } from './smart-question-editor.component';
 import { QuestionPreviewComponent } from './question-preview.component';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 
@@ -66,9 +66,9 @@ interface QuestionFilter {
 
         <!-- Action Buttons -->
         <div class="flex flex-wrap items-center gap-3 mb-6">
-          <button (click)="openModal()" 
+          <button (click)="navigateToAddQuestion()" 
                   class="bg-nafes-gold text-white px-6 py-3 rounded-xl font-bold hover:bg-opacity-90 transition shadow-lg flex items-center gap-2 hover:scale-105 active:scale-95">
-            <span class="text-xl">+</span> إضافة سؤال ذكي
+            <span class="text-xl">+</span> إضافة سؤال جديد
           </button>
           
           <button (click)="openImportModal()" 
@@ -286,7 +286,7 @@ interface QuestionFilter {
                               class="p-2 rounded-lg bg-blue-100 hover:bg-blue-200 text-blue-600 transition">
                         📊
                       </button>
-                      <button (click)="editQuestion(q)" 
+                      <button (click)="navigateToEditQuestion(q)" 
                               title="تعديل" 
                               class="p-2 rounded-lg bg-nafes-gold/10 hover:bg-nafes-gold/20 text-nafes-gold transition">
                         ✏️
@@ -307,7 +307,7 @@ interface QuestionFilter {
                       <span class="text-6xl mb-4">🔍</span>
                       <p class="text-xl text-gray-500 mb-2">لا توجد أسئلة</p>
                       <p class="text-gray-400 mb-4">{{ hasActiveFilters ? 'جرب تغيير معايير البحث' : 'ابدأ بإضافة سؤالك الأول' }}</p>
-                      <button (click)="openModal()" 
+                      <button (click)="navigateToAddQuestion()" 
                               class="mt-2 bg-nafes-gold text-white px-6 py-2 rounded-lg font-bold hover:bg-opacity-90 transition">
                         + إضافة سؤال
                       </button>
@@ -671,7 +671,7 @@ export class AdminQuestionsComponent implements OnInit, OnDestroy {
     totalPages: 0
   };
 
-  constructor(private api: ApiService, private cdr: ChangeDetectorRef) { }
+  constructor(private api: ApiService, private cdr: ChangeDetectorRef, private router: Router) { }
 
   ngOnInit() {
     this.loadQuestions();
@@ -798,35 +798,25 @@ export class AdminQuestionsComponent implements OnInit, OnDestroy {
     });
   }
 
+  // Navigate to wizard for adding a new question
+  navigateToAddQuestion() {
+    this.router.navigate(['/admin/questions/new']);
+  }
+
+  // Navigate to wizard for editing an existing question
+  navigateToEditQuestion(q: any) {
+    this.router.navigate(['/admin/questions/edit', q.id], {
+      state: { question: q }
+    });
+  }
+
+  // Keep legacy modal methods for backward compatibility
   openModal() {
-    this.isEditing = false;
-    this.currentQuestion = {
-      grade: 3,
-      subject: 1,
-      testType: 1,
-      type: 1,
-      difficulty: 1,
-      text: '',
-      correctAnswer: '',
-      options: []
-    };
-    this.showModal = true;
-    this.isValid = false;
+    this.navigateToAddQuestion();
   }
 
   editQuestion(q: any) {
-    this.isEditing = true;
-    this.currentQuestion = JSON.parse(JSON.stringify(q));
-
-    if (typeof this.currentQuestion.options === 'string' && this.currentQuestion.options) {
-      try {
-        this.currentQuestion.options = JSON.parse(this.currentQuestion.options);
-      } catch {
-        this.currentQuestion.options = [];
-      }
-    }
-
-    this.showModal = true;
+    this.navigateToEditQuestion(q);
   }
 
   deleteQuestion(id: number) {

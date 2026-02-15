@@ -1,0 +1,605 @@
+<!-- Question Wizard - Full Page -->
+<div class="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50" dir="rtl">
+
+    <!-- ═══════════ TOP BAR ═══════════ -->
+    <div class="bg-white/80 backdrop-blur-md border-b border-gray-200 sticky top-0 z-30">
+        <div class="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <button (click)="goBack()"
+                    class="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition font-medium">
+                    <lucide-icon name="arrow-right" [size]="18"></lucide-icon>
+                    العودة إلى الأسئلة
+                </button>
+            </div>
+            <h1 class="text-lg font-bold text-gray-800">
+                {{ isEditMode ? '✏️ تعديل السؤال' : '➕ إضافة سؤال جديد' }}
+            </h1>
+            <div *ngIf="questionQueue.length > 0"
+                class="flex items-center gap-2 bg-green-50 text-green-700 px-3 py-1.5 rounded-full text-sm font-medium">
+                <lucide-icon name="check" [size]="14"></lucide-icon>
+                تم حفظ {{ questionQueue.length }} سؤال
+            </div>
+            <div *ngIf="questionQueue.length === 0" class="w-24"></div>
+        </div>
+    </div>
+
+    <!-- ═══════════ PROGRESS BAR ═══════════ -->
+    <div class="max-w-5xl mx-auto px-4 pt-6 pb-2">
+        <div class="flex items-center justify-between">
+            <ng-container *ngFor="let step of [1,2,3,4,5]; let i = index">
+                <!-- Step Circle -->
+                <div class="flex flex-col items-center gap-1 cursor-pointer" (click)="goToStep(step)">
+                    <div class="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300"
+                        [ngClass]="getStepClass(step)">
+                        <lucide-icon *ngIf="step < currentStep" name="check" [size]="18"></lucide-icon>
+                        <span *ngIf="step >= currentStep">{{ step }}</span>
+                    </div>
+                    <span class="text-xs font-medium"
+                        [ngClass]="step === currentStep ? 'text-blue-600' : 'text-gray-400'">
+                        {{ getStepLabel(step) }}
+                    </span>
+                </div>
+                <!-- Connector Line -->
+                <div *ngIf="i < 4" class="flex-1 h-1 mx-2 rounded-full transition-all duration-300"
+                    [ngClass]="step < currentStep ? 'bg-green-400' : 'bg-gray-200'">
+                </div>
+            </ng-container>
+        </div>
+    </div>
+
+    <!-- ═══════════ STEP CONTENT ═══════════ -->
+    <div class="max-w-5xl mx-auto px-4 py-6">
+
+        <!-- ╔══════════════════════════════════╗ -->
+        <!-- ║   STEP 1: QUESTION TYPE          ║ -->
+        <!-- ╚══════════════════════════════════╝ -->
+        <div *ngIf="currentStep === 1" class="animate-fadeIn">
+            <div class="text-center mb-8">
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">ما نوع السؤال الذي تريد إضافته؟</h2>
+                <p class="text-gray-500">اختر نوع السؤال المناسب للمادة والصف</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-3xl mx-auto">
+                <button *ngFor="let type of questionTypes" (click)="selectType(type.value)"
+                    class="group relative p-6 bg-white rounded-2xl border-2 transition-all duration-200 text-right hover:shadow-lg"
+                    [ngClass]="currentDraft.type === type.value
+                  ? 'border-blue-500 bg-blue-50 shadow-md ring-2 ring-blue-200'
+                  : 'border-gray-200 hover:border-blue-300'">
+                    <!-- Selected check -->
+                    <div *ngIf="currentDraft.type === type.value"
+                        class="absolute top-3 left-3 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
+                        <lucide-icon name="check" [size]="14" class="text-white"></lucide-icon>
+                    </div>
+                    <div class="flex items-start gap-4">
+                        <span class="text-4xl">{{ type.icon }}</span>
+                        <div class="flex-1">
+                            <h3 class="text-lg font-bold text-gray-800 mb-1">{{ type.label }}</h3>
+                            <p class="text-sm text-gray-500 mb-3">{{ type.description }}</p>
+                            <div class="bg-gray-50 rounded-lg px-3 py-2 text-xs text-gray-400">
+                                <span class="font-medium text-gray-500">مثال:</span>
+                                {{ type.example }}
+                            </div>
+                        </div>
+                    </div>
+                </button>
+            </div>
+
+            <!-- Next button -->
+            <div class="flex justify-center mt-8">
+                <button (click)="nextStep()" [disabled]="!stepValidity[0]"
+                    class="flex items-center gap-2 bg-blue-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-blue-700 transition disabled:opacity-40 disabled:cursor-not-allowed shadow-lg">
+                    التالي
+                    <lucide-icon name="arrow-left" [size]="18"></lucide-icon>
+                </button>
+            </div>
+        </div>
+
+        <!-- ╔══════════════════════════════════╗ -->
+        <!-- ║   STEP 2: META DETAILS           ║ -->
+        <!-- ╚══════════════════════════════════╝ -->
+        <div *ngIf="currentStep === 2" class="animate-fadeIn">
+            <div class="text-center mb-8">
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">تفاصيل السؤال</h2>
+                <p class="text-gray-500">حدد المادة والصف ومستوى الصعوبة</p>
+            </div>
+
+            <div class="max-w-2xl mx-auto bg-white rounded-2xl p-8 shadow-sm border border-gray-100">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                    <!-- Grade -->
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-2">الصف الدراسي *</label>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button *ngFor="let grade of grades"
+                                (click)="currentDraft.grade = grade.value; onMetaChange()"
+                                class="p-3 rounded-xl border-2 text-center font-bold transition-all" [ngClass]="currentDraft.grade === grade.value
+                        ? 'border-blue-500 bg-blue-50 text-blue-700'
+                        : 'border-gray-200 hover:border-blue-300 text-gray-600'">
+                                {{ grade.label }}
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Subject -->
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-2">المادة الدراسية *</label>
+                        <div class="grid grid-cols-1 gap-2">
+                            <button *ngFor="let subject of subjects"
+                                (click)="currentDraft.subject = subject.value; onMetaChange()"
+                                class="p-3 rounded-xl border-2 text-center font-bold transition-all" [ngClass]="currentDraft.subject === subject.value
+                        ? 'border-blue-500 bg-blue-50 text-blue-700'
+                        : 'border-gray-200 hover:border-blue-300 text-gray-600'">
+                                {{ subject.label }}
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Difficulty -->
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-2">مستوى الصعوبة *</label>
+                        <div class="grid grid-cols-3 gap-2">
+                            <button *ngFor="let diff of difficulties"
+                                (click)="currentDraft.difficulty = diff.value; onMetaChange()"
+                                class="p-3 rounded-xl border-2 text-center font-bold transition-all" [ngClass]="currentDraft.difficulty === diff.value
+                        ? 'border-blue-500 bg-blue-50 text-blue-700'
+                        : 'border-gray-200 hover:border-blue-300 text-gray-600'">
+                                {{ diff.icon }} {{ diff.label }}
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Test Type -->
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-2">نوع الاختبار</label>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button (click)="currentDraft.testType = 1"
+                                class="p-3 rounded-xl border-2 text-center font-bold transition-all" [ngClass]="currentDraft.testType === 1
+                        ? 'border-blue-500 bg-blue-50 text-blue-700'
+                        : 'border-gray-200 hover:border-blue-300 text-gray-600'">
+                                اختبار مركزي
+                            </button>
+                            <button (click)="currentDraft.testType = 2"
+                                class="p-3 rounded-xl border-2 text-center font-bold transition-all" [ngClass]="currentDraft.testType === 2
+                        ? 'border-blue-500 bg-blue-50 text-blue-700'
+                        : 'border-gray-200 hover:border-blue-300 text-gray-600'">
+                                اختبار تقليدي
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Nav buttons -->
+            <div class="flex justify-between max-w-2xl mx-auto mt-8">
+                <button (click)="previousStep()"
+                    class="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition font-medium px-6 py-3">
+                    <lucide-icon name="arrow-right" [size]="18"></lucide-icon>
+                    السابق
+                </button>
+                <button (click)="nextStep()" [disabled]="!stepValidity[1]"
+                    class="flex items-center gap-2 bg-blue-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-blue-700 transition disabled:opacity-40 disabled:cursor-not-allowed shadow-lg">
+                    التالي
+                    <lucide-icon name="arrow-left" [size]="18"></lucide-icon>
+                </button>
+            </div>
+        </div>
+
+        <!-- ╔══════════════════════════════════╗ -->
+        <!-- ║   STEP 3: CONTENT BUILDER        ║ -->
+        <!-- ╚══════════════════════════════════╝ -->
+        <div *ngIf="currentStep === 3" class="animate-fadeIn">
+            <div class="text-center mb-8">
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">اكتب السؤال والإجابات</h2>
+                <p class="text-gray-500">اكتب نص السؤال ثم حدد الإجابة الصحيحة</p>
+            </div>
+
+            <div class="max-w-3xl mx-auto bg-white rounded-2xl p-8 shadow-sm border border-gray-100">
+
+                <!-- Question Text -->
+                <div class="mb-6">
+                    <div class="flex items-center justify-between mb-2">
+                        <label class="text-sm font-bold text-gray-700">نص السؤال *</label>
+                        <span class="text-xs"
+                            [ngClass]="currentDraft.text.length >= 10 ? 'text-green-500' : 'text-gray-400'">
+                            {{ currentDraft.text.length }}/500 حرف
+                        </span>
+                    </div>
+                    <textarea [(ngModel)]="currentDraft.text" (ngModelChange)="onContentChange()" rows="3"
+                        maxlength="500" placeholder="اكتب نص السؤال هنا..."
+                        class="w-full p-4 border-2 border-gray-200 rounded-xl text-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition resize-none"></textarea>
+                    <p *ngIf="currentDraft.text.length > 0 && currentDraft.text.length < 10"
+                        class="text-xs text-red-500 mt-1">
+                        الحد الأدنى: 10 أحرف ({{ 10 - currentDraft.text.length }} أحرف إضافية مطلوبة)
+                    </p>
+                </div>
+
+                <!-- Media URL (optional) -->
+                <div class="mb-6">
+                    <div class="flex items-center gap-2 mb-2">
+                        <label class="text-sm font-bold text-gray-700">رابط الصورة أو الوسائط</label>
+                        <span class="text-xs text-gray-400">(اختياري)</span>
+                    </div>
+                    <input [(ngModel)]="currentDraft.mediaUrl" type="url" placeholder="https://example.com/image.jpg"
+                        class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition text-sm"
+                        dir="ltr">
+                </div>
+
+                <hr class="my-6 border-gray-100">
+
+                <!-- ═══ MCQ BUILDER ═══ -->
+                <div *ngIf="currentDraft.type === 1">
+                    <div class="flex items-center justify-between mb-4">
+                        <div>
+                            <h3 class="text-sm font-bold text-gray-700">خيارات الإجابة *</h3>
+                            <p class="text-xs text-gray-400 mt-0.5">اختر الإجابة الصحيحة بالنقر على الدائرة</p>
+                        </div>
+                    </div>
+
+                    <div class="space-y-3">
+                        <div *ngFor="let option of currentDraft.options; let i = index; trackBy: trackByIndex"
+                            class="flex items-center gap-3 group">
+                            <!-- Radio button -->
+                            <button (click)="selectCorrectOption(i)"
+                                class="w-8 h-8 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all"
+                                [ngClass]="currentDraft.correctAnswerIndex === i
+                        ? 'border-green-500 bg-green-500 text-white'
+                        : 'border-gray-300 hover:border-green-400'">
+                                <lucide-icon *ngIf="currentDraft.correctAnswerIndex === i" name="check"
+                                    [size]="14"></lucide-icon>
+                            </button>
+                            <!-- Option label -->
+                            <span
+                                class="w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold flex-shrink-0"
+                                [ngClass]="currentDraft.correctAnswerIndex === i
+                      ? 'bg-green-100 text-green-700'
+                      : 'bg-gray-100 text-gray-500'">
+                                {{ getOptionLabel(i) }}
+                            </span>
+                            <!-- Option input -->
+                            <input [(ngModel)]="currentDraft.options[i]" (ngModelChange)="onContentChange()"
+                                [placeholder]="'الخيار ' + getOptionLabel(i)"
+                                class="flex-1 p-3 border-2 rounded-xl transition-all" [ngClass]="currentDraft.correctAnswerIndex === i
+                       ? 'border-green-300 bg-green-50'
+                       : 'border-gray-200 focus:border-blue-500'">
+                            <!-- Remove button -->
+                            <button *ngIf="currentDraft.options.length > 2" (click)="removeOption(i)"
+                                class="p-2 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition">
+                                <lucide-icon name="trash" [size]="16"></lucide-icon>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Add option -->
+                    <button *ngIf="currentDraft.options.length < 6" (click)="addOption()"
+                        class="mt-3 flex items-center gap-2 text-blue-600 hover:text-blue-800 text-sm font-medium transition">
+                        <lucide-icon name="plus" [size]="16"></lucide-icon>
+                        إضافة خيار آخر
+                    </button>
+
+                    <!-- Correct answer feedback -->
+                    <div *ngIf="currentDraft.correctAnswerIndex !== null && currentDraft.options[currentDraft.correctAnswerIndex]?.trim()"
+                        class="mt-4 p-3 bg-green-50 border border-green-200 rounded-xl text-green-700 text-sm flex items-center gap-2">
+                        ✅ الإجابة الصحيحة:
+                        <strong>{{ currentDraft.options[currentDraft.correctAnswerIndex] }}</strong>
+                    </div>
+                    <div *ngIf="currentDraft.correctAnswerIndex === null && currentDraft.options.some(isNonEmpty)"
+                        class="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-xl text-yellow-700 text-sm">
+                        ⚠️ يرجى النقر على الدائرة بجانب الإجابة الصحيحة
+                    </div>
+                </div>
+
+                <!-- ═══ TRUE/FALSE BUILDER ═══ -->
+                <div *ngIf="currentDraft.type === 2">
+                    <h3 class="text-sm font-bold text-gray-700 mb-4">الإجابة الصحيحة *</h3>
+                    <div class="grid grid-cols-2 gap-4">
+                        <button (click)="selectTrueFalse('صواب')"
+                            class="p-8 rounded-2xl border-2 flex flex-col items-center gap-3 transition-all" [ngClass]="currentDraft.correctAnswer === 'صواب'
+                      ? 'border-green-500 bg-green-50 shadow-md ring-2 ring-green-200'
+                      : 'border-gray-200 hover:border-green-300'">
+                            <span class="text-5xl">✅</span>
+                            <span class="text-xl font-bold"
+                                [ngClass]="currentDraft.correctAnswer === 'صواب' ? 'text-green-700' : 'text-gray-600'">
+                                صواب
+                            </span>
+                        </button>
+                        <button (click)="selectTrueFalse('خطأ')"
+                            class="p-8 rounded-2xl border-2 flex flex-col items-center gap-3 transition-all" [ngClass]="currentDraft.correctAnswer === 'خطأ'
+                      ? 'border-red-500 bg-red-50 shadow-md ring-2 ring-red-200'
+                      : 'border-gray-200 hover:border-red-300'">
+                            <span class="text-5xl">❌</span>
+                            <span class="text-xl font-bold"
+                                [ngClass]="currentDraft.correctAnswer === 'خطأ' ? 'text-red-700' : 'text-gray-600'">
+                                خطأ
+                            </span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ═══ FILL BLANK BUILDER ═══ -->
+                <div *ngIf="currentDraft.type === 4">
+                    <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-4">
+                        <p class="text-sm text-blue-700 font-medium">💡 نصيحة: استخدم _____ في نص السؤال للإشارة إلى
+                            مكان الفراغ</p>
+                        <p class="text-xs text-blue-500 mt-1">مثال: "عاصمة المملكة العربية السعودية هي _____"</p>
+                    </div>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">الإجابة الصحيحة *</label>
+                    <input [(ngModel)]="currentDraft.correctAnswer" (ngModelChange)="onContentChange()"
+                        placeholder="اكتب الإجابة الصحيحة هنا..."
+                        class="w-full p-4 border-2 border-gray-200 rounded-xl text-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition">
+                    <p class="text-xs text-gray-400 mt-2">هذه هي الإجابة التي سيقوم الطالب بكتابتها في الفراغ</p>
+                </div>
+
+                <!-- ═══ CONNECTING/MATCHING BUILDER ═══ -->
+                <div *ngIf="currentDraft.type === 3">
+                    <div class="bg-purple-50 border border-purple-200 rounded-xl p-4 mb-4">
+                        <p class="text-sm text-purple-700 font-medium">💡 أضف الأزواج التي يجب على الطالب مطابقتها</p>
+                        <p class="text-xs text-purple-500 mt-1">مثال: (الكلمة) ← → (معناها) أو (السؤال) ← → (الإجابة)
+                        </p>
+                    </div>
+
+                    <!-- Column headers -->
+                    <div class="grid grid-cols-2 gap-4 mb-3 px-2">
+                        <span class="text-sm font-bold text-gray-600 text-center">العمود الأيمن</span>
+                        <span class="text-sm font-bold text-gray-600 text-center">العمود الأيسر</span>
+                    </div>
+
+                    <div class="space-y-3">
+                        <div *ngFor="let pair of currentDraft.connectingPairs; let i = index"
+                            class="grid grid-cols-2 gap-4 items-center">
+                            <input [(ngModel)]="pair.right" (ngModelChange)="onContentChange()"
+                                [placeholder]="'العنصر ' + (i + 1)"
+                                class="p-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition text-center">
+                            <input [(ngModel)]="pair.left" (ngModelChange)="onContentChange()"
+                                [placeholder]="'المطابق ' + (i + 1)"
+                                class="p-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition text-center">
+                        </div>
+                    </div>
+
+                    <div class="flex gap-3 mt-4">
+                        <button *ngIf="currentDraft.connectingPairs.length < 6" (click)="addConnectingPair()"
+                            class="flex items-center gap-1 text-purple-600 hover:text-purple-800 text-sm font-medium transition">
+                            <lucide-icon name="plus" [size]="16"></lucide-icon>
+                            إضافة زوج آخر
+                        </button>
+                        <button *ngIf="currentDraft.connectingPairs.length > 2" (click)="removeConnectingPair()"
+                            class="flex items-center gap-1 text-red-500 hover:text-red-700 text-sm font-medium transition">
+                            <lucide-icon name="trash" [size]="16"></lucide-icon>
+                            حذف آخر زوج
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Nav buttons -->
+            <div class="flex justify-between max-w-3xl mx-auto mt-8">
+                <button (click)="previousStep()"
+                    class="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition font-medium px-6 py-3">
+                    <lucide-icon name="arrow-right" [size]="18"></lucide-icon>
+                    السابق
+                </button>
+                <button (click)="nextStep()" [disabled]="!stepValidity[2]"
+                    class="flex items-center gap-2 bg-blue-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-blue-700 transition disabled:opacity-40 disabled:cursor-not-allowed shadow-lg">
+                    <lucide-icon name="eye" [size]="18"></lucide-icon>
+                    معاينة السؤال
+                </button>
+            </div>
+        </div>
+
+        <!-- ╔══════════════════════════════════╗ -->
+        <!-- ║   STEP 4: PREVIEW                ║ -->
+        <!-- ╚══════════════════════════════════╝ -->
+        <div *ngIf="currentStep === 4" class="animate-fadeIn">
+            <div class="text-center mb-8">
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">معاينة السؤال</h2>
+                <p class="text-gray-500">هكذا سيظهر السؤال للطالب</p>
+            </div>
+
+            <div class="max-w-3xl mx-auto">
+                <!-- Meta badges -->
+                <div class="flex flex-wrap gap-2 mb-4 justify-center">
+                    <span class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm font-medium">
+                        {{ getGradeLabel(currentDraft.grade) }}
+                    </span>
+                    <span class="bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full text-sm font-medium">
+                        {{ getSubjectLabel(currentDraft.subject) }}
+                    </span>
+                    <span class="bg-amber-100 text-amber-700 px-3 py-1 rounded-full text-sm font-medium">
+                        {{ getDifficultyIcon(currentDraft.difficulty) }} {{ getDifficultyLabel(currentDraft.difficulty)
+                        }}
+                    </span>
+                    <span class="bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-sm font-medium">
+                        {{ getTypeLabel(currentDraft.type) }}
+                    </span>
+                </div>
+
+                <!-- Preview Card -->
+                <div class="bg-white rounded-2xl p-8 shadow-lg border border-gray-100">
+                    <!-- Question text -->
+                    <div class="text-xl font-bold text-gray-800 mb-6 leading-relaxed text-center">
+                        {{ currentDraft.text }}
+                    </div>
+
+                    <!-- Media preview -->
+                    <div *ngIf="currentDraft.mediaUrl" class="mb-6 text-center">
+                        <img [src]="currentDraft.mediaUrl" alt="وسائط السؤال"
+                            class="max-h-48 mx-auto rounded-xl border border-gray-200"
+                            (error)="currentDraft.mediaUrl = ''">
+                    </div>
+
+                    <!-- MCQ Preview -->
+                    <div *ngIf="currentDraft.type === 1" class="space-y-3">
+                        <div *ngFor="let option of currentDraft.options; let i = index"
+                            class="p-4 rounded-xl border-2 flex items-center gap-3" [ngClass]="currentDraft.correctAnswerIndex === i
+                   ? 'border-green-400 bg-green-50'
+                   : 'border-gray-200'">
+                            <span class="w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold"
+                                [ngClass]="currentDraft.correctAnswerIndex === i
+                      ? 'bg-green-500 text-white'
+                      : 'bg-gray-100 text-gray-500'">
+                                {{ getOptionLabel(i) }}
+                            </span>
+                            <span class="flex-1 text-gray-700">{{ option }}</span>
+                            <span *ngIf="currentDraft.correctAnswerIndex === i"
+                                class="text-green-600 text-sm font-medium">✅ الإجابة الصحيحة</span>
+                        </div>
+                    </div>
+
+                    <!-- True/False Preview -->
+                    <div *ngIf="currentDraft.type === 2" class="grid grid-cols-2 gap-4">
+                        <div class="p-6 rounded-xl border-2 text-center" [ngClass]="currentDraft.correctAnswer === 'صواب'
+                   ? 'border-green-400 bg-green-50'
+                   : 'border-gray-200'">
+                            <span class="text-3xl block mb-2">✅</span>
+                            <span class="font-bold text-lg">صواب</span>
+                            <span *ngIf="currentDraft.correctAnswer === 'صواب'"
+                                class="block text-green-600 text-xs mt-1">الإجابة الصحيحة</span>
+                        </div>
+                        <div class="p-6 rounded-xl border-2 text-center" [ngClass]="currentDraft.correctAnswer === 'خطأ'
+                   ? 'border-red-400 bg-red-50'
+                   : 'border-gray-200'">
+                            <span class="text-3xl block mb-2">❌</span>
+                            <span class="font-bold text-lg">خطأ</span>
+                            <span *ngIf="currentDraft.correctAnswer === 'خطأ'"
+                                class="block text-red-600 text-xs mt-1">الإجابة الصحيحة</span>
+                        </div>
+                    </div>
+
+                    <!-- Fill Blank Preview -->
+                    <div *ngIf="currentDraft.type === 4"
+                        class="bg-blue-50 border border-blue-200 rounded-xl p-4 text-center">
+                        <span class="text-sm text-gray-500">الإجابة الصحيحة:</span>
+                        <span class="block text-xl font-bold text-blue-700 mt-1">{{ currentDraft.correctAnswer }}</span>
+                    </div>
+
+                    <!-- Connecting Preview -->
+                    <div *ngIf="currentDraft.type === 3" class="space-y-3">
+                        <div *ngFor="let pair of currentDraft.connectingPairs"
+                            class="grid grid-cols-5 gap-2 items-center">
+                            <div *ngIf="pair.right.trim()"
+                                class="col-span-2 bg-purple-50 border border-purple-200 rounded-xl p-3 text-center font-medium text-purple-700">
+                                {{ pair.right }}
+                            </div>
+                            <div *ngIf="pair.right.trim()" class="text-center text-gray-400 text-lg">←→</div>
+                            <div *ngIf="pair.left.trim()"
+                                class="col-span-2 bg-indigo-50 border border-indigo-200 rounded-xl p-3 text-center font-medium text-indigo-700">
+                                {{ pair.left }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Edit hint -->
+                <div class="text-center mt-4">
+                    <p class="text-sm text-gray-400">⚠️ إذا وجدت خطأ، يمكنك الرجوع للخطوة السابقة وتعديل السؤال</p>
+                </div>
+            </div>
+
+            <!-- Nav buttons -->
+            <div class="flex justify-between max-w-3xl mx-auto mt-8">
+                <button (click)="previousStep()"
+                    class="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition font-medium px-6 py-3">
+                    <lucide-icon name="arrow-right" [size]="18"></lucide-icon>
+                    تعديل السؤال
+                </button>
+                <button (click)="nextStep()"
+                    class="flex items-center gap-2 bg-green-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-green-700 transition shadow-lg">
+                    <lucide-icon name="save" [size]="18"></lucide-icon>
+                    حفظ السؤال
+                </button>
+            </div>
+        </div>
+
+        <!-- ╔══════════════════════════════════╗ -->
+        <!-- ║   STEP 5: SAVE & CONTINUE        ║ -->
+        <!-- ╚══════════════════════════════════╝ -->
+        <div *ngIf="currentStep === 5" class="animate-fadeIn">
+
+            <!-- Edit mode: just save -->
+            <div *ngIf="isEditMode" class="text-center">
+                <div class="max-w-md mx-auto bg-white rounded-2xl p-8 shadow-sm border border-gray-100">
+                    <span class="text-6xl block mb-4">✏️</span>
+                    <h2 class="text-2xl font-bold text-gray-800 mb-2">السؤال جاهز للتحديث!</h2>
+                    <p class="text-gray-500 mb-6">اضغط حفظ لتحديث السؤال</p>
+                    <button (click)="saveAndFinish()" [disabled]="isSaving"
+                        class="w-full bg-blue-600 text-white px-8 py-4 rounded-xl font-bold hover:bg-blue-700 transition disabled:opacity-50 shadow-lg text-lg">
+                        {{ isSaving ? 'جاري الحفظ...' : 'حفظ التغييرات' }}
+                    </button>
+                </div>
+            </div>
+
+            <!-- Create mode: save & continue -->
+            <div *ngIf="!isEditMode">
+                <div class="text-center mb-8">
+                    <span class="text-5xl block mb-3">🎉</span>
+                    <h2 class="text-2xl font-bold text-gray-800 mb-2">السؤال جاهز للحفظ!</h2>
+                    <p class="text-gray-500">اختر ما تريد فعله بعد الحفظ</p>
+                </div>
+
+                <!-- Session queue -->
+                <div *ngIf="questionQueue.length > 0" class="max-w-2xl mx-auto mb-6">
+                    <h3 class="text-sm font-bold text-gray-500 mb-3">
+                        ✅ الأسئلة المحفوظة في هذه الجلسة ({{ questionQueue.length }})
+                    </h3>
+                    <div class="space-y-2">
+                        <div *ngFor="let q of questionQueue; let i = index"
+                            class="flex items-center gap-3 bg-green-50 border border-green-200 rounded-xl p-3">
+                            <span
+                                class="w-7 h-7 bg-green-500 text-white rounded-full flex items-center justify-center text-xs font-bold">
+                                {{ i + 1 }}
+                            </span>
+                            <span class="flex-1 text-sm text-gray-700 truncate">{{ q.text }}</span>
+                            <span class="text-green-600 text-xs font-medium">تم الحفظ ✅</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action buttons -->
+                <div class="max-w-2xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <button (click)="saveAndAddAnother()" [disabled]="isSaving"
+                        class="group relative p-6 bg-white rounded-2xl border-2 border-blue-200 hover:border-blue-400 hover:shadow-lg transition-all text-right disabled:opacity-50">
+                        <div class="flex items-start gap-4">
+                            <span class="text-3xl">➕</span>
+                            <div>
+                                <h3 class="font-bold text-gray-800 mb-1">حفظ وإضافة سؤال آخر</h3>
+                                <p class="text-sm text-gray-500">احفظ هذا السؤال وابدأ في إضافة سؤال جديد</p>
+                            </div>
+                        </div>
+                    </button>
+
+                    <button (click)="saveAndFinish()" [disabled]="isSaving"
+                        class="group relative p-6 bg-white rounded-2xl border-2 border-green-200 hover:border-green-400 hover:shadow-lg transition-all text-right disabled:opacity-50">
+                        <div class="flex items-start gap-4">
+                            <span class="text-3xl">✅</span>
+                            <div>
+                                <h3 class="font-bold text-gray-800 mb-1">حفظ والانتهاء</h3>
+                                <p class="text-sm text-gray-500">احفظ السؤال والعودة إلى قائمة الأسئلة</p>
+                            </div>
+                        </div>
+                    </button>
+                </div>
+
+                <!-- Quick start next type -->
+                <div class="max-w-2xl mx-auto mt-8 text-center">
+                    <p class="text-sm text-gray-400 mb-3">أو اختر نوع السؤال التالي مباشرة:</p>
+                    <div class="flex flex-wrap justify-center gap-2">
+                        <button *ngFor="let type of questionTypes" (click)="saveAndStartType(type.value)"
+                            [disabled]="isSaving"
+                            class="flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-xl text-sm font-medium transition disabled:opacity-50">
+                            {{ type.icon }} {{ type.label }}
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Loading indicator -->
+                <div *ngIf="isSaving" class="text-center mt-6">
+                    <div class="inline-flex items-center gap-2 text-blue-600">
+                        <div class="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin">
+                        </div>
+                        جاري الحفظ...
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>

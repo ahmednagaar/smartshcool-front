@@ -52,6 +52,8 @@ import { AdminDragDropQuestionFormComponent } from './components/admin-dragdrop-
 import { AdminFlipCardQuestionsListComponent } from './components/admin-flipcard-questions/list/admin-flipcard-questions-list.component';
 import { AdminFlipCardQuestionFormComponent } from './components/admin-flipcard-questions/form/admin-flipcard-question-form.component';
 
+import { QuestionWizardComponent } from './components/admin-questions/question-wizard/question-wizard.component';
+
 // Parent Components
 import { ParentRegisterComponent } from './components/parent-register/parent-register.component';
 import { ParentLoginComponent } from './components/parent-login/parent-login.component';
@@ -104,6 +106,8 @@ export const routes: Routes = [
         children: [
             { path: 'dashboard', component: AdminDashboardComponent },
             { path: 'questions', component: AdminQuestionsComponent },
+            { path: 'questions/new', component: QuestionWizardComponent },
+            { path: 'questions/edit/:id', component: QuestionWizardComponent },
             { path: 'games', component: AdminGamesComponent },
             { path: 'students', component: AdminStudentsComponent },
             {
