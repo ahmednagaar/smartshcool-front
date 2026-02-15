@@ -72,6 +72,23 @@ export class QuestionWizardComponent implements OnInit {
         { value: 6, label: 'الصف السادس' }
     ];
 
+    // Dynamic grades based on testType (1=نافس → 3,6 only; 2=مركزي → all)
+    get availableGrades() {
+        if (this.currentDraft.testType === 1) {
+            return this.grades.filter(g => g.value === 3 || g.value === 6);
+        }
+        return this.grades;
+    }
+
+    onTestTypeChange(newType: number) {
+        this.currentDraft.testType = newType;
+        // Reset grade if it's not valid for the new test type
+        if (newType === 1 && this.currentDraft.grade !== 3 && this.currentDraft.grade !== 6) {
+            this.currentDraft.grade = 0;
+        }
+        this.onMetaChange();
+    }
+
     subjects = [
         { value: 1, label: 'اللغة العربية' },
         { value: 2, label: 'الرياضيات' },
