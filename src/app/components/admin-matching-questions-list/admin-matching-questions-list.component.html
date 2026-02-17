@@ -20,11 +20,11 @@
         <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
             <!-- Grade -->
             <div>
-                <label class="block text-sm font-medium text-slate-700 mb-1">الصحف</label>
+                <label class="block text-sm font-medium text-slate-700 mb-1">الصف</label>
                 <select [(ngModel)]="grade" (change)="onFilterChange()"
                     class="w-full px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none">
                     <option [ngValue]="undefined">كل الصفوف</option>
-                    <option [ngValue]="3">الصحف الثالث</option>
+                    <option [ngValue]="3">الصف الثالث</option>
                     <option [ngValue]="4">الصف الرابع</option>
                     <option [ngValue]="5">الصف الخامس</option>
                     <option [ngValue]="6">الصف السادس</option>
@@ -37,11 +37,9 @@
                 <select [(ngModel)]="subject" (change)="onFilterChange()"
                     class="w-full px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none">
                     <option [ngValue]="undefined">كل المواد</option>
-                    <option [ngValue]="1">لغتي الجميلة</option>
+                    <option [ngValue]="1">اللغة العربية</option>
                     <option [ngValue]="2">الرياضيات</option>
-                    <option [ngValue]="3">التربية الإسلامية</option>
-                    <option [ngValue]="4">العلوم</option>
-                    <option [ngValue]="5">اللغة الإنجليزية</option>
+                    <option [ngValue]="3">العلوم</option>
                 </select>
             </div>
         </div>

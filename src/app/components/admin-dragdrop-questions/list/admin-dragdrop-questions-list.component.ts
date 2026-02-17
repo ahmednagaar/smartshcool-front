@@ -44,7 +44,7 @@ export class AdminDragDropQuestionsListComponent implements OnInit {
     ];
 
     subjects = [
-        { value: SubjectType.Arabic, label: 'لغتي' },
+        { value: SubjectType.Arabic, label: 'اللغة العربية' },
         { value: SubjectType.Math, label: 'الرياضيات' },
         { value: SubjectType.Science, label: 'العلوم' }
     ];

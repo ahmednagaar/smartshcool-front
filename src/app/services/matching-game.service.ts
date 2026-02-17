@@ -59,13 +59,14 @@ export class MatchingGameService {
     }
 
     // Admin Methods
-    getGames(page: number, pageSize: number, grade?: GradeLevel, subject?: SubjectType): Observable<any> { // PaginatedResult<MatchingGameDto>
+    getGames(page: number, pageSize: number, grade?: GradeLevel, subject?: SubjectType, search?: string): Observable<any> {
         let params = new HttpParams()
             .set('page', page.toString())
             .set('pageSize', pageSize.toString());
 
         if (grade) params = params.set('grade', grade.toString());
         if (subject) params = params.set('subject', subject.toString());
+        if (search) params = params.set('search', search);
 
         return this.http.get<any>(`${this.apiUrlAdmin}`, { params });
     }

@@ -11,6 +11,7 @@ import {
   FlipCardContentType,
   FlipCardTimerMode
 } from '../../models/flip-card.model';
+import { getStudentId, getSelectedGrade, getSelectedSubject } from '../../models/shared-enums';
 
 interface CardViewModel extends GameCardDto {
   isFlipped: boolean;
@@ -36,9 +37,12 @@ export class FlipCardsGameComponent implements OnInit, OnDestroy {
 
   // State
   isLoading = true;
+  gameLoadError = '';
+  hasNoQuestions = false;
   gameState: 'start' | 'playing' | 'complete' = 'start';
   currentFlipped: CardViewModel[] = [];
   isProcessing = false;
+  isCalculatingResult = false;
 
   // Stats
   matchedPairs = 0;
@@ -46,6 +50,7 @@ export class FlipCardsGameComponent implements OnInit, OnDestroy {
   moves = 0;
   score = 0;
   timerSeconds = 0;
+  timeLeft = 0;
   timerInterval: any;
   stars = 0;
 
@@ -77,15 +82,14 @@ export class FlipCardsGameComponent implements OnInit, OnDestroy {
 
   startGameByGradeSubject(): void {
     this.isLoading = true;
+    this.gameLoadError = '';
+    this.hasNoQuestions = false;
 
-    // Read grade and subject from sessionStorage (like Matching/DragDrop games)
-    const gradeId = parseInt(sessionStorage.getItem('selectedGrade') || '3');
-    const subjectMap: any = { 'arabic': 1, 'math': 2, 'science': 3, 'islamic': 4, 'english': 5 };
-    const subjectStr = sessionStorage.getItem('selectedSubject') || 'science';
-    const subjectId = subjectMap[subjectStr] || 3;
+    const gradeId = getSelectedGrade();
+    const subjectId = getSelectedSubject();
 
     const dto: StartFlipCardGameDto = {
-      studentId: 1,
+      studentId: getStudentId(), // C2: Anonymous-friendly (0 if not logged in)
       gradeId: gradeId,
       subjectId: subjectId
       // questionId not set - backend will return random question
@@ -103,7 +107,7 @@ export class FlipCardsGameComponent implements OnInit, OnDestroy {
       error: (err) => {
         console.error('Failed to start game - no questions available', err);
         this.isLoading = false;
-        // Stay on start screen, could show error message
+        this.gameLoadError = 'فشل في تحميل الأسئلة، يرجى المحاولة مرة أخرى';
       }
     });
   }
@@ -114,13 +118,13 @@ export class FlipCardsGameComponent implements OnInit, OnDestroy {
 
   startGame(questionId: number): void {
     this.isLoading = true;
-    const gradeId = parseInt(sessionStorage.getItem('selectedGrade') || '3');
-    const subjectMap: any = { 'arabic': 1, 'math': 2, 'science': 3, 'islamic': 4, 'english': 5 };
-    const subjectStr = sessionStorage.getItem('selectedSubject') || 'science';
-    const subjectId = subjectMap[subjectStr] || 3;
+    this.gameLoadError = '';
+
+    const gradeId = getSelectedGrade();
+    const subjectId = getSelectedSubject();
 
     const dto: StartFlipCardGameDto = {
-      studentId: 1,
+      studentId: getStudentId(), // C2: Anonymous-friendly (0 if not logged in)
       gradeId: gradeId,
       subjectId: subjectId,
       questionId: questionId
@@ -138,6 +142,7 @@ export class FlipCardsGameComponent implements OnInit, OnDestroy {
       error: (err) => {
         console.error('Failed to start game', err);
         this.isLoading = false;
+        this.gameLoadError = 'فشل في تحميل اللعبة، يرجى المحاولة مرة أخرى';
       }
     });
   }
@@ -306,35 +311,103 @@ export class FlipCardsGameComponent implements OnInit, OnDestroy {
     }
   }
 
-  // ========== TIMER & UTILS ==========
+  // ========== TIMER & UTILS ========== (M1: Timer now respects timerMode)
   startTimer(): void {
-    this.timerSeconds = 0;
-    // Always start timer for time tracking
-    this.timerInterval = setInterval(() => {
-      this.timerSeconds++;
-    }, 1000);
+    // Clear any existing timer first
+    this.stopTimer();
+
+    const mode = this.gameData?.question?.timerMode;
+    const limitSeconds = this.gameData?.question?.timeLimitSeconds || 60;
+
+    if (mode === FlipCardTimerMode.None) {
+      // No timer - just track elapsed time silently
+      this.timerSeconds = 0;
+      this.timerInterval = setInterval(() => {
+        this.timerSeconds++;
+      }, 1000);
+      return;
+    }
+
+    if (mode === FlipCardTimerMode.CountDown) {
+      // Countdown mode - count down from limit
+      this.timeLeft = limitSeconds;
+      this.timerSeconds = 0;
+      this.timerInterval = setInterval(() => {
+        this.timerSeconds++;
+        if (this.timeLeft > 0) {
+          this.timeLeft--;
+        } else {
+          this.stopTimer();
+          this.finishGame();
+        }
+      }, 1000);
+    } else {
+      // CountUp (default) - count up from 0
+      this.timerSeconds = 0;
+      this.timerInterval = setInterval(() => {
+        this.timerSeconds++;
+      }, 1000);
+    }
   }
 
   stopTimer(): void {
-    if (this.timerInterval) clearInterval(this.timerInterval);
+    if (this.timerInterval) {
+      clearInterval(this.timerInterval);
+      this.timerInterval = null;
+    }
   }
 
   finishGame(): void {
     this.gameState = 'complete';
     this.stopTimer();
-    this.stars = 3;
+    this.isCalculatingResult = true;
+    this.stars = 0; // M2: Don't set to 3 prematurely — wait for API
 
-    this.gameService.completeSession(this.gameData!.id).subscribe(res => {
-      this.score = res.finalScore;
-      this.stars = res.starRating;
+    this.gameService.completeSession(this.gameData!.id).subscribe({
+      next: (res) => {
+        // M2: Set stars ONLY after API responds
+        this.score = res.finalScore;
+        this.stars = res.starRating;
+        this.isCalculatingResult = false;
+      },
+      error: (err) => {
+        console.error('Complete session error:', err);
+        // Fallback to 3 stars only on error
+        this.stars = 3;
+        this.isCalculatingResult = false;
+      }
     });
   }
 
   playAgain(): void {
-    window.location.reload();
+    // m2: Component-level reset instead of window.location.reload()
+    this.stopTimer();
+
+    // Reset all state
+    this.cards = [];
+    this.leftCards = [];
+    this.rightCards = [];
+    this.currentFlipped = [];
+    this.matchedPairs = 0;
+    this.totalPairs = 0;
+    this.moves = 0;
+    this.score = 0;
+    this.stars = 0;
+    this.timerSeconds = 0;
+    this.timeLeft = 0;
+    this.gameState = 'start';
+    this.isProcessing = false;
+    this.isCalculatingResult = false;
+    this.gameData = null;
+    this.gameLoadError = '';
+    this.hasNoQuestions = false;
+
+    // Restart
+    this.startGameByGradeSubject();
   }
 
   exit(): void {
-    this.router.navigate(['/']);
+    // m4: Navigate to game-type selection, not root
+    this.router.navigate(['/game-type']);
   }
 }

@@ -5,6 +5,7 @@ import { AudioService } from '../../services/audio.service';
 import { DragDropModule, CdkDragDrop, moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
 import { DragDropGameService, StartGameRequestDto, GameSessionDto, GameResultDto } from '../../services/drag-drop-game.service';
 import { DragDropZoneDto, DragDropItemDto, GradeLevel, SubjectType } from '../../models/drag-drop.model';
+import { getSelectedGrade, getSelectedSubject } from '../../models/shared-enums';
 import Swal from 'sweetalert2';
 
 @Component({
@@ -198,11 +199,9 @@ export class DragDropGameComponent implements OnInit {
   startGame(questionId: number | null) {
     this.isLoading = true;
 
-    // Read grade and subject from sessionStorage (like Matching Game)
-    const gradeId = parseInt(sessionStorage.getItem('selectedGrade') || '3') as GradeLevel;
-    const subjectMap: any = { 'arabic': 1, 'math': 2, 'science': 3, 'islamic': 4, 'english': 5 };
-    const subjectStr = sessionStorage.getItem('selectedSubject') || 'science';
-    const subjectId = (subjectMap[subjectStr] || SubjectType.Science) as SubjectType;
+    // Read grade and subject from sessionStorage using shared helpers
+    const gradeId = getSelectedGrade() as GradeLevel;
+    const subjectId = getSelectedSubject() as SubjectType;
 
     const req: StartGameRequestDto = {
       questionId: questionId ?? undefined,  // Only include if provided
@@ -300,11 +299,13 @@ export class DragDropGameComponent implements OnInit {
   }
 
   goBack() {
-    this.router.navigate(['/']);
+    this.router.navigate(['/game-type']);
   }
 
   toggleMute() {
     this.isMuted = !this.isMuted;
+    // M6: Actually toggle the AudioService muted state
+    this.audioService.setMuted(this.isMuted);
   }
 
   getZoneGridClass() {

@@ -110,7 +110,7 @@ export class AdminFlipCardQuestionsListComponent implements OnInit {
     }
 
     deleteQuestion(id: number): void {
-        if (confirm('Are you sure you want to delete this game?')) {
+        if (confirm('هل أنت متأكد من حذف هذه اللعبة؟')) {
             this.questionService.delete(id).subscribe(() => {
                 this.questions = this.questions.filter(q => q.id !== id);
                 this.filterQuestions();
@@ -119,10 +119,12 @@ export class AdminFlipCardQuestionsListComponent implements OnInit {
     }
 
     getGradeName(gradeId: number): string {
-        return GradeLevel[gradeId] || 'Unknown';
+        const map: { [key: number]: string } = { 3: 'الصف الثالث', 4: 'الصف الرابع', 5: 'الصف الخامس', 6: 'الصف السادس' };
+        return map[gradeId] || 'غير معروف';
     }
 
     getSubjectName(subjectId: number): string {
-        return SubjectType[subjectId] || 'Unknown';
+        const map: { [key: number]: string } = { 1: 'عربي', 2: 'رياضيات', 3: 'علوم' };
+        return map[subjectId] || 'غير معروف';
     }
 }

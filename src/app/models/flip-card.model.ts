@@ -31,7 +31,7 @@ export interface FlipCardPairDto {
 export interface FlipCardQuestionDto {
     id: number;
     gradeId: number;
-    subjectId: number; // enum?
+    subjectId: number;
     gameTitle: string;
     instructions: string;
     gameMode: FlipCardGameMode;
@@ -47,6 +47,11 @@ export interface FlipCardQuestionDto {
     difficultyLevel?: number;
     isActive: boolean;
     displayOrder: number;
+    category?: string;
+    pointsPerMatch?: number;
+    movePenalty?: number;
+    enableAudio?: boolean;
+    enableExplanations?: boolean;
 }
 
 // Create/Update DTOs

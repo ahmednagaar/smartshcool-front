@@ -63,7 +63,7 @@ export class AdminWheelQuestionsListComponent implements OnInit {
     }
 
     deleteQuestion(id: number): void {
-        if (confirm('Are you sure you want to delete this question?')) {
+        if (confirm('هل أنت متأكد من حذف هذا السؤال؟')) {
             this.wheelService.delete(id).subscribe(() => {
                 this.loadQuestions();
             });

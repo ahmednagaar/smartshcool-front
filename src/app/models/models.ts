@@ -49,9 +49,7 @@ export enum GradeLevel {
 export enum SubjectType {
     Arabic = 1,
     Math = 2,
-    Science = 3,
-    Islamic = 4,
-    English = 5
+    Science = 3
 }
 
 export interface Game {

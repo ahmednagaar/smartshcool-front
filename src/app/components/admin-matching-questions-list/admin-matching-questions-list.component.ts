@@ -49,7 +49,8 @@ export class AdminMatchingQuestionsListComponent implements OnInit {
       this.page,
       this.pageSize,
       this.grade,
-      this.subject
+      this.subject,
+      this.searchStr || undefined // M9: Pass search string to backend
     ).subscribe({
       next: (res) => {
         this.games = res.items || [];
@@ -94,8 +95,7 @@ export class AdminMatchingQuestionsListComponent implements OnInit {
   }
 
   getSubjectName(id: SubjectType): string {
-    // Map based on value
-    const map: any = { 1: 'لغتي', 2: 'رياضيات', 3: 'علوم', 4: 'إسلامية', 5: 'إنجليزي' };
+    const map: any = { 1: 'عربي', 2: 'رياضيات', 3: 'علوم' };
     return map[id] || 'مادة';
   }
 }

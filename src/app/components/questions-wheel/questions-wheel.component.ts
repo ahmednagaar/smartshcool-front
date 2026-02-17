@@ -11,6 +11,7 @@ import {
     SpinResult
 } from '../../models/wheel-game.model';
 import { TestType } from '../../models/models';
+import { getStudentId, getSelectedGrade, getSelectedSubject } from '../../models/shared-enums';
 
 interface SegmentGeometry {
     id: number;
@@ -45,15 +46,38 @@ export class QuestionsWheelComponent implements OnInit, OnDestroy {
     // Visual Data
     visualSegments: VisualSegment[] = [];
 
-    // Fixed Geometry for 6 segments
-    private readonly SEGMENT_GEOMETRY: SegmentGeometry[] = [
-        { id: 1, path: 'M50,50 L50,2 A48,48 0 0,1 91.57,26.5 Z', textX: 65, textY: 24, textRotate: 30 },
-        { id: 2, path: 'M50,50 L91.57,26.5 A48,48 0 0,1 91.57,73.5 Z', textX: 80, textY: 52, textRotate: 90 },
-        { id: 3, path: 'M50,50 L91.57,73.5 A48,48 0 0,1 50,98 Z', textX: 65, textY: 78, textRotate: 150 },
-        { id: 4, path: 'M50,50 L50,98 A48,48 0 0,1 8.43,73.5 Z', textX: 35, textY: 78, textRotate: 210 },
-        { id: 5, path: 'M50,50 L8.43,73.5 A48,48 0 0,1 8.43,26.5 Z', textX: 20, textY: 52, textRotate: 270 },
-        { id: 6, path: 'M50,50 L8.43,26.5 A48,48 0 0,1 50,2 Z', textX: 35, textY: 24, textRotate: 330 }
-    ];
+    // M10: SVG geometry is now computed dynamically based on segment count
+    private computeSegmentGeometry(count: number): SegmentGeometry[] {
+        const segments: SegmentGeometry[] = [];
+        const cx = 50, cy = 50, r = 48;
+        const anglePerSegment = (2 * Math.PI) / count;
+
+        for (let i = 0; i < count; i++) {
+            const startAngle = i * anglePerSegment - Math.PI / 2;
+            const endAngle = startAngle + anglePerSegment;
+            const midAngle = startAngle + anglePerSegment / 2;
+
+            const x1 = cx + r * Math.cos(startAngle);
+            const y1 = cy + r * Math.sin(startAngle);
+            const x2 = cx + r * Math.cos(endAngle);
+            const y2 = cy + r * Math.sin(endAngle);
+            const largeArc = anglePerSegment > Math.PI ? 1 : 0;
+
+            const textR = r * 0.65;
+            const textX = cx + textR * Math.cos(midAngle);
+            const textY = cy + textR * Math.sin(midAngle);
+            const textRotate = (midAngle * 180 / Math.PI) + 90;
+
+            segments.push({
+                id: i + 1,
+                path: `M${cx},${cy} L${x1.toFixed(2)},${y1.toFixed(2)} A${r},${r} 0 ${largeArc},1 ${x2.toFixed(2)},${y2.toFixed(2)} Z`,
+                textX: parseFloat(textX.toFixed(2)),
+                textY: parseFloat(textY.toFixed(2)),
+                textRotate: parseFloat(textRotate.toFixed(2))
+            });
+        }
+        return segments;
+    }
 
     // Game Logic
     sessionId: number = 0;
@@ -68,19 +92,24 @@ export class QuestionsWheelComponent implements OnInit, OnDestroy {
     pointsChange: number = 0;
 
     // Timer & Stats from Server mostly, but tracked locally for UI
-    timeLeft: number = 90;
+    timeLeft: number = 0; // m14: Will be set from API response
     timerInterval: any;
     score: number = 0;
     questionsAnswered: number = 0;
     correctAnswers: number = 0;
+    timerExpired: boolean = false; // M5: Track if game ended by timer
+
+    // Loading/Error states
+    isLoading: boolean = false;
+    gameLoadError: string = '';
 
     // Wheel Animation
     isSpinning: boolean = false;
     wheelRotation: number = 0;
     idleRotationInterval: any;
 
-    // Student Info
-    studentId: number | null = null;
+    // Question-level timer for tracking actual time spent per question
+    private questionStartTime: number = 0;
 
     constructor(
         private wheelGameService: WheelGameService,
@@ -90,10 +119,6 @@ export class QuestionsWheelComponent implements OnInit, OnDestroy {
     ) { }
 
     ngOnInit(): void {
-        const id = sessionStorage.getItem('currentStudentId');
-        if (id) {
-            this.studentId = parseInt(id);
-        }
         this.loadSegments();
         this.startIdleRotation();
     }
@@ -106,15 +131,18 @@ export class QuestionsWheelComponent implements OnInit, OnDestroy {
     loadSegments(): void {
         this.wheelSpinService.getActiveSegments().subscribe({
             next: (segments) => {
-                // Map backend segments to geometry. Limit to 6.
-                this.visualSegments = segments.slice(0, 6).map((seg, index) => {
-                    const geometry = this.SEGMENT_GEOMETRY[index];
+                const count = Math.min(segments.length, 8); // Allow up to 8 segments
+                const geometry = this.computeSegmentGeometry(count);
+
+                // M10: Map backend segments to dynamically computed geometry
+                this.visualSegments = segments.slice(0, count).map((seg, index) => {
+                    const geo = geometry[index];
                     return {
                         ...seg,
-                        path: geometry.path,
-                        textX: geometry.textX,
-                        textY: geometry.textY,
-                        textRotate: geometry.textRotate
+                        path: geo.path,
+                        textX: geo.textX,
+                        textY: geo.textY,
+                        textRotate: geo.textRotate
                     };
                 });
             },
@@ -123,23 +151,23 @@ export class QuestionsWheelComponent implements OnInit, OnDestroy {
     }
 
     startGame(): void {
-        const gradeStr = sessionStorage.getItem('selectedGrade') || '4';
-        const subjectStr = sessionStorage.getItem('selectedSubject');
+        this.isLoading = true;
+        this.gameLoadError = '';
+
+        // M11: Read subject and grade as integers consistently using shared helpers
+        const gradeId = getSelectedGrade();
+        const subjectId = getSelectedSubject();
+
         const testTypeStr = sessionStorage.getItem('testType');
-
-        // Simple Mapping
-        const subjectMap: { [key: string]: number } = { 'arabic': 1, 'math': 2, 'science': 3 };
-        const subjectId = subjectStr ? subjectMap[subjectStr] : 1;
-
         let testType: TestType | undefined;
         if (testTypeStr === 'nafes') testType = TestType.Nafes;
         else if (testTypeStr === 'central') testType = TestType.Central;
 
         const dto: StartWheelGameDto = {
-            studentId: this.studentId || undefined,
-            gradeId: parseInt(gradeStr),
+            studentId: getStudentId() || undefined, // Anonymous support (0 or undefined)
+            gradeId: gradeId,
             subjectId: subjectId,
-            numberOfQuestions: 15,
+            // m14: Remove hardcoded numberOfQuestions — let backend decide
             testType: testType
         };
 
@@ -149,12 +177,21 @@ export class QuestionsWheelComponent implements OnInit, OnDestroy {
                 this.questions = res.questions;
                 this.currentQuestionIndex = 0;
                 this.score = 0;
+                this.questionsAnswered = 0;
+                this.correctAnswers = 0;
+                this.timerExpired = false;
+
+                // m15: Use timeLeft from API response if available
+                this.timeLeft = res.timeLimit || res.questions.length * 15 || 90;
+
                 this.gameState = 'instructions';
+                this.isLoading = false;
                 this.audioService.playClick();
             },
             error: (err) => {
                 console.error('Error starting game', err);
-                alert('حدث خطأ في بدء اللعبة');
+                this.isLoading = false;
+                this.gameLoadError = 'حدث خطأ في بدء اللعبة، يرجى المحاولة مرة أخرى';
             }
         });
     }
@@ -175,26 +212,11 @@ export class QuestionsWheelComponent implements OnInit, OnDestroy {
             next: (result) => {
                 this.currentSpinResult = result;
 
-                // Calculate rotation
-                // The backend returns 'rotationDegrees' which is where the wheel marks the result
-                // We add extra full spins (360 * 5) for effect
                 const spins = 5;
-                // The backend rotationDegrees is absolute position (0-360).
-                // Current CSS rotation is accumulated.
-
-                // We want to land on 'result.rotationDegrees'.
-                // Current total rotation: this.wheelRotation
-                // Current Modulo: this.wheelRotation % 360
-
-                // Target Modulo: result.rotationDegrees
-                // Diff needed: result.rotationDegrees - (this.wheelRotation % 360)
-                // If Diff < 0, add 360 to make it positive forward motion
-
                 const currentMod = this.wheelRotation % 360;
                 let diff = result.rotationDegrees - currentMod;
-                if (diff <= 0) diff += 360; // Ensure at least some rotation? or forward
+                if (diff <= 0) diff += 360;
 
-                // Add spins + diff
                 this.wheelRotation += (spins * 360) + diff;
 
                 setTimeout(() => {
@@ -213,6 +235,7 @@ export class QuestionsWheelComponent implements OnInit, OnDestroy {
     handleSpinComplete(): void {
         if (this.currentQuestionIndex < this.questions.length) {
             this.currentQuestion = this.questions[this.currentQuestionIndex];
+            this.questionStartTime = Date.now(); // M3: Track question start time
             this.gameState = 'question';
             this.audioService.playClick();
         } else {
@@ -226,11 +249,15 @@ export class QuestionsWheelComponent implements OnInit, OnDestroy {
 
         if (!this.currentQuestion) return;
 
+        // M3: Calculate actual time spent on this question
+        const timeSpentMs = Date.now() - this.questionStartTime;
+        const timeSpentSeconds = Math.max(1, Math.round(timeSpentMs / 1000));
+
         this.wheelGameService.submitAnswer({
             sessionId: this.sessionId,
             questionId: this.currentQuestion.id,
             studentAnswer: answer,
-            timeSpent: 5, // Mock time
+            timeSpent: timeSpentSeconds, // M3: Actual measured time, not hardcoded 5
             hintUsed: false
         }).subscribe({
             next: (res) => {
@@ -269,15 +296,22 @@ export class QuestionsWheelComponent implements OnInit, OnDestroy {
 
     // Timer Logic
     startTimer(): void {
+        this.stopTimer(); // Clear any existing timer
         this.timerInterval = setInterval(() => {
             this.timeLeft--;
             if (this.timeLeft <= 10) this.audioService.playTick();
-            if (this.timeLeft <= 0) this.endGame();
+            if (this.timeLeft <= 0) {
+                this.timerExpired = true; // M5: Mark that timer caused the end
+                this.endGame();
+            }
         }, 1000);
     }
 
     stopTimer(): void {
-        if (this.timerInterval) clearInterval(this.timerInterval);
+        if (this.timerInterval) {
+            clearInterval(this.timerInterval);
+            this.timerInterval = null;
+        }
     }
 
     formatTime(seconds: number): string {
@@ -304,12 +338,44 @@ export class QuestionsWheelComponent implements OnInit, OnDestroy {
         this.audioService.playComplete();
     }
 
+    // M5: Returns the correct result message based on HOW the game ended
+    get resultMessage(): string {
+        if (this.timerExpired) return 'انتهى الوقت!';
+        if (this.questionsAnswered >= this.questions.length) return 'أحسنت! أكملت جميع الأسئلة!';
+        return 'أحسنت!';
+    }
+
+    // M4: Properly reset all state
     playAgain(): void {
+        this.stopTimer();
+        this.stopIdleRotation();
+
+        // Reset all game state
+        this.sessionId = 0;
+        this.questions = [];
+        this.currentQuestionIndex = 0;
+        this.currentQuestion = null;
+        this.currentSpinResult = null;
+        this.selectedAnswer = null;
+        this.answerResult = null;
+        this.pointsChange = 0;
+        this.score = 0;
+        this.questionsAnswered = 0;
+        this.correctAnswers = 0;
+        this.timerExpired = false;
+        this.isSpinning = false;
+        this.wheelRotation = 0;
+        this.timeLeft = 0;
+        this.gameLoadError = '';
+
+        // Restart
         this.gameState = 'start';
+        this.startIdleRotation();
         this.startGame();
     }
 
     goHome(): void {
-        this.router.navigate(['/']);
+        // m5: Navigate to game-type selection instead of root
+        this.router.navigate(['/game-type']);
     }
 }

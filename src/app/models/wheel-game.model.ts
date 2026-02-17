@@ -66,6 +66,7 @@ export interface StartWheelGameDto {
 export interface StartGameResponse {
     sessionId: number;
     totalQuestions: number;
+    timeLimit: number; // m15: Server-configured time limit in seconds
     questions: WheelQuestion[];
     session: any; // Raw session object if needed
 }

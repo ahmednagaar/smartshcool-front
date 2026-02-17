@@ -114,13 +114,19 @@ export class AdminFlipCardQuestionFormComponent implements OnInit {
                     gameMode: data.gameMode,
                     difficultyLevel: data.difficultyLevel,
                     isActive: data.isActive,
+                    category: data.category,
                     timerMode: data.timerMode,
                     timeLimitSeconds: data.timeLimitSeconds,
                     showHints: data.showHints,
                     maxHints: data.maxHints,
                     uiTheme: data.uiTheme,
                     cardBackDesign: data.cardBackDesign,
-                    customCardBackUrl: data.customCardBackUrl
+                    customCardBackUrl: data.customCardBackUrl,
+                    // m10: Restore additional fields
+                    pointsPerMatch: data.pointsPerMatch,
+                    movePenalty: data.movePenalty,
+                    enableAudio: data.enableAudio,
+                    enableExplanations: data.enableExplanations
                 });
 
                 // Clear and rebuild pairs array
@@ -198,7 +204,7 @@ export class AdminFlipCardQuestionFormComponent implements OnInit {
         if (this.questionForm.invalid) {
             this.questionForm.markAllAsTouched();
             // maybe alert user
-            alert('Please fill all required fields');
+            alert('الرجاء تعبئة جميع الحقول المطلوبة');
             return;
         }
 
@@ -219,7 +225,7 @@ export class AdminFlipCardQuestionFormComponent implements OnInit {
                 error: (err) => {
                     console.error(err);
                     this.loading = false;
-                    alert('Failed to update game');
+                    alert('حدث خطأ أثناء تحديث اللعبة');
                 }
             });
         } else {
@@ -236,7 +242,7 @@ export class AdminFlipCardQuestionFormComponent implements OnInit {
                 error: (err) => {
                     console.error(err);
                     this.loading = false;
-                    alert('Failed to create game');
+                    alert('حدث خطأ أثناء إنشاء اللعبة');
                 }
             });
         }
