@@ -1,0 +1,209 @@
+<div class="bg-v0-gradient min-h-screen p-4 overflow-hidden relative">
+    <!-- Success/Celebration Overlay -->
+    <div *ngIf="showCelebration"
+        class="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm animate-in fade-in duration-300">
+        <div
+            class="success-overlay pop-in p-12 text-center bg-white rounded-3xl shadow-2xl border-4 border-green-400 max-w-sm w-full mx-4">
+            <div class="success-emoji text-8xl mb-6 animate-bounce">{{ feedbackEmoji }}</div>
+            <h2 class="text-4xl font-black text-green-600 mb-4 font-handicrafts animate-pulse">{{ feedbackMessage }}
+            </h2>
+            <button (click)="nextQuestion()"
+                class="btn-primary w-full text-xl py-4 shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all">
+                {{ isLastQuestion ? 'عرض النتيجة 🏁' : (isPassageQuestion && currentSubQuestionIndex < totalSubQuestions
+                    - 1 ? 'السؤال الفرعي التالي ←' : 'السؤال التالي ←' ) }} </button>
+        </div>
+        <!-- Confetti pieces (CSS driven) -->
+        <div class="confetti-piece" style="left: 10%; animation-delay: 0s; background: #FFD700;"></div>
+        <div class="confetti-piece" style="left: 20%; animation-delay: 0.2s; background: #FF6347;"></div>
+        <div class="confetti-piece" style="left: 30%; animation-delay: 0.4s; background: #32CD32;"></div>
+        <div class="confetti-piece" style="left: 50%; animation-delay: 0.1s; background: #1E90FF;"></div>
+        <div class="confetti-piece" style="left: 70%; animation-delay: 0.3s; background: #FF69B4;"></div>
+        <div class="confetti-piece" style="left: 85%; animation-delay: 0.5s; background: #FFA500;"></div>
+    </div>
+
+    <div class="container max-w-6xl py-8">
+        <!-- Header with progress -->
+        <div class="mb-8">
+            <div class="flex justify-between items-center mb-4">
+                <button (click)="exitQuiz()" class="btn-ghost">
+                    <span>✕</span>
+                    خروج
+                </button>
+                <div class="text-center">
+                    <span class="text-muted">التقدم</span>
+                    <span class="text-2xl font-bold text-foreground mx-2">{{ answeredCount }}</span>
+                    <span class="text-muted">من {{ totalQuestionCount }}</span>
+                </div>
+                <div class="text-left">
+                    <span class="text-muted">النتيجة:</span>
+                    <span class="text-2xl font-bold text-primary mx-2">{{ score }}</span>
+                </div>
+            </div>
+
+            <!-- Progress Bar -->
+            <div class="bg-gray-200 rounded-full h-3 overflow-hidden">
+                <div class="bg-primary h-full rounded-full transition-all duration-300"
+                    [style.width.%]="totalQuestionCount > 0 ? (answeredCount / totalQuestionCount) * 100 : 0"></div>
+            </div>
+        </div>
+
+        <!-- ═══════════ PASSAGE QUESTION LAYOUT ═══════════ -->
+        <div *ngIf="currentQuestion && isPassageQuestion" class="passage-layout animate-fadeIn">
+            <!-- Passage indicator -->
+            <div class="mb-4 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <span class="bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-sm font-bold">📄 قطعة
+                        فهم</span>
+                    <span *ngIf="currentQuestion.estimatedTimeMinutes"
+                        class="bg-cyan-100 text-cyan-700 px-3 py-1 rounded-full text-sm font-medium">
+                        ⏰ {{ currentQuestion.estimatedTimeMinutes }} دقيقة
+                    </span>
+                </div>
+                <span class="text-sm text-muted">
+                    السؤال الفرعي {{ currentSubQuestionIndex + 1 }} من {{ totalSubQuestions }}
+                </span>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Passage Panel (sticky on desktop) -->
+                <div class="passage-panel">
+                    <div class="card-v0 p-6 lg:sticky lg:top-24 max-h-[70vh] overflow-y-auto">
+                        <h3 class="text-lg font-bold text-foreground mb-4 border-b pb-3">
+                            {{ currentQuestion.text }}
+                        </h3>
+                        <div class="text-base leading-loose text-gray-700 whitespace-pre-wrap" dir="rtl">
+                            {{ currentQuestion.passageText }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sub-question Panel -->
+                <div class="subquestion-panel">
+                    <div class="card-v0 p-6">
+                        <!-- Sub-question navigation dots -->
+                        <div class="flex items-center gap-2 mb-6 flex-wrap justify-center">
+                            <div *ngFor="let sq of currentQuestion.subQuestions; let si = index"
+                                class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all cursor-default"
+                                [ngClass]="{
+                  'bg-green-500 text-white': subQuestionAnswers.has(si) && subQuestionAnswers.get(si)?.correct,
+                  'bg-red-400 text-white': subQuestionAnswers.has(si) && !subQuestionAnswers.get(si)?.correct,
+                  'bg-primary text-white ring-2 ring-primary/30': si === currentSubQuestionIndex && !subQuestionAnswers.has(si),
+                  'bg-gray-200 text-gray-500': si !== currentSubQuestionIndex && !subQuestionAnswers.has(si)
+                }">
+                                {{ si + 1 }}
+                            </div>
+                        </div>
+
+                        <!-- Current sub-question -->
+                        <div *ngIf="currentSubQuestion">
+                            <h2 class="text-xl md:text-2xl font-bold text-foreground text-center mb-6 leading-relaxed">
+                                {{ currentSubQuestion.text }}
+                            </h2>
+
+                            <!-- Answer Options -->
+                            <div class="grid gap-3">
+                                <button *ngFor="let option of currentSubQuestion.options; let i = index"
+                                    (click)="selectAnswer(option)" [disabled]="answered"
+                                    class="p-5 text-lg font-bold rounded-xl border-2 transition-all text-right group relative overflow-hidden"
+                                    [ngClass]="{
+                    'border-gray-200 hover:border-primary hover:bg-primary/5 hover:scale-[1.02] hover:shadow-md': !answered,
+                    'border-green-500 bg-green-50 text-green-700': answered && option === currentSubQuestion.correctAnswer,
+                    'border-red-500 bg-red-50 text-red-700 shake': answered && selectedAnswer === option && option !== currentSubQuestion.correctAnswer,
+                    'border-gray-200 opacity-50': answered && selectedAnswer !== option && option !== currentSubQuestion.correctAnswer
+                  }">
+                                    <span
+                                        class="inline-flex items-center justify-center w-9 h-9 rounded-full bg-gray-100 text-gray-600 ml-3 group-hover:bg-primary group-hover:text-white transition-colors">
+                                        {{ getOptionLabel(i) }}
+                                    </span>
+                                    {{ option }}
+
+                                    <span *ngIf="answered && option === currentSubQuestion.correctAnswer"
+                                        class="absolute left-4 top-1/2 -translate-y-1/2 text-xl animate-pulse">✅</span>
+                                    <span
+                                        *ngIf="answered && selectedAnswer === option && option !== currentSubQuestion.correctAnswer"
+                                        class="absolute left-4 top-1/2 -translate-y-1/2 text-xl">❌</span>
+                                </button>
+                            </div>
+
+                            <!-- Wrong answer feedback -->
+                            <div *ngIf="answered && !isCorrect"
+                                class="mt-6 text-center animate-in fade-in slide-in-from-bottom-4">
+                                <div class="p-4 rounded-2xl bg-red-50 border-2 border-red-200 shadow-sm">
+                                    <div class="text-3xl mb-1">💪</div>
+                                    <h3 class="text-lg font-bold text-red-800 mb-1">لا بأس!</h3>
+                                    <p class="text-red-600 text-sm">الإجابة الصحيحة هي: <span class="font-bold">{{
+                                            currentSubQuestion.correctAnswer }}</span></p>
+                                </div>
+
+                                <button (click)="nextQuestion()"
+                                    class="btn-primary mt-4 px-10 py-3 text-lg shadow-lg hover:shadow-xl hover:-translate-y-1 transition-transform">
+                                    {{ isLastQuestion ? 'عرض النتيجة 🏁' : (currentSubQuestionIndex < totalSubQuestions
+                                        - 1 ? 'السؤال الفرعي التالي ←' : 'السؤال التالي ←' ) }} </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══════════ REGULAR MCQ QUESTION ═══════════ -->
+        <div class="card-v0 p-8 transform transition-all duration-500" *ngIf="currentQuestion && !isPassageQuestion">
+            <!-- Question Image (if any) -->
+            <div *ngIf="currentQuestion.image" class="mb-6 text-center">
+                <img [src]="currentQuestion.image" alt="صورة السؤال"
+                    class="max-w-full h-auto mx-auto rounded-lg shadow-md max-h-64 object-contain" />
+            </div>
+
+            <!-- Question Text -->
+            <h2 class="text-2xl md:text-3xl font-bold text-foreground text-center mb-8 leading-relaxed">
+                {{ currentQuestion.text }}
+            </h2>
+
+            <!-- Answer Options -->
+            <div class="grid gap-4">
+                <button *ngFor="let option of currentQuestion.options; let i = index" (click)="selectAnswer(option)"
+                    [disabled]="answered"
+                    class="p-6 text-xl font-bold rounded-xl border-2 transition-all text-right group relative overflow-hidden"
+                    [ngClass]="{
+            'border-gray-200 hover:border-primary hover:bg-primary/5 hover:scale-[1.02] hover:shadow-md': !answered,
+            'border-green-500 bg-green-50 text-green-700': answered && option === currentQuestion.correctAnswer,
+            'border-red-500 bg-red-50 text-red-700 shake': answered && selectedAnswer === option && option !== currentQuestion.correctAnswer,
+            'border-gray-200 opacity-50': answered && selectedAnswer !== option && option !== currentQuestion.correctAnswer
+          }">
+                    <span
+                        class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-gray-100 text-gray-600 ml-4 group-hover:bg-primary group-hover:text-white transition-colors">
+                        {{ getOptionLabel(i) }}
+                    </span>
+                    {{ option }}
+
+                    <!-- Correct/Wrong Icons -->
+                    <span *ngIf="answered && option === currentQuestion.correctAnswer"
+                        class="absolute left-6 top-1/2 -translate-y-1/2 text-2xl animate-pulse">✅</span>
+                    <span *ngIf="answered && selectedAnswer === option && option !== currentQuestion.correctAnswer"
+                        class="absolute left-6 top-1/2 -translate-y-1/2 text-2xl">❌</span>
+                </button>
+            </div>
+
+            <!-- Feedback Message (Only for Wrong Answer now, Correct shows Overlay) -->
+            <div *ngIf="answered && !isCorrect" class="mt-8 text-center animate-in fade-in slide-in-from-bottom-4">
+                <div class="p-6 rounded-2xl bg-red-50 border-2 border-red-200 shadow-sm">
+                    <div class="text-4xl mb-2">💪</div>
+                    <h3 class="text-xl font-bold text-red-800 mb-2">لا بأس! حاول مرة أخرى</h3>
+                    <p class="text-red-600">الإجابة الصحيحة هي: <span class="font-bold">{{ currentQuestion.correctAnswer
+                            }}</span></p>
+                </div>
+
+                <button (click)="nextQuestion()"
+                    class="btn-primary mt-6 px-12 py-4 text-xl shadow-lg hover:shadow-xl hover:-translate-y-1 transition-transform">
+                    {{ isLastQuestion ? 'عرض النتيجة 🏁' : 'السؤال التالي ←' }}
+                </button>
+            </div>
+        </div>
+
+        <!-- Loading State -->
+        <div *ngIf="loading" class="card-v0 p-16 text-center">
+            <div class="text-6xl mb-4 animate-spin-slow">⏳</div>
+            <p class="text-xl text-muted">جاري تحميل الأسئلة...</p>
+        </div>
+    </div>
+</div>

@@ -20,6 +20,14 @@ import {
 import Swal from 'sweetalert2';
 import { ApiService } from '../../../services/api.service';
 
+interface SubQuestionDraft {
+    text: string;
+    options: string[];
+    correctAnswerIndex: number | null;
+    correctAnswer: string;
+    explanation: string;
+}
+
 interface QuestionDraft {
     type: number | null;
     grade: number | null;
@@ -32,6 +40,10 @@ interface QuestionDraft {
     correctAnswerIndex: number | null;
     mediaUrl: string;
     savedId?: number;
+    // Passage fields
+    passageText: string;
+    estimatedTimeMinutes: number | null;
+    subQuestions: SubQuestionDraft[];
 }
 
 @Component({
@@ -108,6 +120,13 @@ export class QuestionWizardComponent implements OnInit {
             icon: '🔘',
             description: 'سؤال مع عدة خيارات وإجابة صحيحة واحدة',
             example: 'ما هي عاصمة المملكة العربية السعودية؟'
+        },
+        {
+            value: 6,
+            label: 'قطعة فهم',
+            icon: '📄',
+            description: 'نص قراءة مع أسئلة فرعية متعددة',
+            example: 'اقرأ النص التالي ثم أجب عن الأسئلة'
         }
     ];
 
@@ -120,7 +139,7 @@ export class QuestionWizardComponent implements OnInit {
     ) { }
 
     ngOnInit() {
-        // Auto-select Multiple Choice since it's the only type
+        // Default to MCQ
         this.currentDraft.type = 1;
 
         const id = this.route.snapshot.paramMap.get('id');
@@ -131,10 +150,27 @@ export class QuestionWizardComponent implements OnInit {
         }
     }
 
+    // ── Passage helpers ──────────────────────────
+    get isPassageType(): boolean {
+        return this.currentDraft.type === 6;
+    }
+
+    selectType(type: number) {
+        this.currentDraft.type = type;
+        if (type === 6) {
+            // Initialize passage defaults
+            if (this.currentDraft.subQuestions.length === 0) {
+                this.addSubQuestion();
+                this.addSubQuestion();
+            }
+        }
+        this.onMetaChange();
+    }
+
     // ── Draft factory ─────────────────────────────
     createEmptyDraft(): QuestionDraft {
         return {
-            type: 1,           // Always Multiple Choice
+            type: 1,
             grade: null,
             subject: null,
             difficulty: null,
@@ -143,8 +179,65 @@ export class QuestionWizardComponent implements OnInit {
             options: ['', '', '', ''],
             correctAnswer: '',
             correctAnswerIndex: null,
-            mediaUrl: ''
+            mediaUrl: '',
+            passageText: '',
+            estimatedTimeMinutes: null,
+            subQuestions: []
         };
+    }
+
+    createEmptySubQuestion(): SubQuestionDraft {
+        return {
+            text: '',
+            options: ['', '', '', ''],
+            correctAnswerIndex: null,
+            correctAnswer: '',
+            explanation: ''
+        };
+    }
+
+    // ── Sub-Question CRUD ──────────────────────────
+    addSubQuestion() {
+        if (this.currentDraft.subQuestions.length < 20) {
+            this.currentDraft.subQuestions.push(this.createEmptySubQuestion());
+        }
+    }
+
+    removeSubQuestion(index: number) {
+        if (this.currentDraft.subQuestions.length > 2) {
+            this.currentDraft.subQuestions.splice(index, 1);
+            this.validateStep2();
+        }
+    }
+
+    addSubQuestionOption(sqIndex: number) {
+        const sq = this.currentDraft.subQuestions[sqIndex];
+        if (sq && sq.options.length < 6) {
+            sq.options.push('');
+        }
+    }
+
+    removeSubQuestionOption(sqIndex: number, optIndex: number) {
+        const sq = this.currentDraft.subQuestions[sqIndex];
+        if (sq && sq.options.length > 2) {
+            sq.options.splice(optIndex, 1);
+            if (sq.correctAnswerIndex === optIndex) {
+                sq.correctAnswerIndex = null;
+                sq.correctAnswer = '';
+            } else if (sq.correctAnswerIndex !== null && sq.correctAnswerIndex > optIndex) {
+                sq.correctAnswerIndex--;
+            }
+            this.validateStep2();
+        }
+    }
+
+    selectSubQuestionCorrectAnswer(sqIndex: number, optIndex: number) {
+        const sq = this.currentDraft.subQuestions[sqIndex];
+        if (sq) {
+            sq.correctAnswerIndex = optIndex;
+            sq.correctAnswer = sq.options[optIndex];
+            this.validateStep2();
+        }
     }
 
     // ── Edit mode ─────────────────────────────────
@@ -168,8 +261,32 @@ export class QuestionWizardComponent implements OnInit {
                 }
             }
 
+            // Build sub-questions from API data
+            let subQuestions: SubQuestionDraft[] = [];
+            if (q.type === 6 && q.subQuestions && Array.isArray(q.subQuestions)) {
+                subQuestions = q.subQuestions.map((sq: any) => {
+                    let sqOptions = ['', '', '', ''];
+                    let sqCorrectIndex: number | null = null;
+                    try {
+                        const parsed = typeof sq.options === 'string' ? JSON.parse(sq.options) : sq.options;
+                        if (Array.isArray(parsed)) {
+                            sqOptions = parsed;
+                            sqCorrectIndex = parsed.indexOf(sq.correctAnswer);
+                            if (sqCorrectIndex === -1) sqCorrectIndex = null;
+                        }
+                    } catch { }
+                    return {
+                        text: sq.text || '',
+                        options: sqOptions,
+                        correctAnswerIndex: sqCorrectIndex,
+                        correctAnswer: sq.correctAnswer || '',
+                        explanation: sq.explanation || ''
+                    } as SubQuestionDraft;
+                });
+            }
+
             this.currentDraft = {
-                type: 1, // Always MCQ
+                type: q.type || 1,
                 grade: q.grade,
                 subject: q.subject,
                 difficulty: q.difficulty,
@@ -178,7 +295,10 @@ export class QuestionWizardComponent implements OnInit {
                 options,
                 correctAnswer: q.correctAnswer || '',
                 correctAnswerIndex,
-                mediaUrl: q.mediaUrl || ''
+                mediaUrl: q.mediaUrl || '',
+                passageText: q.passageText || '',
+                estimatedTimeMinutes: q.estimatedTimeMinutes || null,
+                subQuestions
             };
 
             this.stepValidity = [true, true, true, true];
@@ -256,17 +376,40 @@ export class QuestionWizardComponent implements OnInit {
     // ── Validation ────────────────────────────────
     validateStep1() {
         this.stepValidity[0] =
+            this.currentDraft.type !== null &&
             this.currentDraft.grade !== null &&
             this.currentDraft.subject !== null &&
             this.currentDraft.difficulty !== null;
     }
 
     validateStep2() {
-        const hasText = this.currentDraft.text.trim().length >= 10;
-        const validOptions = this.currentDraft.options.filter(o => o.trim()).length;
-        const hasAnswer = validOptions >= 2 && this.currentDraft.correctAnswerIndex !== null
-            && !!this.currentDraft.options[this.currentDraft.correctAnswerIndex]?.trim();
-        this.stepValidity[1] = hasText && hasAnswer;
+        if (this.isPassageType) {
+            // Passage validation
+            const hasText = this.currentDraft.text.trim().length >= 5;
+            const hasPassage = this.currentDraft.passageText.trim().length >= 100;
+            const hasSubs = this.currentDraft.subQuestions.length >= 2;
+
+            let allSubsValid = true;
+            for (const sq of this.currentDraft.subQuestions) {
+                const sqHasText = sq.text.trim().length >= 5;
+                const sqValidOpts = sq.options.filter(o => o.trim()).length >= 2;
+                const sqHasAnswer = sq.correctAnswerIndex !== null
+                    && !!sq.options[sq.correctAnswerIndex]?.trim();
+                if (!sqHasText || !sqValidOpts || !sqHasAnswer) {
+                    allSubsValid = false;
+                    break;
+                }
+            }
+
+            this.stepValidity[1] = hasText && hasPassage && hasSubs && allSubsValid;
+        } else {
+            // MCQ validation
+            const hasText = this.currentDraft.text.trim().length >= 10;
+            const validOptions = this.currentDraft.options.filter(o => o.trim()).length;
+            const hasAnswer = validOptions >= 2 && this.currentDraft.correctAnswerIndex !== null
+                && !!this.currentDraft.options[this.currentDraft.correctAnswerIndex]?.trim();
+            this.stepValidity[1] = hasText && hasAnswer;
+        }
     }
 
     onContentChange() {
@@ -279,12 +422,28 @@ export class QuestionWizardComponent implements OnInit {
 
     // ── Save ──────────────────────────────────────
     buildOptionsJson(): string | null {
+        if (this.isPassageType) return null;
         const validOptions = this.currentDraft.options.filter(o => o.trim());
         return validOptions.length >= 2 ? JSON.stringify(validOptions) : null;
     }
 
     buildCorrectAnswer(): string {
+        if (this.isPassageType) return '';
         return this.currentDraft.correctAnswer;
+    }
+
+    buildSubQuestionsPayload(): any[] | null {
+        if (!this.isPassageType) return null;
+        return this.currentDraft.subQuestions.map((sq, i) => {
+            const validOpts = sq.options.filter(o => o.trim());
+            return {
+                orderIndex: i + 1,
+                text: sq.text.trim(),
+                options: JSON.stringify(validOpts),
+                correctAnswer: sq.correctAnswer,
+                explanation: sq.explanation?.trim() || null
+            };
+        });
     }
 
     async saveCurrentQuestion() {
@@ -299,8 +458,15 @@ export class QuestionWizardComponent implements OnInit {
             testType: Number(this.currentDraft.testType) || 2,
             mediaUrl: this.currentDraft.mediaUrl?.trim() || null,
             options: this.buildOptionsJson(),
-            correctAnswer: this.buildCorrectAnswer()
+            correctAnswer: this.buildCorrectAnswer() || null
         };
+
+        // Add passage fields
+        if (this.isPassageType) {
+            payload.passageText = this.currentDraft.passageText;
+            payload.estimatedTimeMinutes = this.currentDraft.estimatedTimeMinutes;
+            payload.subQuestions = this.buildSubQuestionsPayload();
+        }
 
         try {
             if (this.isEditMode && this.editQuestionId) {
@@ -327,12 +493,20 @@ export class QuestionWizardComponent implements OnInit {
             const prevSubject = this.currentDraft.subject;
             const prevDifficulty = this.currentDraft.difficulty;
             const prevTestType = this.currentDraft.testType;
+            const prevType = this.currentDraft.type;
 
             this.currentDraft = this.createEmptyDraft();
             this.currentDraft.grade = prevGrade;
             this.currentDraft.subject = prevSubject;
             this.currentDraft.difficulty = prevDifficulty;
             this.currentDraft.testType = prevTestType;
+            this.currentDraft.type = prevType;
+
+            // If passage type, re-initialize sub-questions
+            if (prevType === 6) {
+                this.addSubQuestion();
+                this.addSubQuestion();
+            }
 
             // Skip to step 2 (content) since metadata is pre-filled
             this.currentStep = 2;

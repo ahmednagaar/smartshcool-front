@@ -3,132 +3,31 @@ import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { ApiService } from '../../services/api.service';
 
-interface Question {
+interface SubQuestion {
   id: number;
   text: string;
   options: string[];
   correctAnswer: string;
+}
+
+interface Question {
+  id: number;
+  text: string;
+  type: number;
+  options: string[];
+  correctAnswer: string;
   image?: string;
+  passageText?: string;
+  estimatedTimeMinutes?: number;
+  subQuestions?: SubQuestion[];
 }
 
 @Component({
   selector: 'app-traditional-quiz',
   standalone: true,
   imports: [CommonModule],
-  template: `
-    <div class="bg-v0-gradient min-h-screen p-4 overflow-hidden relative">
-      <!-- Success/Celebration Overlay -->
-      <div *ngIf="showCelebration" class="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm animate-in fade-in duration-300">
-        <div class="success-overlay pop-in p-12 text-center bg-white rounded-3xl shadow-2xl border-4 border-green-400 max-w-sm w-full mx-4">
-          <div class="success-emoji text-8xl mb-6 animate-bounce">{{ feedbackEmoji }}</div>
-          <h2 class="text-4xl font-black text-green-600 mb-4 font-handicrafts animate-pulse">{{ feedbackMessage }}</h2>
-          <button (click)="nextQuestion()" class="btn-primary w-full text-xl py-4 shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all">
-            {{ currentQuestionIndex < questions.length - 1 ? 'السؤال التالي ←' : 'عرض النتيجة 🏁' }}
-          </button>
-        </div>
-        <!-- Confetti pieces (CSS driven) -->
-        <div class="confetti-piece" style="left: 10%; animation-delay: 0s; background: #FFD700;"></div>
-        <div class="confetti-piece" style="left: 20%; animation-delay: 0.2s; background: #FF6347;"></div>
-        <div class="confetti-piece" style="left: 30%; animation-delay: 0.4s; background: #32CD32;"></div>
-        <div class="confetti-piece" style="left: 50%; animation-delay: 0.1s; background: #1E90FF;"></div>
-        <div class="confetti-piece" style="left: 70%; animation-delay: 0.3s; background: #FF69B4;"></div>
-        <div class="confetti-piece" style="left: 85%; animation-delay: 0.5s; background: #FFA500;"></div>
-      </div>
-
-      <div class="container max-w-4xl py-8">
-        <!-- Header with progress -->
-        <div class="mb-8">
-          <div class="flex justify-between items-center mb-4">
-            <button (click)="exitQuiz()" class="btn-ghost">
-              <span>✕</span>
-              خروج
-            </button>
-            <div class="text-center">
-              <span class="text-muted">السؤال</span>
-              <span class="text-2xl font-bold text-foreground mx-2">{{ currentQuestionIndex + 1 }}</span>
-              <span class="text-muted">من {{ questions.length }}</span>
-            </div>
-            <div class="text-left">
-              <span class="text-muted">النتيجة:</span>
-              <span class="text-2xl font-bold text-primary mx-2">{{ score }}</span>
-            </div>
-          </div>
-          
-          <!-- Progress Bar -->
-          <div class="bg-gray-200 rounded-full h-3 overflow-hidden">
-            <div 
-              class="bg-primary h-full rounded-full transition-all duration-300"
-              [style.width.%]="((currentQuestionIndex + 1) / questions.length) * 100"
-            ></div>
-          </div>
-        </div>
-
-        <!-- Question Card -->
-        <div class="card-v0 p-8 transform transition-all duration-500" *ngIf="currentQuestion">
-          <!-- Question Image (if any) -->
-          <div *ngIf="currentQuestion.image" class="mb-6 text-center">
-            <img 
-              [src]="currentQuestion.image" 
-              alt="صورة السؤال"
-              class="max-w-full h-auto mx-auto rounded-lg shadow-md max-h-64 object-contain"
-            />
-          </div>
-
-          <!-- Question Text -->
-          <h2 class="text-2xl md:text-3xl font-bold text-foreground text-center mb-8 leading-relaxed">
-            {{ currentQuestion.text }}
-          </h2>
-
-          <!-- Answer Options -->
-          <div class="grid gap-4">
-            <button
-              *ngFor="let option of currentQuestion.options; let i = index"
-              (click)="selectAnswer(option)"
-              [disabled]="answered"
-              class="p-6 text-xl font-bold rounded-xl border-2 transition-all text-right group relative overflow-hidden"
-              [ngClass]="{
-                'border-gray-200 hover:border-primary hover:bg-primary/5 hover:scale-[1.02] hover:shadow-md': !answered,
-                'border-green-500 bg-green-50 text-green-700': answered && option === currentQuestion.correctAnswer,
-                'border-red-500 bg-red-50 text-red-700 shake': answered && selectedAnswer === option && option !== currentQuestion.correctAnswer,
-                'border-gray-200 opacity-50': answered && selectedAnswer !== option && option !== currentQuestion.correctAnswer
-              }"
-            >
-              <span class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-gray-100 text-gray-600 ml-4 group-hover:bg-primary group-hover:text-white transition-colors">
-                {{ getOptionLabel(i) }}
-              </span>
-              {{ option }}
-              
-              <!-- Correct/Wrong Icons -->
-              <span *ngIf="answered && option === currentQuestion.correctAnswer" class="absolute left-6 top-1/2 -translate-y-1/2 text-2xl animate-pulse">✅</span>
-              <span *ngIf="answered && selectedAnswer === option && option !== currentQuestion.correctAnswer" class="absolute left-6 top-1/2 -translate-y-1/2 text-2xl">❌</span>
-            </button>
-          </div>
-
-          <!-- Feedback Message (Only for Wrong Answer now, Correct shows Overlay) -->
-          <div *ngIf="answered && !isCorrect" class="mt-8 text-center animate-in fade-in slide-in-from-bottom-4">
-            <div class="p-6 rounded-2xl bg-red-50 border-2 border-red-200 shadow-sm">
-              <div class="text-4xl mb-2">💪</div>
-              <h3 class="text-xl font-bold text-red-800 mb-2">لا بأس! حاول مرة أخرى</h3>
-              <p class="text-red-600">الإجابة الصحيحة هي: <span class="font-bold">{{ currentQuestion.correctAnswer }}</span></p>
-            </div>
-
-            <button
-              (click)="nextQuestion()"
-              class="btn-primary mt-6 px-12 py-4 text-xl shadow-lg hover:shadow-xl hover:-translate-y-1 transition-transform"
-            >
-              {{ currentQuestionIndex < questions.length - 1 ? 'السؤال التالي ←' : 'عرض النتيجة' }}
-            </button>
-          </div>
-        </div>
-
-        <!-- Loading State -->
-        <div *ngIf="loading" class="card-v0 p-16 text-center">
-          <div class="text-6xl mb-4 animate-spin-slow">⏳</div>
-          <p class="text-xl text-muted">جاري تحميل الأسئلة...</p>
-        </div>
-      </div>
-    </div>
-  `
+  templateUrl: './traditional-quiz.component.html',
+  styleUrls: ['./traditional-quiz.component.css']
 })
 export class TraditionalQuizComponent implements OnInit {
   questions: Question[] = [];
@@ -138,9 +37,13 @@ export class TraditionalQuizComponent implements OnInit {
   selectedAnswer = '';
   isCorrect = false;
   loading = true;
-  showCelebration = false; // New property
+  showCelebration = false;
   feedbackMessage = '';
   feedbackEmoji = '';
+
+  // Passage state
+  currentSubQuestionIndex = 0;
+  subQuestionAnswers: Map<number, { answer: string; correct: boolean }> = new Map();
 
   constructor(
     private router: Router,
@@ -149,6 +52,51 @@ export class TraditionalQuizComponent implements OnInit {
 
   get currentQuestion(): Question | null {
     return this.questions[this.currentQuestionIndex] || null;
+  }
+
+  get isPassageQuestion(): boolean {
+    return this.currentQuestion?.type === 6;
+  }
+
+  get currentSubQuestion(): SubQuestion | null {
+    if (!this.isPassageQuestion || !this.currentQuestion?.subQuestions) return null;
+    return this.currentQuestion.subQuestions[this.currentSubQuestionIndex] || null;
+  }
+
+  get totalSubQuestions(): number {
+    return this.currentQuestion?.subQuestions?.length || 0;
+  }
+
+  get totalQuestionCount(): number {
+    let count = 0;
+    for (const q of this.questions) {
+      if (q.type === 6 && q.subQuestions) {
+        count += q.subQuestions.length;
+      } else {
+        count++;
+      }
+    }
+    return count;
+  }
+
+  get answeredCount(): number {
+    let count = 0;
+    for (let i = 0; i < this.currentQuestionIndex; i++) {
+      const q = this.questions[i];
+      if (q.type === 6 && q.subQuestions) {
+        count += q.subQuestions.length;
+      } else {
+        count++;
+      }
+    }
+    // Add current passage answered subs
+    if (this.isPassageQuestion) {
+      count += this.currentSubQuestionIndex;
+      if (this.answered) count++;
+    } else {
+      if (this.answered) count++;
+    }
+    return count;
   }
 
   ngOnInit() {
@@ -176,16 +124,32 @@ export class TraditionalQuizComponent implements OnInit {
     this.loading = true;
     this.api.getFilteredQuestions(grade, subject, testType).subscribe({
       next: (response: any) => {
-        // Handle both array and paginated response
         const questionsList = Array.isArray(response) ? response : (response.data || response.items || []);
 
-        this.questions = questionsList.map((q: any) => ({
-          id: q.id,
-          text: q.text,
-          options: typeof q.options === 'string' ? JSON.parse(q.options) : q.options,
-          correctAnswer: q.correctAnswer,
-          image: q.mediaUrl
-        }));
+        this.questions = questionsList.map((q: any) => {
+          const mapped: Question = {
+            id: q.id,
+            text: q.text,
+            type: q.type || 1,
+            options: q.type === 6 ? [] : (typeof q.options === 'string' ? JSON.parse(q.options) : (q.options || [])),
+            correctAnswer: q.correctAnswer || '',
+            image: q.mediaUrl,
+            passageText: q.passageText,
+            estimatedTimeMinutes: q.estimatedTimeMinutes
+          };
+
+          // Map sub-questions for passage type
+          if (q.type === 6 && q.subQuestions && Array.isArray(q.subQuestions)) {
+            mapped.subQuestions = q.subQuestions.map((sq: any) => ({
+              id: sq.id,
+              text: sq.text,
+              options: typeof sq.options === 'string' ? JSON.parse(sq.options) : (sq.options || []),
+              correctAnswer: sq.correctAnswer
+            }));
+          }
+
+          return mapped;
+        });
         this.loading = false;
       },
       error: (err) => {
@@ -196,7 +160,7 @@ export class TraditionalQuizComponent implements OnInit {
   }
 
   getOptionLabel(index: number): string {
-    return ['أ', 'ب', 'ج', 'د'][index] || '';
+    return ['أ', 'ب', 'ج', 'د', 'هـ', 'و'][index] || '';
   }
 
   selectAnswer(answer: string) {
@@ -204,18 +168,25 @@ export class TraditionalQuizComponent implements OnInit {
 
     this.selectedAnswer = answer;
     this.answered = true;
-    this.isCorrect = answer === this.currentQuestion?.correctAnswer;
+
+    if (this.isPassageQuestion && this.currentSubQuestion) {
+      this.isCorrect = answer === this.currentSubQuestion.correctAnswer;
+      // Store sub-question answer
+      this.subQuestionAnswers.set(this.currentSubQuestionIndex, {
+        answer,
+        correct: this.isCorrect
+      });
+    } else {
+      this.isCorrect = answer === this.currentQuestion?.correctAnswer;
+    }
 
     if (this.isCorrect) {
       this.score++;
       this.triggerCelebration();
-    } else {
-      // Just show the inline feedback for wrong answer
     }
   }
 
   triggerCelebration() {
-    // Pick random encouraging message
     const messages = ['ممتاز!', 'أنت بطل! 🏆', 'إجابة رائعة!', 'ذكاء خارق! 🧠', 'استمر يا بطل!'];
     const emojis = ['🌟', '👏', '🎉', '🚀', '💎'];
 
@@ -224,16 +195,43 @@ export class TraditionalQuizComponent implements OnInit {
     this.showCelebration = true;
   }
 
+  get currentCorrectAnswer(): string {
+    if (this.isPassageQuestion && this.currentSubQuestion) {
+      return this.currentSubQuestion.correctAnswer;
+    }
+    return this.currentQuestion?.correctAnswer || '';
+  }
+
+  get isLastQuestion(): boolean {
+    if (this.isPassageQuestion) {
+      // Last sub-question of last question
+      return this.currentQuestionIndex >= this.questions.length - 1
+        && this.currentSubQuestionIndex >= this.totalSubQuestions - 1;
+    }
+    return this.currentQuestionIndex >= this.questions.length - 1;
+  }
+
   nextQuestion() {
-    this.showCelebration = false; // Hide overlay
-    if (this.currentQuestionIndex < this.questions.length - 1) {
+    this.showCelebration = false;
+
+    if (this.isPassageQuestion && this.currentSubQuestionIndex < this.totalSubQuestions - 1) {
+      // Next sub-question
+      this.currentSubQuestionIndex++;
+      this.answered = false;
+      this.selectedAnswer = '';
+      this.isCorrect = false;
+    } else if (this.currentQuestionIndex < this.questions.length - 1) {
+      // Next main question
       this.currentQuestionIndex++;
+      this.currentSubQuestionIndex = 0;
+      this.subQuestionAnswers.clear();
       this.answered = false;
       this.selectedAnswer = '';
       this.isCorrect = false;
     } else {
+      // Quiz finished
       sessionStorage.setItem('quizScore', this.score.toString());
-      sessionStorage.setItem('quizTotal', this.questions.length.toString());
+      sessionStorage.setItem('quizTotal', this.totalQuestionCount.toString());
       this.router.navigate(['/result']);
     }
   }

@@ -1,4 +1,4 @@
-<!-- Question Wizard - Full Page (MCQ Only) -->
+<!-- Question Wizard - Full Page (MCQ + Passage) -->
 <div class="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50" dir="rtl">
 
     <!-- ═══════════ TOP BAR ═══════════ -->
@@ -56,11 +56,30 @@
         <div *ngIf="currentStep === 1" class="animate-fadeIn">
             <div class="text-center mb-8">
                 <h2 class="text-2xl font-bold text-gray-800 mb-2">تفاصيل السؤال</h2>
-                <p class="text-gray-500">حدد المادة والصف ومستوى الصعوبة</p>
+                <p class="text-gray-500">حدد نوع السؤال والمادة والصف ومستوى الصعوبة</p>
             </div>
 
             <div class="max-w-2xl mx-auto bg-white rounded-2xl p-8 shadow-sm border border-gray-100">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                    <!-- Question Type -->
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-bold text-gray-700 mb-2">نوع السؤال *</label>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <button *ngFor="let qt of questionTypes" (click)="selectType(qt.value)"
+                                class="p-4 rounded-xl border-2 text-right transition-all" [ngClass]="currentDraft.type === qt.value
+                        ? 'border-blue-500 bg-blue-50 shadow-md'
+                        : 'border-gray-200 hover:border-blue-300'">
+                                <div class="flex items-center gap-3">
+                                    <span class="text-2xl">{{ qt.icon }}</span>
+                                    <div>
+                                        <div class="font-bold text-gray-800">{{ qt.label }}</div>
+                                        <div class="text-xs text-gray-500 mt-0.5">{{ qt.description }}</div>
+                                    </div>
+                                </div>
+                            </button>
+                        </div>
+                    </div>
 
                     <!-- Grade -->
                     <div>
@@ -140,104 +159,228 @@
         <!-- ╚══════════════════════════════════╝ -->
         <div *ngIf="currentStep === 2" class="animate-fadeIn">
             <div class="text-center mb-8">
-                <h2 class="text-2xl font-bold text-gray-800 mb-2">اكتب السؤال والإجابات</h2>
-                <p class="text-gray-500">اكتب نص السؤال ثم حدد الإجابة الصحيحة</p>
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">
+                    {{ isPassageType ? 'أنشئ القطعة والأسئلة الفرعية' : 'اكتب السؤال والإجابات' }}
+                </h2>
+                <p class="text-gray-500">
+                    {{ isPassageType ? 'أدخل نص القطعة ثم أضف الأسئلة الفرعية' : 'اكتب نص السؤال ثم حدد الإجابة الصحيحة'
+                    }}
+                </p>
             </div>
 
             <div class="max-w-3xl mx-auto bg-white rounded-2xl p-8 shadow-sm border border-gray-100">
 
-                <!-- Question Text -->
+                <!-- Question Title/Text -->
                 <div class="mb-6">
                     <div class="flex items-center justify-between mb-2">
-                        <label class="text-sm font-bold text-gray-700">نص السؤال *</label>
+                        <label class="text-sm font-bold text-gray-700">
+                            {{ isPassageType ? 'عنوان القطعة *' : 'نص السؤال *' }}
+                        </label>
                         <span class="text-xs"
-                            [ngClass]="currentDraft.text.length >= 10 ? 'text-green-500' : 'text-gray-400'">
+                            [ngClass]="currentDraft.text.length >= (isPassageType ? 5 : 10) ? 'text-green-500' : 'text-gray-400'">
                             {{ currentDraft.text.length }}/500 حرف
                         </span>
                     </div>
-                    <textarea [(ngModel)]="currentDraft.text" (ngModelChange)="onContentChange()" rows="3"
-                        maxlength="500" placeholder="اكتب نص السؤال هنا..."
+                    <textarea [(ngModel)]="currentDraft.text" (ngModelChange)="onContentChange()" rows="2"
+                        maxlength="500"
+                        [placeholder]="isPassageType ? 'عنوان مختصر للقطعة (مثلاً: قراءة عن الشجرة)' : 'اكتب نص السؤال هنا...'"
                         class="w-full p-4 border-2 border-gray-200 rounded-xl text-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition resize-none"></textarea>
-                    <p *ngIf="currentDraft.text.length > 0 && currentDraft.text.length < 10"
-                        class="text-xs text-red-500 mt-1">
-                        الحد الأدنى: 10 أحرف ({{ 10 - currentDraft.text.length }} أحرف إضافية مطلوبة)
-                    </p>
                 </div>
 
-                <!-- Media URL (optional) -->
-                <div class="mb-6">
-                    <div class="flex items-center gap-2 mb-2">
-                        <label class="text-sm font-bold text-gray-700">رابط الصورة أو الوسائط</label>
-                        <span class="text-xs text-gray-400">(اختياري)</span>
-                    </div>
-                    <input [(ngModel)]="currentDraft.mediaUrl" type="url" placeholder="https://example.com/image.jpg"
-                        class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition text-sm"
-                        dir="ltr">
-                </div>
-
-                <hr class="my-6 border-gray-100">
-
-                <!-- ═══ MCQ BUILDER ═══ -->
-                <div>
-                    <div class="flex items-center justify-between mb-4">
-                        <div>
-                            <h3 class="text-sm font-bold text-gray-700">خيارات الإجابة *</h3>
-                            <p class="text-xs text-gray-400 mt-0.5">اختر الإجابة الصحيحة بالنقر على الدائرة</p>
+                <!-- ═══════════ PASSAGE BUILDER ═══════════ -->
+                <ng-container *ngIf="isPassageType">
+                    <!-- Passage Text -->
+                    <div class="mb-6">
+                        <div class="flex items-center justify-between mb-2">
+                            <label class="text-sm font-bold text-gray-700">📄 نص القطعة *</label>
+                            <span class="text-xs"
+                                [ngClass]="currentDraft.passageText.length >= 100 ? 'text-green-500' : 'text-red-400'">
+                                {{ currentDraft.passageText.length }} حرف (الحد الأدنى 100)
+                            </span>
                         </div>
+                        <textarea [(ngModel)]="currentDraft.passageText" (ngModelChange)="onContentChange()" rows="8"
+                            maxlength="50000" placeholder="أدخل نص القطعة هنا... يمكنك كتابة فقرات متعددة..."
+                            class="w-full p-4 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition resize-y text-base leading-relaxed"
+                            dir="rtl"></textarea>
+                        <p *ngIf="currentDraft.passageText.length > 0 && currentDraft.passageText.length < 100"
+                            class="text-xs text-red-500 mt-1">
+                            يلزم {{ 100 - currentDraft.passageText.length }} حرف إضافي على الأقل
+                        </p>
                     </div>
 
-                    <div class="space-y-3">
-                        <div *ngFor="let option of currentDraft.options; let i = index; trackBy: trackByIndex"
-                            class="flex items-center gap-3 group">
-                            <!-- Radio button -->
-                            <button (click)="selectCorrectOption(i)"
-                                class="w-8 h-8 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all"
-                                [ngClass]="currentDraft.correctAnswerIndex === i
+                    <!-- Estimated Time -->
+                    <div class="mb-6">
+                        <label class="text-sm font-bold text-gray-700 mb-2 block">⏰ الوقت المقدر (بالدقائق)</label>
+                        <input [(ngModel)]="currentDraft.estimatedTimeMinutes" type="number" min="1" max="120"
+                            placeholder="مثلاً: 10"
+                            class="w-32 p-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition text-center text-lg font-bold">
+                    </div>
+
+                    <hr class="my-6 border-gray-200">
+
+                    <!-- Sub-Questions -->
+                    <div>
+                        <div class="flex items-center justify-between mb-4">
+                            <div>
+                                <h3 class="text-sm font-bold text-gray-700">📝 الأسئلة الفرعية *</h3>
+                                <p class="text-xs text-gray-400 mt-0.5">أضف من 2 إلى 20 سؤال فرعي للقطعة</p>
+                            </div>
+                            <span class="text-xs font-bold px-3 py-1 rounded-full"
+                                [ngClass]="currentDraft.subQuestions.length >= 2 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'">
+                                {{ currentDraft.subQuestions.length }} / 20
+                            </span>
+                        </div>
+
+                        <div class="space-y-6">
+                            <div *ngFor="let sq of currentDraft.subQuestions; let si = index; trackBy: trackByIndex"
+                                class="bg-gray-50 rounded-xl p-5 border border-gray-200 relative">
+
+                                <!-- Sub-question header -->
+                                <div class="flex items-center justify-between mb-3">
+                                    <span class="font-bold text-sm text-gray-700">
+                                        السؤال الفرعي {{ si + 1 }}
+                                    </span>
+                                    <button *ngIf="currentDraft.subQuestions.length > 2" (click)="removeSubQuestion(si)"
+                                        class="text-red-400 hover:text-red-600 transition p-1">
+                                        <lucide-icon name="trash" [size]="16"></lucide-icon>
+                                    </button>
+                                </div>
+
+                                <!-- Sub-question text -->
+                                <div class="mb-3">
+                                    <textarea [(ngModel)]="sq.text" (ngModelChange)="onContentChange()" rows="2"
+                                        maxlength="1000" [placeholder]="'اكتب نص السؤال الفرعي ' + (si + 1) + '...'"
+                                        class="w-full p-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition resize-none text-sm"></textarea>
+                                </div>
+
+                                <!-- Sub-question options -->
+                                <div class="space-y-2">
+                                    <div *ngFor="let opt of sq.options; let oi = index; trackBy: trackByIndex"
+                                        class="flex items-center gap-2 group">
+                                        <!-- Radio -->
+                                        <button (click)="selectSubQuestionCorrectAnswer(si, oi)"
+                                            class="w-7 h-7 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all"
+                                            [ngClass]="sq.correctAnswerIndex === oi
+                                    ? 'border-green-500 bg-green-500 text-white'
+                                    : 'border-gray-300 hover:border-green-400'">
+                                            <lucide-icon *ngIf="sq.correctAnswerIndex === oi" name="check"
+                                                [size]="12"></lucide-icon>
+                                        </button>
+                                        <!-- Label -->
+                                        <span
+                                            class="w-6 h-6 rounded flex items-center justify-center text-xs font-bold flex-shrink-0"
+                                            [ngClass]="sq.correctAnswerIndex === oi ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-400'">
+                                            {{ getOptionLabel(oi) }}
+                                        </span>
+                                        <!-- Input -->
+                                        <input [(ngModel)]="sq.options[oi]" (ngModelChange)="onContentChange()"
+                                            [placeholder]="'الخيار ' + getOptionLabel(oi)"
+                                            class="flex-1 p-2 border rounded-lg text-sm transition-all" [ngClass]="sq.correctAnswerIndex === oi
+                                   ? 'border-green-300 bg-green-50'
+                                   : 'border-gray-200 focus:border-blue-500'">
+                                        <!-- Remove -->
+                                        <button *ngIf="sq.options.length > 2" (click)="removeSubQuestionOption(si, oi)"
+                                            class="p-1 text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition">
+                                            <lucide-icon name="x" [size]="14"></lucide-icon>
+                                        </button>
+                                    </div>
+                                </div>
+                                <!-- Add option -->
+                                <button *ngIf="sq.options.length < 6" (click)="addSubQuestionOption(si)"
+                                    class="mt-2 text-blue-500 hover:text-blue-700 text-xs font-medium flex items-center gap-1">
+                                    <lucide-icon name="plus" [size]="12"></lucide-icon>
+                                    إضافة خيار
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Add sub-question button -->
+                        <button *ngIf="currentDraft.subQuestions.length < 20" (click)="addSubQuestion()"
+                            class="mt-4 w-full p-3 border-2 border-dashed border-blue-300 rounded-xl text-blue-600 hover:bg-blue-50 transition font-medium text-sm flex items-center justify-center gap-2">
+                            <lucide-icon name="plus" [size]="16"></lucide-icon>
+                            إضافة سؤال فرعي جديد
+                        </button>
+                    </div>
+                </ng-container>
+
+                <!-- ═══════════ MCQ BUILDER ═══════════ -->
+                <ng-container *ngIf="!isPassageType">
+                    <!-- Media URL (optional) -->
+                    <div class="mb-6">
+                        <div class="flex items-center gap-2 mb-2">
+                            <label class="text-sm font-bold text-gray-700">رابط الصورة أو الوسائط</label>
+                            <span class="text-xs text-gray-400">(اختياري)</span>
+                        </div>
+                        <input [(ngModel)]="currentDraft.mediaUrl" type="url"
+                            placeholder="https://example.com/image.jpg"
+                            class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition text-sm"
+                            dir="ltr">
+                    </div>
+
+                    <hr class="my-6 border-gray-100">
+
+                    <!-- MCQ Options -->
+                    <div>
+                        <div class="flex items-center justify-between mb-4">
+                            <div>
+                                <h3 class="text-sm font-bold text-gray-700">خيارات الإجابة *</h3>
+                                <p class="text-xs text-gray-400 mt-0.5">اختر الإجابة الصحيحة بالنقر على الدائرة</p>
+                            </div>
+                        </div>
+
+                        <div class="space-y-3">
+                            <div *ngFor="let option of currentDraft.options; let i = index; trackBy: trackByIndex"
+                                class="flex items-center gap-3 group">
+                                <!-- Radio button -->
+                                <button (click)="selectCorrectOption(i)"
+                                    class="w-8 h-8 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all"
+                                    [ngClass]="currentDraft.correctAnswerIndex === i
                         ? 'border-green-500 bg-green-500 text-white'
                         : 'border-gray-300 hover:border-green-400'">
-                                <lucide-icon *ngIf="currentDraft.correctAnswerIndex === i" name="check"
-                                    [size]="14"></lucide-icon>
-                            </button>
-                            <!-- Option label -->
-                            <span
-                                class="w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold flex-shrink-0"
-                                [ngClass]="currentDraft.correctAnswerIndex === i
+                                    <lucide-icon *ngIf="currentDraft.correctAnswerIndex === i" name="check"
+                                        [size]="14"></lucide-icon>
+                                </button>
+                                <!-- Option label -->
+                                <span
+                                    class="w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold flex-shrink-0"
+                                    [ngClass]="currentDraft.correctAnswerIndex === i
                       ? 'bg-green-100 text-green-700'
                       : 'bg-gray-100 text-gray-500'">
-                                {{ getOptionLabel(i) }}
-                            </span>
-                            <!-- Option input -->
-                            <input [(ngModel)]="currentDraft.options[i]" (ngModelChange)="onContentChange()"
-                                [placeholder]="'الخيار ' + getOptionLabel(i)"
-                                class="flex-1 p-3 border-2 rounded-xl transition-all" [ngClass]="currentDraft.correctAnswerIndex === i
+                                    {{ getOptionLabel(i) }}
+                                </span>
+                                <!-- Option input -->
+                                <input [(ngModel)]="currentDraft.options[i]" (ngModelChange)="onContentChange()"
+                                    [placeholder]="'الخيار ' + getOptionLabel(i)"
+                                    class="flex-1 p-3 border-2 rounded-xl transition-all" [ngClass]="currentDraft.correctAnswerIndex === i
                        ? 'border-green-300 bg-green-50'
                        : 'border-gray-200 focus:border-blue-500'">
-                            <!-- Remove button -->
-                            <button *ngIf="currentDraft.options.length > 2" (click)="removeOption(i)"
-                                class="p-2 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition">
-                                <lucide-icon name="trash" [size]="16"></lucide-icon>
-                            </button>
+                                <!-- Remove button -->
+                                <button *ngIf="currentDraft.options.length > 2" (click)="removeOption(i)"
+                                    class="p-2 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition">
+                                    <lucide-icon name="trash" [size]="16"></lucide-icon>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Add option -->
+                        <button *ngIf="currentDraft.options.length < 6" (click)="addOption()"
+                            class="mt-3 flex items-center gap-2 text-blue-600 hover:text-blue-800 text-sm font-medium transition">
+                            <lucide-icon name="plus" [size]="16"></lucide-icon>
+                            إضافة خيار آخر
+                        </button>
+
+                        <!-- Correct answer feedback -->
+                        <div *ngIf="currentDraft.correctAnswerIndex !== null && currentDraft.options[currentDraft.correctAnswerIndex]?.trim()"
+                            class="mt-4 p-3 bg-green-50 border border-green-200 rounded-xl text-green-700 text-sm flex items-center gap-2">
+                            ✅ الإجابة الصحيحة:
+                            <strong>{{ currentDraft.options[currentDraft.correctAnswerIndex] }}</strong>
+                        </div>
+                        <div *ngIf="currentDraft.correctAnswerIndex === null && currentDraft.options.some(isNonEmpty)"
+                            class="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-xl text-yellow-700 text-sm">
+                            ⚠️ يرجى النقر على الدائرة بجانب الإجابة الصحيحة
                         </div>
                     </div>
-
-                    <!-- Add option -->
-                    <button *ngIf="currentDraft.options.length < 6" (click)="addOption()"
-                        class="mt-3 flex items-center gap-2 text-blue-600 hover:text-blue-800 text-sm font-medium transition">
-                        <lucide-icon name="plus" [size]="16"></lucide-icon>
-                        إضافة خيار آخر
-                    </button>
-
-                    <!-- Correct answer feedback -->
-                    <div *ngIf="currentDraft.correctAnswerIndex !== null && currentDraft.options[currentDraft.correctAnswerIndex]?.trim()"
-                        class="mt-4 p-3 bg-green-50 border border-green-200 rounded-xl text-green-700 text-sm flex items-center gap-2">
-                        ✅ الإجابة الصحيحة:
-                        <strong>{{ currentDraft.options[currentDraft.correctAnswerIndex] }}</strong>
-                    </div>
-                    <div *ngIf="currentDraft.correctAnswerIndex === null && currentDraft.options.some(isNonEmpty)"
-                        class="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-xl text-yellow-700 text-sm">
-                        ⚠️ يرجى النقر على الدائرة بجانب الإجابة الصحيحة
-                    </div>
-                </div>
+                </ng-container>
             </div>
 
             <!-- Nav buttons -->
@@ -280,39 +423,79 @@
                     <span class="bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-sm font-medium">
                         {{ getTypeLabel(currentDraft.type) }}
                     </span>
+                    <span *ngIf="isPassageType && currentDraft.estimatedTimeMinutes"
+                        class="bg-cyan-100 text-cyan-700 px-3 py-1 rounded-full text-sm font-medium">
+                        ⏰ {{ currentDraft.estimatedTimeMinutes }} دقيقة
+                    </span>
                 </div>
 
                 <!-- Preview Card -->
                 <div class="bg-white rounded-2xl p-8 shadow-lg border border-gray-100">
-                    <!-- Question text -->
-                    <div class="text-xl font-bold text-gray-800 mb-6 leading-relaxed text-center">
+                    <!-- Question title text -->
+                    <div class="text-xl font-bold text-gray-800 mb-4 leading-relaxed text-center">
                         {{ currentDraft.text }}
                     </div>
 
-                    <!-- Media preview -->
-                    <div *ngIf="currentDraft.mediaUrl" class="mb-6 text-center">
-                        <img [src]="currentDraft.mediaUrl" alt="وسائط السؤال"
-                            class="max-h-48 mx-auto rounded-xl border border-gray-200"
-                            (error)="currentDraft.mediaUrl = ''">
-                    </div>
+                    <!-- PASSAGE PREVIEW -->
+                    <ng-container *ngIf="isPassageType">
+                        <!-- Passage text box -->
+                        <div class="bg-blue-50 border border-blue-200 rounded-xl p-6 mb-6 max-h-64 overflow-y-auto text-base leading-relaxed text-gray-700"
+                            dir="rtl">
+                            <div class="whitespace-pre-wrap">{{ currentDraft.passageText }}</div>
+                        </div>
 
-                    <!-- MCQ Preview -->
-                    <div class="space-y-3">
-                        <div *ngFor="let option of currentDraft.options; let i = index"
-                            class="p-4 rounded-xl border-2 flex items-center gap-3" [ngClass]="currentDraft.correctAnswerIndex === i
+                        <!-- Sub-questions list -->
+                        <div class="space-y-4">
+                            <div *ngFor="let sq of currentDraft.subQuestions; let si = index"
+                                class="bg-gray-50 rounded-xl p-4 border border-gray-200">
+                                <div class="font-bold text-sm text-gray-700 mb-3">
+                                    السؤال {{ si + 1 }}: {{ sq.text }}
+                                </div>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <div *ngFor="let opt of sq.options; let oi = index"
+                                        class="p-2 rounded-lg border text-sm flex items-center gap-2" [ngClass]="sq.correctAnswerIndex === oi
+                                ? 'border-green-400 bg-green-50 font-bold text-green-700'
+                                : 'border-gray-200 text-gray-600'">
+                                        <span class="w-5 h-5 rounded flex items-center justify-center text-xs font-bold"
+                                            [ngClass]="sq.correctAnswerIndex === oi ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-500'">
+                                            {{ getOptionLabel(oi) }}
+                                        </span>
+                                        {{ opt }}
+                                        <span *ngIf="sq.correctAnswerIndex === oi"
+                                            class="text-green-600 mr-auto text-xs">✅</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </ng-container>
+
+                    <!-- MCQ PREVIEW -->
+                    <ng-container *ngIf="!isPassageType">
+                        <!-- Media preview -->
+                        <div *ngIf="currentDraft.mediaUrl" class="mb-6 text-center">
+                            <img [src]="currentDraft.mediaUrl" alt="وسائط السؤال"
+                                class="max-h-48 mx-auto rounded-xl border border-gray-200"
+                                (error)="currentDraft.mediaUrl = ''">
+                        </div>
+
+                        <!-- MCQ Preview -->
+                        <div class="space-y-3">
+                            <div *ngFor="let option of currentDraft.options; let i = index"
+                                class="p-4 rounded-xl border-2 flex items-center gap-3" [ngClass]="currentDraft.correctAnswerIndex === i
                    ? 'border-green-400 bg-green-50'
                    : 'border-gray-200'">
-                            <span class="w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold"
-                                [ngClass]="currentDraft.correctAnswerIndex === i
+                                <span class="w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold"
+                                    [ngClass]="currentDraft.correctAnswerIndex === i
                       ? 'bg-green-500 text-white'
                       : 'bg-gray-100 text-gray-500'">
-                                {{ getOptionLabel(i) }}
-                            </span>
-                            <span class="flex-1 text-gray-700">{{ option }}</span>
-                            <span *ngIf="currentDraft.correctAnswerIndex === i"
-                                class="text-green-600 text-sm font-medium">✅ الإجابة الصحيحة</span>
+                                    {{ getOptionLabel(i) }}
+                                </span>
+                                <span class="flex-1 text-gray-700">{{ option }}</span>
+                                <span *ngIf="currentDraft.correctAnswerIndex === i"
+                                    class="text-green-600 text-sm font-medium">✅ الإجابة الصحيحة</span>
+                            </div>
                         </div>
-                    </div>
+                    </ng-container>
                 </div>
 
                 <!-- Edit hint -->
