@@ -4,9 +4,65 @@
     <!-- Decorative Sparkles Background -->
     <div class="sparkles-bg"></div>
 
+    <!-- Confetti Overlay (Phase 2 - E4) -->
+    <div *ngIf="showConfetti" class="confetti-container">
+        <div *ngFor="let piece of confettiPieces" class="confetti-piece" [style.left.%]="piece.left"
+            [style.animationDelay.s]="piece.delay" [style.backgroundColor]="piece.color"
+            [style.transform]="'rotate(' + piece.rotation + 'deg)'">
+        </div>
+    </div>
+
+    <!-- Streak Badge (Phase 2) -->
+    <div *ngIf="showStreakBadge" class="streak-badge">
+        🔥 {{ streak }}x سلسلة! <span class="streak-bonus">+{{ (streak - 2) * 5 }}</span>
+    </div>
+
+    <!-- Card Preview Overlay (Phase 3 - P2) -->
+    <div *ngIf="isPreviewPhase" class="preview-overlay">
+        <div class="preview-badge">
+            <span class="preview-icon">👀</span>
+            <span class="preview-text">احفظ مواقع البطاقات!</span>
+            <span class="preview-countdown">{{ previewCountdown }}</span>
+        </div>
+    </div>
+
+    <!-- Pair Explanation Modal (Phase 3 - P3) -->
+    <div *ngIf="showExplanation" class="explanation-toast" (click)="dismissExplanation()">
+        <div class="explanation-icon">💡</div>
+        <div class="explanation-body">
+            <span class="explanation-pair">{{ explanationPairText }}</span>
+            <p class="explanation-text">{{ currentExplanation }}</p>
+        </div>
+        <button class="explanation-close">✕</button>
+    </div>
+
     <!-- Header Section -->
-    <header class="game-header">
-        <h1 class="game-title">{{ gameData?.question?.gameTitle || 'لعبة مطابقة البطاقات' }}</h1>
+    <header class="game-header" *ngIf="gameState === 'playing'">
+        <div class="header-top">
+            <!-- Difficulty Badge (Phase 3 - P1) -->
+            <div class="difficulty-badge" [style.borderColor]="difficultyColor">
+                <span class="difficulty-stars">
+                    <span *ngFor="let s of [1,2,3]" [class.active]="s <= difficultyStars">⭐</span>
+                </span>
+                <span class="difficulty-label" [style.color]="difficultyColor">{{ difficultyLabel }}</span>
+            </div>
+
+            <h1 class="game-title">{{ gameData?.question?.gameTitle || 'لعبة مطابقة البطاقات' }}</h1>
+
+            <!-- Sound Toggle -->
+            <button class="sound-toggle" (click)="toggleSound()" [title]="soundEnabled ? 'كتم الصوت' : 'تشغيل الصوت'">
+                {{ soundEnabled ? '🔊' : '🔇' }}
+            </button>
+        </div>
+
+        <!-- Instructions Banner (Phase 2 - E7) -->
+        <div *ngIf="showInstructions && gameData?.question?.instructions" class="instructions-banner">
+            <div class="instructions-content">
+                <span class="instructions-icon">📋</span>
+                <p>{{ gameData?.question?.instructions }}</p>
+            </div>
+            <button class="dismiss-btn" (click)="dismissInstructions()">✕</button>
+        </div>
 
         <!-- Progress Bar -->
         <div class="progress-container">
@@ -14,61 +70,119 @@
         </div>
 
         <!-- Stats & Stars -->
-        <div class="flex justify-center items-center gap-8 mb-4">
-            <div class="text-white text-lg font-bold">
-                <span>الزمن: {{ timerSeconds }}s</span>
+        <div class="stats-bar">
+            <!-- Timer -->
+            <div class="stat-pill" *ngIf="timerDisplay">
+                <span class="stat-icon">⏱️</span>
+                <span>{{ timerDisplay }}</span>
+                <span *ngIf="gameData?.question?.timerMode === FlipCardTimerMode.CountDown"
+                    class="countdown-label">متبقي</span>
             </div>
+
+            <!-- Moves Counter -->
+            <div class="stat-pill">
+                <span class="stat-icon">🔄</span>
+                <span>{{ moves }} محاولة</span>
+            </div>
+
+            <!-- Hint Button (Phase 2 - E2) -->
+            <button *ngIf="showHints" class="stat-pill hint-button"
+                [disabled]="hintsRemaining <= 0 || isHinting || isProcessing || isPreviewPhase" (click)="useHint()">
+                <span class="stat-icon">💡</span>
+                <span>تلميح ({{ hintsRemaining }})</span>
+            </button>
+
+            <!-- Star Ratings -->
             <div class="star-ratings">
                 <span *ngFor="let star of [0,1,2]" class="star" [class.active]="star < stars" role="img">
                     ★
                 </span>
             </div>
-            <div class="text-white text-lg font-bold">
-                <span>النقاط: {{ score }}</span>
+
+            <!-- Score -->
+            <div class="stat-pill score-pill">
+                <span class="stat-icon">🏆</span>
+                <span>{{ score }} نقطة</span>
             </div>
+        </div>
+
+        <!-- Pairs Progress -->
+        <div class="pairs-progress">
+            {{ matchedPairs }} / {{ totalPairs }} أزواج مطابقة
+            <span *ngIf="streak >= 2" class="streak-indicator">🔥 {{ streak }}x</span>
         </div>
     </header>
 
-    <!-- Loading State -->
+    <!-- ========== LOADING STATE ========== -->
     <div *ngIf="isLoading" class="loading-state">
         <div class="loading-spinner">🎮</div>
         <p>جاري تحميل اللعبة...</p>
     </div>
 
-    <!-- Start Screen (if needed, usually auto-starts) -->
-    <div *ngIf="!isLoading && gameState === 'start'" class="start-screen">
+    <!-- ========== ERROR STATE ========== -->
+    <div *ngIf="!isLoading && gameLoadError" class="error-state">
+        <div class="error-card">
+            <div class="error-icon" *ngIf="hasNoQuestions">📭</div>
+            <div class="error-icon" *ngIf="!hasNoQuestions">⚠️</div>
+            <h2>{{ hasNoQuestions ? 'لا توجد ألعاب متاحة' : 'حدث خطأ' }}</h2>
+            <p>{{ gameLoadError }}</p>
+            <div class="error-actions">
+                <button class="retry-button" (click)="retryGame()">
+                    🔄 حاول مرة أخرى
+                </button>
+                <button class="exit-button" (click)="exit()">
+                    ← العودة لاختيار اللعبة
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== START SCREEN ========== -->
+    <div *ngIf="!isLoading && !gameLoadError && gameState === 'start'" class="start-screen">
         <div class="start-card">
             <div class="start-icon">🧠</div>
             <h2>هل أنت مستعد؟</h2>
             <p>طابق الإجابات بالأسئلة الصحيحة</p>
-            <!-- We usually auto-start, but if not -->
         </div>
     </div>
 
-    <!-- Playing State -->
-    <div *ngIf="!isLoading && (gameState === 'playing' || gameState === 'complete')" class="w-full">
+    <!-- ========== PLAYING STATE ========== -->
+    <div *ngIf="!isLoading && !gameLoadError && (gameState === 'playing' || gameState === 'complete')" class="w-full">
 
         <!-- CLASSIC MODE GRID -->
-        <div *ngIf="gameData?.gameMode === FlipCardGameMode.Classic" class="classic-grid">
+        <div *ngIf="gameData?.gameMode === FlipCardGameMode.Classic" class="classic-grid"
+            [style.grid-template-columns]="'repeat(' + gridColumns + ', 1fr)'">
             <div *ngFor="let card of cards" class="memory-card" [class.flipped]="card.isFlipped || card.isMatched"
-                [class.matched]="card.isMatched" [class.shake]="card.shake" (click)="flipCard(card)">
+                [class.matched]="card.isMatched" [class.shake]="card.shake" [class.hinted]="card.isHinted"
+                [class.preview-card]="isPreviewPhase" (click)="!isPreviewPhase && flipCard(card)">
 
                 <div class="memory-face card-front">
-                    <!-- Content -->
-                    <div *ngIf="card.type === FlipCardContentType.Text" class="text-xl font-bold text-center p-2">{{
-                        card.text }}</div>
-                    <div *ngIf="card.type === FlipCardContentType.Image">
-                        <img [src]="card.imageUrl" alt="Card Image" class="max-w-full max-h-full">
-                        <p *ngIf="card.text" class="text-sm mt-2">{{ card.text }}</p>
+                    <!-- Text Content -->
+                    <div *ngIf="card.type === FlipCardContentType.Text" class="card-text-content">
+                        {{ card.text }}
                     </div>
-                    <div *ngIf="card.type === FlipCardContentType.Audio">
-                        <span class="text-2xl">🔊</span>
-                        <p>Listen</p>
+                    <!-- Image Content -->
+                    <div *ngIf="card.type === FlipCardContentType.Image" class="card-image-content">
+                        <img [src]="card.imageUrl" [alt]="card.text || 'Card Image'" class="card-img">
+                        <p *ngIf="card.text" class="card-image-label">{{ card.text }}</p>
                     </div>
+                    <!-- Audio Content -->
+                    <div *ngIf="card.type === FlipCardContentType.Audio" class="audio-card-content"
+                        (click)="$event.stopPropagation(); playAudio(card)">
+                        <span class="audio-icon" [class.playing]="card.isPlayingAudio">
+                            {{ card.isPlayingAudio ? '🔊' : '🔈' }}
+                        </span>
+                        <p class="audio-label">{{ card.text || 'اضغط للاستماع' }}</p>
+                        <div *ngIf="card.isPlayingAudio" class="audio-wave">
+                            <span></span><span></span><span></span><span></span>
+                        </div>
+                    </div>
+                    <!-- Match indicator -->
+                    <div *ngIf="card.isMatched" class="card-match-check">✓</div>
                 </div>
 
                 <div class="memory-face card-back">
-                    <span>?</span>
+                    <span class="card-back-icon">?</span>
                 </div>
             </div>
         </div>
@@ -76,37 +190,40 @@
         <!-- MATCH MODE GRID -->
         <div *ngIf="gameData?.gameMode === FlipCardGameMode.Match" class="game-grid">
 
-            <!-- RIGHT SECTION (Questions/Targets in RTL layou, but functionally drag SOURCE to TARGET) -->
-            <!-- In our logic: Drag Left (Answer) to Right (Question). -->
-            <!-- Visual RTL: Right is first? Grid layout: 1fr auto 1fr. -->
-            <!-- Let's put Answers on Right (Source) and Questions on Left (Target) for RTL flow? -->
-            <!-- Traditionally RTL: Flow is Right to Left. So Source on Right? -->
-            <!-- Let's stick to logical columns. -->
-
-            <!-- Answers Column (Source) -->
+            <!-- Answers Column -->
             <section class="game-section answers-section">
                 <h2 class="section-title">الإجابات</h2>
                 <div class="cards-container">
                     <div *ngFor="let card of leftCards" class="card-wrapper">
                         <div *ngIf="!card.isMatched" cdkDrag [cdkDragData]="card"
-                            class="flip-card answer-card draggable">
+                            class="flip-card answer-card draggable" [class.hinted]="card.isHinted">
 
                             <div class="flip-card-inner">
                                 <div class="flip-card-front">
-                                    <!-- Content -->
-                                    <div *ngIf="card.type === FlipCardContentType.Text" class="text-lg font-bold">{{
-                                        card.text }}</div>
-                                    <div *ngIf="card.type === FlipCardContentType.Image">
-                                        <img [src]="card.imageUrl" class="h-16 object-contain">
+                                    <div *ngIf="card.type === FlipCardContentType.Text" class="card-text">
+                                        {{ card.text }}
+                                    </div>
+                                    <div *ngIf="card.type === FlipCardContentType.Image" class="card-image">
+                                        <img [src]="card.imageUrl" [alt]="card.text || 'Image'" class="match-card-img">
+                                    </div>
+                                    <div *ngIf="card.type === FlipCardContentType.Audio" class="card-audio"
+                                        (click)="$event.stopPropagation(); playAudio(card)">
+                                        <span class="audio-icon" [class.playing]="card.isPlayingAudio">
+                                            {{ card.isPlayingAudio ? '🔊' : '🔈' }}
+                                        </span>
+                                        <span>{{ card.text || 'استمع' }}</span>
                                     </div>
                                     <div class="drag-hint">اسحبني!</div>
                                 </div>
                             </div>
 
-                            <!-- Preview -->
                             <div *cdkDragPreview class="drag-preview">
                                 <span>{{ card.text || 'Image' }}</span>
                             </div>
+                        </div>
+
+                        <div *ngIf="card.isMatched" class="matched-placeholder">
+                            <span>✓</span>
                         </div>
                     </div>
                 </div>
@@ -117,7 +234,7 @@
                 <div class="divider-line"></div>
             </div>
 
-            <!-- Questions Column (Target) -->
+            <!-- Questions Column -->
             <section class="game-section questions-section">
                 <h2 class="section-title">الأسئلة</h2>
                 <div class="cards-container">
@@ -125,14 +242,22 @@
                         (cdkDropListDropped)="onDrop($event, card)">
 
                         <div class="flip-card question-card" [class.matched]="card.isMatched" [class.shake]="card.shake"
-                            [class.celebrate]="card.celebrate">
+                            [class.celebrate]="card.celebrate" [class.hinted]="card.isHinted">
 
                             <div class="flip-card-inner">
                                 <div class="flip-card-front">
-                                    <div *ngIf="card.type === FlipCardContentType.Text" class="text-lg font-bold">{{
-                                        card.text }}</div>
-                                    <div *ngIf="card.type === FlipCardContentType.Image">
-                                        <img [src]="card.imageUrl" class="h-16 object-contain">
+                                    <div *ngIf="card.type === FlipCardContentType.Text" class="card-text">
+                                        {{ card.text }}
+                                    </div>
+                                    <div *ngIf="card.type === FlipCardContentType.Image" class="card-image">
+                                        <img [src]="card.imageUrl" [alt]="card.text || 'Image'" class="match-card-img">
+                                    </div>
+                                    <div *ngIf="card.type === FlipCardContentType.Audio" class="card-audio"
+                                        (click)="playAudio(card)">
+                                        <span class="audio-icon" [class.playing]="card.isPlayingAudio">
+                                            {{ card.isPlayingAudio ? '🔊' : '🔈' }}
+                                        </span>
+                                        <span>{{ card.text || 'استمع' }}</span>
                                     </div>
 
                                     <div *ngIf="card.isMatched" class="match-badge">✓</div>
@@ -147,30 +272,69 @@
 
     </div>
 
-    <!-- Victory Modal -->
+    <!-- ========== VICTORY MODAL ========== -->
     <div *ngIf="gameState === 'complete'" class="victory-overlay">
         <div class="victory-modal">
-            <div class="victory-icon">🏆</div>
-            <h2>أحسنت!</h2>
-            <p>أكملت اللعبة بنجاح!</p>
-
-            <div class="stats">
-                <div class="stat">
-                    <span class="stat-value">{{ score }}</span>
-                    <span class="stat-label">نقاط</span>
-                </div>
-                <div class="stat">
-                    <span class="stat-value">{{ timerSeconds }}s</span>
-                    <span class="stat-label">ثانية</span>
-                </div>
+            <!-- Loading state -->
+            <div *ngIf="isCalculatingResult" class="calculating-result">
+                <div class="loading-spinner">🎯</div>
+                <p>جاري حساب النتيجة...</p>
             </div>
 
-            <button class="replay-button" (click)="playAgain()">
-                العب مرة أخرى 🔄
-            </button>
-            <button class="exit-button" (click)="exit()">
-                خروج
-            </button>
+            <!-- Result content -->
+            <div *ngIf="!isCalculatingResult">
+                <div class="victory-icon">🏆</div>
+                <h2>أحسنت!</h2>
+                <p>أكملت اللعبة بنجاح!</p>
+
+                <!-- Star Rating -->
+                <div class="victory-stars">
+                    <span *ngFor="let star of [0,1,2]" class="victory-star" [class.active]="star < stars">
+                        ★
+                    </span>
+                </div>
+
+                <!-- Stats Grid -->
+                <div class="stats">
+                    <div class="stat">
+                        <span class="stat-value">{{ score }}</span>
+                        <span class="stat-label">نقاط</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-value">{{ timerSeconds }}s</span>
+                        <span class="stat-label">ثانية</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-value">{{ moves }}</span>
+                        <span class="stat-label">محاولات</span>
+                    </div>
+                    <div class="stat" *ngIf="bestStreak > 0">
+                        <span class="stat-value">🔥 {{ bestStreak }}</span>
+                        <span class="stat-label">أفضل سلسلة</span>
+                    </div>
+                    <div class="stat" *ngIf="streakBonusPoints > 0">
+                        <span class="stat-value bonus-value">+{{ streakBonusPoints }}</span>
+                        <span class="stat-label">مكافأة السلسلة</span>
+                    </div>
+                </div>
+
+                <!-- Achievements -->
+                <div *ngIf="achievements.length > 0" class="achievements-section">
+                    <h3>🏅 الإنجازات</h3>
+                    <div class="achievements-list">
+                        <span *ngFor="let badge of achievements" class="achievement-badge">
+                            {{ badge }}
+                        </span>
+                    </div>
+                </div>
+
+                <button class="replay-button" (click)="playAgain()">
+                    العب مرة أخرى 🔄
+                </button>
+                <button class="exit-button" (click)="exit()">
+                    خروج
+                </button>
+            </div>
         </div>
     </div>
 </div>

@@ -12,7 +12,7 @@ import {
     UpdateFlipCardQuestionDto
 } from '../../../models/flip-card.model';
 import { GradeLevel, SubjectType } from '../../../models/drag-drop.model';
-import { LucideAngularModule, ChevronLeft, ChevronRight, Save, Plus, Trash2, Image, Mic, Type } from 'lucide-angular';
+import { LucideAngularModule, ChevronLeft, ChevronRight, Save, Plus, Trash2, Image, Mic, Type, Copy } from 'lucide-angular';
 
 @Component({
     selector: 'app-admin-flipcard-question-form',
@@ -32,6 +32,12 @@ export class AdminFlipCardQuestionFormComponent implements OnInit, OnDestroy {
     readonly MIN_PAIRS = 4;
     readonly MAX_PAIRS = 12;
 
+    // Toast notification system
+    toastMessage = '';
+    toastType: 'success' | 'error' | 'warning' | 'info' = 'info';
+    toastVisible = false;
+    private toastTimeout: any;
+
     // Enums for template
     GradeLevel = GradeLevel;
     SubjectType = SubjectType;
@@ -44,15 +50,24 @@ export class AdminFlipCardQuestionFormComponent implements OnInit, OnDestroy {
 
     // Options
     themes = [
-        { id: 'modern', name: 'Modern' },
-        { id: 'kids', name: 'Kids' },
-        { id: 'dark', name: 'Dark Ops' }
+        { id: 'modern', name: 'عصري' },
+        { id: 'kids', name: 'أطفال' },
+        { id: 'dark', name: 'داكن' }
     ];
 
     cardBacks = [
-        { id: 'standard', name: 'Standard' },
-        { id: 'pattern', name: 'Pattern' },
-        { id: 'logo', name: 'School Logo' }
+        { id: 'standard', name: 'قياسي' },
+        { id: 'pattern', name: 'نمط' },
+        { id: 'logo', name: 'شعار المدرسة' }
+    ];
+
+    categories = [
+        { id: 'عام', name: 'عام' },
+        { id: 'مفردات', name: 'مفردات' },
+        { id: 'قواعد', name: 'قواعد' },
+        { id: 'أرقام', name: 'أرقام' },
+        { id: 'علوم', name: 'علوم' },
+        { id: 'جغرافيا', name: 'جغرافيا' }
     ];
 
     constructor(
@@ -74,14 +89,14 @@ export class AdminFlipCardQuestionFormComponent implements OnInit, OnDestroy {
 
             // Step 2: Settings
             timerMode: [FlipCardTimerMode.None, [Validators.required]],
-            timeLimitSeconds: [null],
+            timeLimitSeconds: [60],
             showHints: [true],
             maxHints: [3],
             uiTheme: ['modern'],
             cardBackDesign: ['standard'],
             customCardBackUrl: [''],
 
-            // Additional backend-required fields with defaults
+            // Scoring & Options
             pointsPerMatch: [10],
             movePenalty: [0],
             enableAudio: [false],
@@ -94,6 +109,16 @@ export class AdminFlipCardQuestionFormComponent implements OnInit, OnDestroy {
 
     get pairs(): FormArray {
         return this.questionForm.get('pairs') as FormArray;
+    }
+
+    /** Check if timer settings should be visible */
+    get isTimerEnabled(): boolean {
+        return this.questionForm.get('timerMode')?.value !== FlipCardTimerMode.None;
+    }
+
+    /** Check if explanations are enabled */
+    get explanationsEnabled(): boolean {
+        return this.questionForm.get('enableExplanations')?.value === true;
     }
 
     ngOnInit(): void {
@@ -112,8 +137,26 @@ export class AdminFlipCardQuestionFormComponent implements OnInit, OnDestroy {
 
     ngOnDestroy(): void {
         this.subscriptions.forEach(s => s.unsubscribe());
+        if (this.toastTimeout) clearTimeout(this.toastTimeout);
     }
 
+    // ========== TOAST NOTIFICATIONS ==========
+    showToast(message: string, type: 'success' | 'error' | 'warning' | 'info' = 'info', duration = 4000): void {
+        if (this.toastTimeout) clearTimeout(this.toastTimeout);
+        this.toastMessage = message;
+        this.toastType = type;
+        this.toastVisible = true;
+
+        this.toastTimeout = setTimeout(() => {
+            this.dismissToast();
+        }, duration);
+    }
+
+    dismissToast(): void {
+        this.toastVisible = false;
+    }
+
+    // ========== LOAD QUESTION (EDIT MODE) ==========
     loadQuestion(id: number): void {
         this.loading = true;
         this.questionService.getById(id).subscribe({
@@ -163,39 +206,35 @@ export class AdminFlipCardQuestionFormComponent implements OnInit, OnDestroy {
             error: (err) => {
                 console.error('Failed to load question', err);
                 this.loading = false;
+                this.showToast('فشل تحميل بيانات اللعبة', 'error');
             }
         });
     }
 
+    // ========== PAIR MANAGEMENT ==========
     createPairGroup(): FormGroup {
         const group = this.fb.group({
             id: [0],
             // Card 1
             card1Type: [FlipCardContentType.Text, Validators.required],
-            card1Text: [''],      // Validators set dynamically
+            card1Text: [''],
             card1ImageUrl: [''],
             card1AudioUrl: [''],
             // Card 2
             card2Type: [FlipCardContentType.Text, Validators.required],
-            card2Text: [''],      // Validators set dynamically
+            card2Text: [''],
             card2ImageUrl: [''],
-            card2AudioUrl: ['']
+            card2AudioUrl: [''],
+            // Explanation (Phase 3 - for pair explanation toast)
+            explanation: ['']
         });
 
-        // Setup conditional validators for both cards
         this.setupCardValidators(group, 'card1Type', 'card1Text', 'card1ImageUrl', 'card1AudioUrl');
         this.setupCardValidators(group, 'card2Type', 'card2Text', 'card2ImageUrl', 'card2AudioUrl');
 
         return group;
     }
 
-    /**
-     * Dynamically sets validators based on card type:
-     *  - Text → text required
-     *  - Image → imageUrl required, text optional (alt text)
-     *  - Audio → audioUrl required, text optional
-     *  - Mixed → text required (at minimum)
-     */
     private setupCardValidators(
         group: FormGroup,
         typeControl: string,
@@ -210,7 +249,6 @@ export class AdminFlipCardQuestionFormComponent implements OnInit, OnDestroy {
 
         if (!type || !text || !image || !audio) return;
 
-        // Apply validators whenever type changes
         const sub = type.valueChanges.subscribe((cardType: FlipCardContentType) => {
             text.clearValidators();
             image.clearValidators();
@@ -220,17 +258,12 @@ export class AdminFlipCardQuestionFormComponent implements OnInit, OnDestroy {
                 case FlipCardContentType.Text:
                     text.setValidators([Validators.required]);
                     break;
-
                 case FlipCardContentType.Image:
                     image.setValidators([Validators.required]);
-                    // text is optional alt-text
                     break;
-
                 case FlipCardContentType.Audio:
                     audio.setValidators([Validators.required]);
-                    // text is optional transcription
                     break;
-
                 case FlipCardContentType.Mixed:
                 default:
                     text.setValidators([Validators.required]);
@@ -244,10 +277,8 @@ export class AdminFlipCardQuestionFormComponent implements OnInit, OnDestroy {
 
         this.subscriptions.push(sub);
 
-        // Trigger initial validation for the default type
         type.updateValueAndValidity({ emitEvent: true });
 
-        // Also fire once manually for the initial state
         const currentType = type.value as FlipCardContentType;
         text.clearValidators();
         image.clearValidators();
@@ -266,7 +297,7 @@ export class AdminFlipCardQuestionFormComponent implements OnInit, OnDestroy {
 
     addPair(): void {
         if (this.pairs.length >= this.MAX_PAIRS) {
-            alert(`الحد الأقصى هو ${this.MAX_PAIRS} زوج.`);
+            this.showToast(`الحد الأقصى هو ${this.MAX_PAIRS} زوج`, 'warning');
             return;
         }
         this.pairs.push(this.createPairGroup());
@@ -274,12 +305,35 @@ export class AdminFlipCardQuestionFormComponent implements OnInit, OnDestroy {
 
     removePair(index: number): void {
         if (this.pairs.length <= this.MIN_PAIRS) {
-            alert(`الحد الأدنى هو ${this.MIN_PAIRS} أزواج. لا يمكن الحذف.`);
+            this.showToast(`الحد الأدنى هو ${this.MIN_PAIRS} أزواج. لا يمكن الحذف`, 'warning');
             return;
         }
         this.pairs.removeAt(index);
+        this.showToast('تم حذف الزوج', 'info', 2000);
     }
 
+    duplicatePair(index: number): void {
+        if (this.pairs.length >= this.MAX_PAIRS) {
+            this.showToast(`الحد الأقصى هو ${this.MAX_PAIRS} زوج`, 'warning');
+            return;
+        }
+
+        const source = this.pairs.at(index) as FormGroup;
+        const newGroup = this.createPairGroup();
+        newGroup.patchValue({
+            ...source.value,
+            id: 0  // Reset ID for new pair
+        });
+        this.pairs.insert(index + 1, newGroup);
+        this.showToast('تم نسخ الزوج', 'success', 2000);
+    }
+
+    // ========== DIFFICULTY LEVEL ==========
+    setDifficulty(level: number): void {
+        this.questionForm.patchValue({ difficultyLevel: level });
+    }
+
+    // ========== WIZARD NAVIGATION ==========
     nextStep(): void {
         if (!this.validateCurrentStep()) {
             return;
@@ -307,67 +361,66 @@ export class AdminFlipCardQuestionFormComponent implements OnInit, OnDestroy {
                 const subject = this.questionForm.get('subjectId');
 
                 if (title?.invalid) {
-                    alert('يرجى إدخال عنوان اللعبة (3 أحرف على الأقل)');
+                    this.showToast('يرجى إدخال عنوان اللعبة (3 أحرف على الأقل)', 'warning');
                     title.markAsTouched();
                     return false;
                 }
                 if (grade?.invalid) {
-                    alert('يرجى اختيار الصف الدراسي');
+                    this.showToast('يرجى اختيار الصف الدراسي', 'warning');
                     grade.markAsTouched();
                     return false;
                 }
                 if (subject?.invalid) {
-                    alert('يرجى اختيار المادة');
+                    this.showToast('يرجى اختيار المادة', 'warning');
                     subject.markAsTouched();
                     return false;
                 }
                 return true;
             }
             case 2:
-                // Settings are mostly optional
                 return true;
             default:
                 return true;
         }
     }
 
+    // ========== SUBMIT ==========
     onSubmit(): void {
         if (this.questionForm.invalid) {
             this.questionForm.markAllAsTouched();
 
-            // Build specific error messages
             const errors: string[] = [];
 
             if (this.questionForm.get('gameTitle')?.invalid) {
-                errors.push('• عنوان اللعبة مطلوب (3 أحرف على الأقل)');
+                errors.push('عنوان اللعبة مطلوب (3 أحرف على الأقل)');
             }
             if (this.questionForm.get('gradeId')?.invalid) {
-                errors.push('• اختر الصف الدراسي');
+                errors.push('اختر الصف الدراسي');
             }
             if (this.questionForm.get('subjectId')?.invalid) {
-                errors.push('• اختر المادة');
+                errors.push('اختر المادة');
             }
 
             if (this.pairs.length < this.MIN_PAIRS) {
-                errors.push(`• الحد الأدنى ${this.MIN_PAIRS} أزواج (حالياً: ${this.pairs.length})`);
+                errors.push(`الحد الأدنى ${this.MIN_PAIRS} أزواج (حالياً: ${this.pairs.length})`);
             }
 
             let invalidPairCount = 0;
-            this.pairs.controls.forEach((pair, i) => {
+            this.pairs.controls.forEach((pair) => {
                 if (pair.invalid) {
                     invalidPairCount++;
                 }
             });
 
             if (invalidPairCount > 0) {
-                errors.push(`• ${invalidPairCount} زوج غير مكتمل - تحقق من المحتوى المطلوب`);
+                errors.push(`${invalidPairCount} زوج غير مكتمل - تحقق من المحتوى المطلوب`);
             }
 
             const errorMessage = errors.length > 0
-                ? 'يرجى إصلاح الأخطاء التالية:\n\n' + errors.join('\n')
+                ? errors.join(' • ')
                 : 'الرجاء تعبئة جميع الحقول المطلوبة';
 
-            alert(errorMessage);
+            this.showToast(errorMessage, 'error', 6000);
             return;
         }
 
@@ -383,14 +436,16 @@ export class AdminFlipCardQuestionFormComponent implements OnInit, OnDestroy {
 
             this.questionService.update(this.questionId, updateDto).subscribe({
                 next: () => {
-                    alert('✅ تم تحديث اللعبة بنجاح!');
-                    this.router.navigate(['../../list'], { relativeTo: this.route });
+                    this.showToast('تم تحديث اللعبة بنجاح! ✅', 'success');
+                    setTimeout(() => {
+                        this.router.navigate(['../../list'], { relativeTo: this.route });
+                    }, 1500);
                 },
                 error: (err) => {
                     console.error('Update error:', err);
                     this.loading = false;
                     const message = err?.error?.message || err?.message || 'حدث خطأ أثناء تحديث اللعبة';
-                    alert('فشل التحديث:\n' + message);
+                    this.showToast('فشل التحديث: ' + message, 'error', 6000);
                 }
             });
         } else {
@@ -402,14 +457,16 @@ export class AdminFlipCardQuestionFormComponent implements OnInit, OnDestroy {
 
             this.questionService.create(createDto).subscribe({
                 next: () => {
-                    alert('✅ تم إنشاء اللعبة بنجاح!');
-                    this.router.navigate(['../list'], { relativeTo: this.route });
+                    this.showToast('تم إنشاء اللعبة بنجاح! ✅', 'success');
+                    setTimeout(() => {
+                        this.router.navigate(['../list'], { relativeTo: this.route });
+                    }, 1500);
                 },
                 error: (err) => {
                     console.error('Create error:', err);
                     this.loading = false;
                     const message = err?.error?.message || err?.message || 'حدث خطأ أثناء إنشاء اللعبة';
-                    alert('فشل الإنشاء:\n' + message);
+                    this.showToast('فشل الإنشاء: ' + message, 'error', 6000);
                 }
             });
         }

@@ -1,82 +1,80 @@
-<div class="max-w-5xl mx-auto p-6" dir="rtl">
+<div class="admin-form-container" dir="rtl">
+
+    <!-- Toast Notification -->
+    <div *ngIf="toastVisible" class="toast-notification" [class]="'toast-' + toastType" (click)="dismissToast()">
+        <span class="toast-icon">
+            <span *ngIf="toastType === 'success'">✅</span>
+            <span *ngIf="toastType === 'error'">❌</span>
+            <span *ngIf="toastType === 'warning'">⚠️</span>
+            <span *ngIf="toastType === 'info'">ℹ️</span>
+        </span>
+        <span class="toast-text">{{ toastMessage }}</span>
+        <button class="toast-close">✕</button>
+    </div>
+
     <!-- Header -->
-    <div class="mb-8 flex items-center justify-between">
+    <div class="form-header">
         <div>
-            <h1 class="text-2xl font-bold text-gray-900">{{ isEditMode ? 'تعديل' : 'إنشاء' }} لعبة البطاقات</h1>
-            <p class="text-gray-500">تكوين إعدادات اللعبة وأزواج المحتوى</p>
+            <h1 class="form-title">{{ isEditMode ? '✏️ تعديل' : '🎴 إنشاء' }} لعبة البطاقات</h1>
+            <p class="form-subtitle">تكوين إعدادات اللعبة وأزواج المحتوى</p>
         </div>
-        <a routerLink="../" class="text-gray-500 hover:text-gray-700 flex items-center gap-1">
-            إلغاء
-        </a>
+        <a routerLink="../" class="cancel-link">إلغاء</a>
     </div>
 
     <!-- Wizard Steps -->
-    <div class="mb-8">
-        <div class="flex items-center justify-between relative">
-            <div class="absolute left-0 top-1/2 transform -translate-y-1/2 w-full h-1 bg-gray-200 -z-10"></div>
+    <div class="wizard-steps">
+        <div class="steps-track">
+            <div class="steps-line"></div>
+            <div class="steps-progress" [style.width]="((currentStep - 1) / 2 * 100) + '%'"></div>
 
-            <!-- Step 1 -->
-            <button type="button" (click)="setStep(1)" [class.bg-indigo-600]="currentStep >= 1"
-                [class.bg-gray-200]="currentStep < 1" [class.text-white]="currentStep >= 1"
-                [class.text-gray-500]="currentStep < 1"
-                class="w-10 h-10 rounded-full flex items-center justify-center font-bold z-10 transition-colors">
-                1
+            <button type="button" (click)="setStep(1)" class="step-circle" [class.active]="currentStep >= 1"
+                [class.current]="currentStep === 1">
+                <span class="step-number">1</span>
             </button>
-
-            <!-- Step 2 -->
-            <button type="button" (click)="setStep(2)" [class.bg-indigo-600]="currentStep >= 2"
-                [class.bg-gray-200]="currentStep < 2" [class.text-white]="currentStep >= 2"
-                [class.text-gray-500]="currentStep < 2"
-                class="w-10 h-10 rounded-full flex items-center justify-center font-bold z-10 transition-colors">
-                2
+            <button type="button" (click)="setStep(2)" class="step-circle" [class.active]="currentStep >= 2"
+                [class.current]="currentStep === 2">
+                <span class="step-number">2</span>
             </button>
-
-            <!-- Step 3 -->
-            <button type="button" (click)="setStep(3)" [class.bg-indigo-600]="currentStep >= 3"
-                [class.bg-gray-200]="currentStep < 3" [class.text-white]="currentStep >= 3"
-                [class.text-gray-500]="currentStep < 3"
-                class="w-10 h-10 rounded-full flex items-center justify-center font-bold z-10 transition-colors">
-                3
+            <button type="button" (click)="setStep(3)" class="step-circle" [class.active]="currentStep >= 3"
+                [class.current]="currentStep === 3">
+                <span class="step-number">3</span>
             </button>
         </div>
-        <div class="flex justify-between text-xs text-gray-500 mt-2 font-medium">
-            <span>المعلومات الأساسية</span>
-            <span>الإعدادات</span>
-            <span>أزواج المحتوى</span>
+        <div class="steps-labels">
+            <span [class.active-label]="currentStep === 1">المعلومات الأساسية</span>
+            <span [class.active-label]="currentStep === 2">الإعدادات</span>
+            <span [class.active-label]="currentStep === 3">أزواج المحتوى</span>
         </div>
     </div>
 
     <!-- Form Content -->
-    <form [formGroup]="questionForm" (ngSubmit)="onSubmit()"
-        class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 min-h-[400px]">
+    <form [formGroup]="questionForm" (ngSubmit)="onSubmit()" class="form-card">
 
-        <!-- STEP 1: Basic Info -->
-        <div *ngIf="currentStep === 1" class="space-y-6 animate-fade-in">
-            <h2 class="text-xl font-semibold text-gray-800 border-b pb-2">المعلومات الأساسية</h2>
+        <!-- ====================== STEP 1: Basic Info ====================== -->
+        <div *ngIf="currentStep === 1" class="step-content">
+            <h2 class="section-title">📋 المعلومات الأساسية</h2>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="col-span-2">
-                    <label class="block text-sm font-medium text-gray-700 mb-1">عنوان اللعبة <span
-                            class="text-red-500">*</span></label>
-                    <input formControlName="gameTitle" type="text"
-                        class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 py-2 px-3 border"
+            <div class="form-grid">
+                <!-- Game Title -->
+                <div class="form-group full-width">
+                    <label class="form-label">عنوان اللعبة <span class="required">*</span></label>
+                    <input formControlName="gameTitle" type="text" class="form-input"
                         placeholder="مثال: مطابقة الحيوانات">
                     <p *ngIf="questionForm.get('gameTitle')?.touched && questionForm.get('gameTitle')?.invalid"
-                        class="text-red-500 text-xs mt-1">العنوان مطلوب (3 أحرف على الأقل).</p>
+                        class="field-error">العنوان مطلوب (3 أحرف على الأقل)</p>
                 </div>
 
-                <div class="col-span-2">
-                    <label class="block text-sm font-medium text-gray-700 mb-1">التعليمات</label>
-                    <textarea formControlName="instructions" rows="3"
-                        class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 py-2 px-3 border"
+                <!-- Instructions -->
+                <div class="form-group full-width">
+                    <label class="form-label">التعليمات</label>
+                    <textarea formControlName="instructions" rows="2" class="form-input"
                         placeholder="كيفية اللعب..."></textarea>
                 </div>
 
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">الصف الدراسي <span
-                            class="text-red-500">*</span></label>
-                    <select formControlName="gradeId"
-                        class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 py-2 px-3 border">
+                <!-- Grade -->
+                <div class="form-group">
+                    <label class="form-label">الصف الدراسي <span class="required">*</span></label>
+                    <select formControlName="gradeId" class="form-select">
                         <option [ngValue]="null">اختر الصف</option>
                         <option [ngValue]="GradeLevel.Grade3">الصف الثالث</option>
                         <option [ngValue]="GradeLevel.Grade4">الصف الرابع</option>
@@ -84,307 +82,395 @@
                         <option [ngValue]="GradeLevel.Grade6">الصف السادس</option>
                     </select>
                     <p *ngIf="questionForm.get('gradeId')?.touched && questionForm.get('gradeId')?.invalid"
-                        class="text-red-500 text-xs mt-1">اختر الصف الدراسي.</p>
+                        class="field-error">اختر الصف الدراسي</p>
                 </div>
 
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">المادة <span
-                            class="text-red-500">*</span></label>
-                    <select formControlName="subjectId"
-                        class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 py-2 px-3 border">
+                <!-- Subject -->
+                <div class="form-group">
+                    <label class="form-label">المادة <span class="required">*</span></label>
+                    <select formControlName="subjectId" class="form-select">
                         <option [ngValue]="null">اختر المادة</option>
                         <option [ngValue]="SubjectType.Arabic">اللغة العربية</option>
                         <option [ngValue]="SubjectType.Math">الرياضيات</option>
                         <option [ngValue]="SubjectType.Science">العلوم</option>
                     </select>
                     <p *ngIf="questionForm.get('subjectId')?.touched && questionForm.get('subjectId')?.invalid"
-                        class="text-red-500 text-xs mt-1">اختر المادة.</p>
+                        class="field-error">اختر المادة</p>
                 </div>
 
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">نوع اللعبة</label>
-                    <div class="flex gap-4">
+                <!-- Game Mode -->
+                <div class="form-group full-width">
+                    <label class="form-label">نوع اللعبة</label>
+                    <div class="mode-selector">
                         <button type="button" (click)="questionForm.patchValue({gameMode: FlipCardGameMode.Classic})"
-                            [class.ring-2]="questionForm.get('gameMode')?.value === FlipCardGameMode.Classic"
-                            class="flex-1 p-4 border rounded-lg text-center hover:bg-gray-50 focus:outline-none ring-indigo-500">
-                            <div class="font-bold">🧠 لعبة الذاكرة</div>
-                            <div class="text-xs text-gray-500">اقلب البطاقات للعثور على الأزواج</div>
+                            [class.selected]="questionForm.get('gameMode')?.value === FlipCardGameMode.Classic"
+                            class="mode-card">
+                            <div class="mode-icon">🧠</div>
+                            <div class="mode-name">لعبة الذاكرة</div>
+                            <div class="mode-desc">اقلب البطاقات للعثور على الأزواج</div>
                         </button>
                         <button type="button" (click)="questionForm.patchValue({gameMode: FlipCardGameMode.Match})"
-                            [class.ring-2]="questionForm.get('gameMode')?.value === FlipCardGameMode.Match"
-                            class="flex-1 p-4 border rounded-lg text-center hover:bg-gray-50 focus:outline-none ring-indigo-500">
-                            <div class="font-bold">🔗 لعبة المطابقة</div>
-                            <div class="text-xs text-gray-500">اسحب لتوصيل الأزواج</div>
+                            [class.selected]="questionForm.get('gameMode')?.value === FlipCardGameMode.Match"
+                            class="mode-card">
+                            <div class="mode-icon">🔗</div>
+                            <div class="mode-name">لعبة المطابقة</div>
+                            <div class="mode-desc">اسحب لتوصيل الأزواج</div>
                         </button>
                     </div>
                 </div>
 
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">الحالة</label>
-                    <div class="flex items-center">
-                        <input formControlName="isActive" type="checkbox"
-                            class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
-                        <span class="mr-2 text-sm text-gray-700">نشط (مرئي للطلاب)</span>
+                <!-- Difficulty Level -->
+                <div class="form-group">
+                    <label class="form-label">مستوى الصعوبة</label>
+                    <div class="difficulty-selector">
+                        <button type="button" (click)="setDifficulty(1)" class="diff-btn"
+                            [class.active]="questionForm.get('difficultyLevel')?.value === 1">
+                            <span class="diff-star">⭐</span>
+                            <span>سهل</span>
+                        </button>
+                        <button type="button" (click)="setDifficulty(2)" class="diff-btn"
+                            [class.active]="questionForm.get('difficultyLevel')?.value === 2">
+                            <span class="diff-star">⭐⭐</span>
+                            <span>متوسط</span>
+                        </button>
+                        <button type="button" (click)="setDifficulty(3)" class="diff-btn"
+                            [class.active]="questionForm.get('difficultyLevel')?.value === 3">
+                            <span class="diff-star">⭐⭐⭐</span>
+                            <span>صعب</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Category -->
+                <div class="form-group">
+                    <label class="form-label">التصنيف</label>
+                    <select formControlName="category" class="form-select">
+                        <option *ngFor="let cat of categories" [value]="cat.id">{{ cat.name }}</option>
+                    </select>
+                </div>
+
+                <!-- Active Toggle -->
+                <div class="form-group full-width">
+                    <label class="toggle-row">
+                        <input formControlName="isActive" type="checkbox" class="toggle-input">
+                        <span class="toggle-switch"></span>
+                        <span class="toggle-label">نشط (مرئي للطلاب)</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- ====================== STEP 2: Settings ====================== -->
+        <div *ngIf="currentStep === 2" class="step-content">
+            <h2 class="section-title">⚙️ إعدادات اللعبة</h2>
+
+            <div class="form-grid">
+                <!-- Timer Mode -->
+                <div class="form-group">
+                    <label class="form-label">وضع المؤقت</label>
+                    <select formControlName="timerMode" class="form-select">
+                        <option [ngValue]="FlipCardTimerMode.None">⏸️ بدون مؤقت</option>
+                        <option [ngValue]="FlipCardTimerMode.CountUp">⬆️ تصاعدي (تحدي الوقت)</option>
+                        <option [ngValue]="FlipCardTimerMode.CountDown">⬇️ تنازلي (حد زمني)</option>
+                    </select>
+                </div>
+
+                <!-- Time Limit (only when timer is enabled) -->
+                <div class="form-group" *ngIf="isTimerEnabled">
+                    <label class="form-label">الحد الزمني (ثواني)</label>
+                    <input formControlName="timeLimitSeconds" type="number" min="10" max="600" class="form-input"
+                        placeholder="60">
+                    <p class="field-hint">المدة الزمنية المسموحة لإكمال اللعبة</p>
+                </div>
+
+                <!-- Empty spacer when timer is disabled -->
+                <div class="form-group" *ngIf="!isTimerEnabled"></div>
+
+                <!-- UI Theme -->
+                <div class="form-group">
+                    <label class="form-label">مظهر الواجهة</label>
+                    <select formControlName="uiTheme" class="form-select">
+                        <option *ngFor="let t of themes" [value]="t.id">{{ t.name }}</option>
+                    </select>
+                </div>
+
+                <!-- Card Back Design -->
+                <div class="form-group">
+                    <label class="form-label">تصميم ظهر البطاقة</label>
+                    <select formControlName="cardBackDesign" class="form-select">
+                        <option *ngFor="let c of cardBacks" [value]="c.id">{{ c.name }}</option>
+                    </select>
+                </div>
+
+                <!-- Scoring Section -->
+                <div class="form-group full-width settings-section">
+                    <h3 class="subsection-title">🏆 نظام النقاط</h3>
+                    <div class="scoring-grid">
+                        <div class="scoring-item">
+                            <label class="form-label">نقاط لكل تطابق</label>
+                            <div class="range-control">
+                                <input formControlName="pointsPerMatch" type="range" min="5" max="50" step="5"
+                                    class="range-input">
+                                <span class="range-value">{{ questionForm.get('pointsPerMatch')?.value }} نقطة</span>
+                            </div>
+                        </div>
+                        <div class="scoring-item">
+                            <label class="form-label">خصم لكل خطأ</label>
+                            <div class="range-control">
+                                <input formControlName="movePenalty" type="range" min="0" max="10" step="1"
+                                    class="range-input">
+                                <span class="range-value">-{{ questionForm.get('movePenalty')?.value }} نقطة</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Hints Section -->
+                <div class="form-group full-width settings-section">
+                    <h3 class="subsection-title">💡 التلميحات</h3>
+                    <div class="hints-row">
+                        <label class="toggle-row">
+                            <input formControlName="showHints" type="checkbox" class="toggle-input">
+                            <span class="toggle-switch"></span>
+                            <span class="toggle-label">السماح بالتلميحات</span>
+                        </label>
+                        <div class="hints-count" *ngIf="questionForm.get('showHints')?.value">
+                            <label class="form-label">أقصى عدد:</label>
+                            <input formControlName="maxHints" type="number" min="1" max="10"
+                                class="form-input small-input">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Feature Toggles -->
+                <div class="form-group full-width settings-section">
+                    <h3 class="subsection-title">🎛️ ميزات إضافية</h3>
+                    <div class="toggles-grid">
+                        <label class="toggle-row">
+                            <input formControlName="enableAudio" type="checkbox" class="toggle-input">
+                            <span class="toggle-switch"></span>
+                            <div>
+                                <span class="toggle-label">🔊 تفعيل المؤثرات الصوتية</span>
+                                <span class="toggle-desc">أصوات عند القلب والمطابقة</span>
+                            </div>
+                        </label>
+                        <label class="toggle-row">
+                            <input formControlName="enableExplanations" type="checkbox" class="toggle-input">
+                            <span class="toggle-switch"></span>
+                            <div>
+                                <span class="toggle-label">💬 تفعيل الشرح</span>
+                                <span class="toggle-desc">عرض شرح بعد كل تطابق صحيح</span>
+                            </div>
+                        </label>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- STEP 2: Settings -->
-        <div *ngIf="currentStep === 2" class="space-y-6 animate-fade-in">
-            <h2 class="text-xl font-semibold text-gray-800 border-b pb-2">إعدادات اللعبة</h2>
+        <!-- ====================== STEP 3: Pairs ====================== -->
+        <div *ngIf="currentStep === 3" class="step-content">
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Pairs Header -->
+            <div class="pairs-header">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">وضع المؤقت</label>
-                    <select formControlName="timerMode"
-                        class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 py-2 px-3 border">
-                        <option [ngValue]="FlipCardTimerMode.None">بدون مؤقت</option>
-                        <option [ngValue]="FlipCardTimerMode.CountUp">تصاعدي (تحدي الوقت)</option>
-                        <option [ngValue]="FlipCardTimerMode.CountDown">تنازلي (حد زمني)</option>
-                    </select>
-                </div>
-
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">الحد الزمني (ثواني)</label>
-                    <input formControlName="timeLimitSeconds" type="number"
-                        class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 py-2 px-3 border">
-                    <p class="text-xs text-gray-500 mt-1">يُطبق فقط إذا تم تفعيل المؤقت.</p>
-                </div>
-
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">مظهر الواجهة</label>
-                    <select formControlName="uiTheme"
-                        class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 py-2 px-3 border">
-                        <option *ngFor="let t of themes" [value]="t.id">{{t.name}}</option>
-                    </select>
-                </div>
-
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">تصميم ظهر البطاقة</label>
-                    <select formControlName="cardBackDesign"
-                        class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 py-2 px-3 border">
-                        <option *ngFor="let c of cardBacks" [value]="c.id">{{c.name}}</option>
-                    </select>
-                </div>
-
-                <div class="col-span-2">
-                    <div class="flex items-center gap-6">
-                        <div class="flex items-center">
-                            <input formControlName="showHints" type="checkbox"
-                                class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
-                            <span class="mr-2 text-sm text-gray-700">السماح بالتلميحات</span>
-                        </div>
-                        <div>
-                            <label class="text-sm font-medium text-gray-700 ml-2">أقصى عدد تلميحات:</label>
-                            <input formControlName="maxHints" type="number"
-                                class="w-20 border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 py-1 px-2 border text-sm">
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- STEP 3: Pairs -->
-        <div *ngIf="currentStep === 3" class="space-y-6 animate-fade-in">
-
-            <!-- Pairs Header with Counter -->
-            <div class="flex justify-between items-center border-b pb-2">
-                <div>
-                    <h2 class="text-xl font-semibold text-gray-800">أزواج المحتوى</h2>
-                    <p class="text-xs text-gray-500 mt-1">
-                        الأزواج: {{ pairs.length }} / {{ MAX_PAIRS }}
+                    <h2 class="section-title">🎴 أزواج المحتوى</h2>
+                    <p class="pairs-count">
+                        {{ pairs.length }} / {{ MAX_PAIRS }} أزواج
                         &nbsp;·&nbsp;
-                        الحد الأدنى: {{ MIN_PAIRS }} أزواج
+                        الحد الأدنى: {{ MIN_PAIRS }}
                     </p>
                 </div>
-                <button type="button" (click)="addPair()" [disabled]="pairs.length >= MAX_PAIRS"
-                    class="text-sm bg-indigo-50 text-indigo-700 hover:bg-indigo-100 px-3 py-1 rounded-lg flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed">
+                <button type="button" (click)="addPair()" [disabled]="pairs.length >= MAX_PAIRS" class="add-pair-btn">
                     <lucide-icon name="plus" class="w-4 h-4"></lucide-icon> إضافة زوج
                 </button>
             </div>
 
             <!-- Pairs Progress Bar -->
-            <div class="w-full bg-gray-100 rounded-full h-2">
-                <div class="h-2 rounded-full transition-all duration-300"
-                    [style.width.%]="(pairs.length / MAX_PAIRS) * 100" [class.bg-red-400]="pairs.length < MIN_PAIRS"
-                    [class.bg-indigo-500]="pairs.length >= MIN_PAIRS && pairs.length <= MAX_PAIRS">
-                </div>
+            <div class="pairs-progress-bar">
+                <div class="pairs-progress-fill" [style.width.%]="(pairs.length / MAX_PAIRS) * 100"
+                    [class.low]="pairs.length < MIN_PAIRS" [class.ok]="pairs.length >= MIN_PAIRS"></div>
             </div>
 
-            <div formArrayName="pairs" class="space-y-4">
-                <div *ngFor="let pair of pairs.controls; let i=index" [formGroupName]="i"
-                    class="p-4 rounded-xl border relative transition-all" [class.bg-green-50]="pair.valid"
-                    [class.border-green-300]="pair.valid" [class.bg-gray-50]="pair.invalid && !pair.touched"
-                    [class.border-gray-200]="pair.invalid && !pair.touched"
-                    [class.bg-red-50]="pair.invalid && pair.touched"
-                    [class.border-red-300]="pair.invalid && pair.touched">
+            <div formArrayName="pairs" class="pairs-list">
+                <div *ngFor="let pair of pairs.controls; let i=index" [formGroupName]="i" class="pair-card"
+                    [class.valid]="pair.valid" [class.invalid-touched]="pair.invalid && pair.touched">
 
                     <!-- Pair Header -->
-                    <div class="flex justify-between items-center mb-3">
-                        <div class="flex items-center gap-2">
-                            <span class="font-medium text-sm text-gray-700">الزوج {{ i + 1 }}</span>
-                            <span *ngIf="pair.valid" class="text-green-500 text-xs">✓ مكتمل</span>
-                            <span *ngIf="pair.invalid && pair.touched" class="text-red-500 text-xs">⚠️ غير مكتمل</span>
+                    <div class="pair-header">
+                        <div class="pair-title-row">
+                            <span class="pair-number">الزوج {{ i + 1 }}</span>
+                            <span *ngIf="pair.valid" class="pair-status valid">✓ مكتمل</span>
+                            <span *ngIf="pair.invalid && pair.touched" class="pair-status invalid">⚠️ غير مكتمل</span>
                         </div>
-                        <button type="button" (click)="removePair(i)" [disabled]="pairs.length <= MIN_PAIRS"
-                            class="text-gray-400 hover:text-red-500 disabled:opacity-30 disabled:cursor-not-allowed"
-                            [title]="pairs.length <= MIN_PAIRS ? 'الحد الأدنى ' + MIN_PAIRS + ' أزواج' : 'حذف'">
-                            <lucide-icon name="trash-2" class="w-4 h-4"></lucide-icon>
-                        </button>
+                        <div class="pair-actions">
+                            <button type="button" (click)="duplicatePair(i)" [disabled]="pairs.length >= MAX_PAIRS"
+                                class="pair-action-btn copy" title="نسخ الزوج">
+                                <lucide-icon name="copy" class="w-4 h-4"></lucide-icon>
+                            </button>
+                            <button type="button" (click)="removePair(i)" [disabled]="pairs.length <= MIN_PAIRS"
+                                class="pair-action-btn delete" title="حذف">
+                                <lucide-icon name="trash-2" class="w-4 h-4"></lucide-icon>
+                            </button>
+                        </div>
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <!-- Card 1 -->
-                        <div class="space-y-3">
-                            <div class="font-medium text-sm text-indigo-600">البطاقة ١</div>
+                    <div class="pair-cards-grid">
+                        <!-- ===== Card 1 ===== -->
+                        <div class="card-section">
+                            <div class="card-section-label card1-label">البطاقة ١</div>
 
-                            <!-- Card 1 Type Selection -->
-                            <div>
-                                <label class="block text-xs font-medium text-gray-500 mb-1">نوع المحتوى</label>
-                                <select formControlName="card1Type"
-                                    class="w-full border-gray-300 rounded shadow-sm py-1.5 px-3 border text-sm">
+                            <div class="card-type-select">
+                                <label class="type-label">نوع المحتوى</label>
+                                <select formControlName="card1Type" class="form-select compact">
                                     <option [ngValue]="FlipCardContentType.Text">📝 نص</option>
                                     <option [ngValue]="FlipCardContentType.Image">🖼️ صورة</option>
                                     <option [ngValue]="FlipCardContentType.Audio">🔊 صوت</option>
                                 </select>
                             </div>
 
-                            <!-- Card 1 Text (shown for Text type, optional for others) -->
+                            <!-- Text -->
                             <div *ngIf="pair.get('card1Type')?.value === FlipCardContentType.Text">
-                                <label class="block text-xs font-medium text-gray-500 mb-1">النص <span
-                                        class="text-red-500">*</span></label>
+                                <label class="type-label">النص <span class="required">*</span></label>
                                 <input formControlName="card1Text" type="text" placeholder="أدخل النص..."
-                                    class="w-full border-gray-300 rounded shadow-sm py-1.5 px-3 border text-sm">
+                                    class="form-input compact">
                                 <p *ngIf="pair.get('card1Text')?.touched && pair.get('card1Text')?.invalid"
-                                    class="text-red-500 text-xs mt-1">النص مطلوب</p>
+                                    class="field-error">النص مطلوب</p>
                             </div>
 
-                            <!-- Card 1 Image fields -->
+                            <!-- Image -->
                             <div *ngIf="pair.get('card1Type')?.value === FlipCardContentType.Image">
-                                <label class="block text-xs font-medium text-gray-500 mb-1">رابط الصورة <span
-                                        class="text-red-500">*</span></label>
-                                <input formControlName="card1ImageUrl" type="text" placeholder="رابط الصورة..."
-                                    class="w-full border-gray-300 rounded shadow-sm py-1.5 px-3 border text-sm mb-2">
+                                <label class="type-label">رابط الصورة <span class="required">*</span></label>
+                                <input formControlName="card1ImageUrl" type="text" placeholder="https://..."
+                                    class="form-input compact">
                                 <p *ngIf="pair.get('card1ImageUrl')?.touched && pair.get('card1ImageUrl')?.invalid"
-                                    class="text-red-500 text-xs mt-1">رابط الصورة مطلوب</p>
+                                    class="field-error">رابط الصورة مطلوب</p>
+                                <!-- Image Preview -->
+                                <div *ngIf="pair.get('card1ImageUrl')?.value" class="image-preview">
+                                    <img [src]="pair.get('card1ImageUrl')?.value" alt="معاينة"
+                                        (error)="$any($event.target).style.display='none'">
+                                </div>
                                 <input formControlName="card1Text" type="text" placeholder="نص بديل (اختياري)..."
-                                    class="w-full border-gray-300 rounded shadow-sm py-1.5 px-3 border text-sm">
+                                    class="form-input compact mt-2">
                             </div>
 
-                            <!-- Card 1 Audio fields -->
+                            <!-- Audio -->
                             <div *ngIf="pair.get('card1Type')?.value === FlipCardContentType.Audio">
-                                <label class="block text-xs font-medium text-gray-500 mb-1">رابط الصوت <span
-                                        class="text-red-500">*</span></label>
-                                <input formControlName="card1AudioUrl" type="text" placeholder="رابط الصوت..."
-                                    class="w-full border-gray-300 rounded shadow-sm py-1.5 px-3 border text-sm mb-2">
+                                <label class="type-label">رابط الصوت <span class="required">*</span></label>
+                                <input formControlName="card1AudioUrl" type="text" placeholder="https://..."
+                                    class="form-input compact">
                                 <p *ngIf="pair.get('card1AudioUrl')?.touched && pair.get('card1AudioUrl')?.invalid"
-                                    class="text-red-500 text-xs mt-1">رابط الصوت مطلوب</p>
+                                    class="field-error">رابط الصوت مطلوب</p>
                                 <input formControlName="card1Text" type="text" placeholder="نص اختياري..."
-                                    class="w-full border-gray-300 rounded shadow-sm py-1.5 px-3 border text-sm">
+                                    class="form-input compact mt-2">
                             </div>
                         </div>
 
-                        <!-- Card 2 -->
-                        <div class="space-y-3">
-                            <div class="font-medium text-sm text-pink-600">البطاقة ٢</div>
+                        <!-- Divider arrow -->
+                        <div class="pair-divider">↔</div>
 
-                            <!-- Card 2 Type Selection -->
-                            <div>
-                                <label class="block text-xs font-medium text-gray-500 mb-1">نوع المحتوى</label>
-                                <select formControlName="card2Type"
-                                    class="w-full border-gray-300 rounded shadow-sm py-1.5 px-3 border text-sm">
+                        <!-- ===== Card 2 ===== -->
+                        <div class="card-section">
+                            <div class="card-section-label card2-label">البطاقة ٢</div>
+
+                            <div class="card-type-select">
+                                <label class="type-label">نوع المحتوى</label>
+                                <select formControlName="card2Type" class="form-select compact">
                                     <option [ngValue]="FlipCardContentType.Text">📝 نص</option>
                                     <option [ngValue]="FlipCardContentType.Image">🖼️ صورة</option>
                                     <option [ngValue]="FlipCardContentType.Audio">🔊 صوت</option>
                                 </select>
                             </div>
 
-                            <!-- Card 2 Text -->
+                            <!-- Text -->
                             <div *ngIf="pair.get('card2Type')?.value === FlipCardContentType.Text">
-                                <label class="block text-xs font-medium text-gray-500 mb-1">النص <span
-                                        class="text-red-500">*</span></label>
+                                <label class="type-label">النص <span class="required">*</span></label>
                                 <input formControlName="card2Text" type="text" placeholder="أدخل النص..."
-                                    class="w-full border-gray-300 rounded shadow-sm py-1.5 px-3 border text-sm">
+                                    class="form-input compact">
                                 <p *ngIf="pair.get('card2Text')?.touched && pair.get('card2Text')?.invalid"
-                                    class="text-red-500 text-xs mt-1">النص مطلوب</p>
+                                    class="field-error">النص مطلوب</p>
                             </div>
 
-                            <!-- Card 2 Image fields -->
+                            <!-- Image -->
                             <div *ngIf="pair.get('card2Type')?.value === FlipCardContentType.Image">
-                                <label class="block text-xs font-medium text-gray-500 mb-1">رابط الصورة <span
-                                        class="text-red-500">*</span></label>
-                                <input formControlName="card2ImageUrl" type="text" placeholder="رابط الصورة..."
-                                    class="w-full border-gray-300 rounded shadow-sm py-1.5 px-3 border text-sm mb-2">
+                                <label class="type-label">رابط الصورة <span class="required">*</span></label>
+                                <input formControlName="card2ImageUrl" type="text" placeholder="https://..."
+                                    class="form-input compact">
                                 <p *ngIf="pair.get('card2ImageUrl')?.touched && pair.get('card2ImageUrl')?.invalid"
-                                    class="text-red-500 text-xs mt-1">رابط الصورة مطلوب</p>
+                                    class="field-error">رابط الصورة مطلوب</p>
+                                <div *ngIf="pair.get('card2ImageUrl')?.value" class="image-preview">
+                                    <img [src]="pair.get('card2ImageUrl')?.value" alt="معاينة"
+                                        (error)="$any($event.target).style.display='none'">
+                                </div>
                                 <input formControlName="card2Text" type="text" placeholder="نص بديل (اختياري)..."
-                                    class="w-full border-gray-300 rounded shadow-sm py-1.5 px-3 border text-sm">
+                                    class="form-input compact mt-2">
                             </div>
 
-                            <!-- Card 2 Audio fields -->
+                            <!-- Audio -->
                             <div *ngIf="pair.get('card2Type')?.value === FlipCardContentType.Audio">
-                                <label class="block text-xs font-medium text-gray-500 mb-1">رابط الصوت <span
-                                        class="text-red-500">*</span></label>
-                                <input formControlName="card2AudioUrl" type="text" placeholder="رابط الصوت..."
-                                    class="w-full border-gray-300 rounded shadow-sm py-1.5 px-3 border text-sm mb-2">
+                                <label class="type-label">رابط الصوت <span class="required">*</span></label>
+                                <input formControlName="card2AudioUrl" type="text" placeholder="https://..."
+                                    class="form-input compact">
                                 <p *ngIf="pair.get('card2AudioUrl')?.touched && pair.get('card2AudioUrl')?.invalid"
-                                    class="text-red-500 text-xs mt-1">رابط الصوت مطلوب</p>
+                                    class="field-error">رابط الصوت مطلوب</p>
                                 <input formControlName="card2Text" type="text" placeholder="نص اختياري..."
-                                    class="w-full border-gray-300 rounded shadow-sm py-1.5 px-3 border text-sm">
+                                    class="form-input compact mt-2">
                             </div>
                         </div>
                     </div>
 
-                    <!-- Pair Preview -->
-                    <div class="mt-3 pt-3 border-t border-gray-200 flex items-center gap-3 text-xs text-gray-400">
-                        <span>معاينة:</span>
-                        <span class="bg-white px-2 py-1 rounded border text-gray-600">
-                            <span *ngIf="pair.get('card1Type')?.value === FlipCardContentType.Text">{{
-                                pair.get('card1Text')?.value || '...' }}</span>
-                            <span *ngIf="pair.get('card1Type')?.value === FlipCardContentType.Image">🖼️ صورة</span>
-                            <span *ngIf="pair.get('card1Type')?.value === FlipCardContentType.Audio">🔊 صوت</span>
-                        </span>
-                        <span class="text-gray-300">↔</span>
-                        <span class="bg-white px-2 py-1 rounded border text-gray-600">
-                            <span *ngIf="pair.get('card2Type')?.value === FlipCardContentType.Text">{{
-                                pair.get('card2Text')?.value || '...' }}</span>
-                            <span *ngIf="pair.get('card2Type')?.value === FlipCardContentType.Image">🖼️ صورة</span>
-                            <span *ngIf="pair.get('card2Type')?.value === FlipCardContentType.Audio">🔊 صوت</span>
-                        </span>
+                    <!-- Explanation (when enabled) -->
+                    <div *ngIf="explanationsEnabled" class="explanation-field">
+                        <label class="type-label">💬 شرح الزوج <span class="optional">(اختياري)</span></label>
+                        <input formControlName="explanation" type="text"
+                            placeholder="سيظهر للطالب بعد المطابقة الصحيحة..." class="form-input compact">
+                    </div>
+
+                    <!-- Mini Card Preview -->
+                    <div class="mini-preview">
+                        <span class="preview-label">معاينة:</span>
+                        <div class="preview-card card1-preview">
+                            <span *ngIf="pair.get('card1Type')?.value === FlipCardContentType.Text">
+                                {{ pair.get('card1Text')?.value || '...' }}
+                            </span>
+                            <span *ngIf="pair.get('card1Type')?.value === FlipCardContentType.Image">🖼️</span>
+                            <span *ngIf="pair.get('card1Type')?.value === FlipCardContentType.Audio">🔊</span>
+                        </div>
+                        <span class="preview-arrow">↔</span>
+                        <div class="preview-card card2-preview">
+                            <span *ngIf="pair.get('card2Type')?.value === FlipCardContentType.Text">
+                                {{ pair.get('card2Text')?.value || '...' }}
+                            </span>
+                            <span *ngIf="pair.get('card2Type')?.value === FlipCardContentType.Image">🖼️</span>
+                            <span *ngIf="pair.get('card2Type')?.value === FlipCardContentType.Audio">🔊</span>
+                        </div>
                     </div>
                 </div>
 
-                <div *ngIf="pairs.length === 0"
-                    class="text-center py-8 text-gray-500 border-2 border-dashed border-gray-200 rounded-xl">
+                <div *ngIf="pairs.length === 0" class="empty-pairs">
                     لم تُضف أزواج بعد. اضغط "إضافة زوج" للبدء.
                 </div>
             </div>
         </div>
 
-        <!-- Actions -->
-        <div class="mt-8 pt-6 border-t border-gray-100 flex justify-between items-center">
-            <button type="button" (click)="prevStep()" [disabled]="currentStep === 1"
-                class="px-5 py-2 rounded-lg text-gray-600 hover:bg-gray-100 font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
+        <!-- ====================== ACTIONS ====================== -->
+        <div class="form-actions">
+            <button type="button" (click)="prevStep()" [disabled]="currentStep === 1" class="btn-secondary">
                 <lucide-icon name="chevron-right" class="w-4 h-4"></lucide-icon> السابق
             </button>
 
-            <button *ngIf="currentStep < 3" type="button" (click)="nextStep()"
-                class="px-5 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 font-medium flex items-center gap-2">
+            <button *ngIf="currentStep < 3" type="button" (click)="nextStep()" class="btn-primary">
                 التالي <lucide-icon name="chevron-left" class="w-4 h-4"></lucide-icon>
             </button>
 
             <!-- Save Button (Step 3 only) -->
-            <div *ngIf="currentStep === 3" class="flex flex-col items-end gap-1">
-                <button type="submit" [disabled]="loading || questionForm.invalid"
-                    class="px-6 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 font-medium flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all">
+            <div *ngIf="currentStep === 3" class="save-section">
+                <button type="submit" [disabled]="loading || questionForm.invalid" class="btn-save">
                     <lucide-icon *ngIf="!loading" name="save" class="w-4 h-4"></lucide-icon>
-                    <span *ngIf="loading"
-                        class="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                    <span *ngIf="loading" class="spinner"></span>
                     <span *ngIf="!loading">{{ isEditMode ? 'تحديث اللعبة' : 'إنشاء اللعبة' }}</span>
                     <span *ngIf="loading">جاري الحفظ...</span>
                 </button>
-                <p *ngIf="questionForm.invalid" class="text-xs text-amber-600">
+                <p *ngIf="questionForm.invalid" class="save-hint">
                     ⚠️ أكمل جميع الحقول المطلوبة لتفعيل الحفظ
                 </p>
             </div>

@@ -36,14 +36,7 @@ export class FlipCardGameService {
     }
 
     completeSession(sessionId: number): Observable<SessionCompleteDto> {
-        // Updated to pass sessionId as query param if Controller expects int, 
-        // OR as body if Controller expects [FromBody] int (which is weird in ASP.NET).
-        // Controller: public async Task<IActionResult> CompleteSession(int sessionId)
-        // If it's [HttpPost("complete")], and argument is "int sessionId", it usually expects query string ?sessionId=123
-        // unless [FromBody] is explicit. My controller code didn't specify [FromBody] for simple int usually.
-        // Let's assume query param or check controller.
-        // Controller Code: public async Task<IActionResult> CompleteSession(int sessionId)
-        // Default binding for simple types is Query/Route.
-        return this.http.post<SessionCompleteDto>(`${this.apiUrl}/complete?sessionId=${sessionId}`, {});
+        // Controller expects [FromBody] CompleteSessionRequest { SessionId }
+        return this.http.post<SessionCompleteDto>(`${this.apiUrl}/complete`, { sessionId });
     }
 }

@@ -26,6 +26,7 @@ export interface FlipCardPairDto {
     card2Text: string;
     card2ImageUrl?: string;
     card2AudioUrl?: string;
+    explanation?: string;
 }
 
 export interface FlipCardQuestionDto {
@@ -64,6 +65,7 @@ export interface CreateFlipCardPairDto {
     card2Text: string;
     card2ImageUrl?: string;
     card2AudioUrl?: string;
+    explanation?: string;
 }
 
 export interface CreateFlipCardQuestionDto {
