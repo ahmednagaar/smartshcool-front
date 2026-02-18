@@ -39,4 +39,10 @@ export class FlipCardGameService {
         // Controller expects [FromBody] CompleteSessionRequest { SessionId }
         return this.http.post<SessionCompleteDto>(`${this.apiUrl}/complete`, { sessionId });
     }
+
+    getLeaderboard(gradeId: number, subjectId: number): Observable<any[]> {
+        return this.http.get<any[]>(
+            `${this.apiUrl}/leaderboard?gradeId=${gradeId}&subjectId=${subjectId}`
+        );
+    }
 }

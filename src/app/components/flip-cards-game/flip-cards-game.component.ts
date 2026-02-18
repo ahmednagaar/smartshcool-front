@@ -46,6 +46,18 @@ export class FlipCardsGameComponent implements OnInit, OnDestroy {
   isProcessing = false;
   isCalculatingResult = false;
 
+  // Match feedback toast
+  showMatchFeedback = false;
+  matchFeedbackText = '';
+  matchFeedbackType: 'success' | 'error' = 'success';
+
+  // Leaderboard
+  leaderboardEntries: { rank: number; studentName: string; totalScore: number; testsCompleted: number }[] = [];
+  showLeaderboard = false;
+
+  // Difficulty progression
+  canPlayHarder = false;
+
   // Stats
   matchedPairs = 0;
   totalPairs = 0;
@@ -333,42 +345,66 @@ export class FlipCardsGameComponent implements OnInit, OnDestroy {
           oscillator.stop(ctx.currentTime + 0.15);
           break;
 
-        case 'match':
-          oscillator.type = 'sine';
-          oscillator.frequency.setValueAtTime(523, ctx.currentTime);
-          oscillator.frequency.setValueAtTime(659, ctx.currentTime + 0.1);
-          oscillator.frequency.setValueAtTime(784, ctx.currentTime + 0.2);
-          gainNode.gain.setValueAtTime(0.2, ctx.currentTime);
-          gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
-          oscillator.start(ctx.currentTime);
-          oscillator.stop(ctx.currentTime + 0.4);
-          break;
-
-        case 'wrong':
-          oscillator.type = 'sawtooth';
-          oscillator.frequency.setValueAtTime(300, ctx.currentTime);
-          oscillator.frequency.exponentialRampToValueAtTime(200, ctx.currentTime + 0.2);
-          gainNode.gain.setValueAtTime(0.1, ctx.currentTime);
-          gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
-          oscillator.start(ctx.currentTime);
-          oscillator.stop(ctx.currentTime + 0.3);
-          break;
-
-        case 'complete':
-          // Celebratory ascending tones
-          [523, 659, 784, 1047].forEach((freq, i) => {
+        case 'match': {
+          // Rich success chord: C-E-G played together
+          const matchFreqs = [523, 659, 784];
+          matchFreqs.forEach((freq, i) => {
             const osc = ctx.createOscillator();
             const gain = ctx.createGain();
             osc.connect(gain);
             gain.connect(ctx.destination);
             osc.type = 'sine';
-            osc.frequency.setValueAtTime(freq, ctx.currentTime + i * 0.15);
-            gain.gain.setValueAtTime(0.2, ctx.currentTime + i * 0.15);
-            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + i * 0.15 + 0.3);
-            osc.start(ctx.currentTime + i * 0.15);
-            osc.stop(ctx.currentTime + i * 0.15 + 0.3);
+            osc.frequency.setValueAtTime(freq, ctx.currentTime + i * 0.08);
+            gain.gain.setValueAtTime(0.15, ctx.currentTime + i * 0.08);
+            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + i * 0.08 + 0.4);
+            osc.start(ctx.currentTime + i * 0.08);
+            osc.stop(ctx.currentTime + i * 0.08 + 0.4);
           });
-          return; // Already handled oscillators
+          return;
+        }
+
+        case 'wrong': {
+          // Buzzer: two dissonant tones
+          const wrongFreqs = [200, 250];
+          wrongFreqs.forEach(freq => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(freq, ctx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(freq * 0.7, ctx.currentTime + 0.3);
+            gain.gain.setValueAtTime(0.08, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.35);
+            osc.start(ctx.currentTime);
+            osc.stop(ctx.currentTime + 0.35);
+          });
+          return;
+        }
+
+        case 'complete': {
+          // Grand celebration: ascending major scale with harmonics
+          const celebFreqs = [523, 587, 659, 784, 880, 1047];
+          celebFreqs.forEach((freq, i) => {
+            const osc = ctx.createOscillator();
+            const osc2 = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain);
+            osc2.connect(gain);
+            gain.connect(ctx.destination);
+            osc.type = 'sine';
+            osc2.type = 'triangle';
+            osc.frequency.setValueAtTime(freq, ctx.currentTime + i * 0.12);
+            osc2.frequency.setValueAtTime(freq * 2, ctx.currentTime + i * 0.12);
+            gain.gain.setValueAtTime(0.15, ctx.currentTime + i * 0.12);
+            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + i * 0.12 + 0.4);
+            osc.start(ctx.currentTime + i * 0.12);
+            osc2.start(ctx.currentTime + i * 0.12);
+            osc.stop(ctx.currentTime + i * 0.12 + 0.4);
+            osc2.stop(ctx.currentTime + i * 0.12 + 0.4);
+          });
+          return;
+        }
 
         case 'hint':
           oscillator.type = 'triangle';
@@ -380,15 +416,23 @@ export class FlipCardsGameComponent implements OnInit, OnDestroy {
           oscillator.stop(ctx.currentTime + 0.25);
           break;
 
-        case 'streak':
-          oscillator.type = 'sine';
-          oscillator.frequency.setValueAtTime(1000, ctx.currentTime);
-          oscillator.frequency.exponentialRampToValueAtTime(1500, ctx.currentTime + 0.15);
-          gainNode.gain.setValueAtTime(0.15, ctx.currentTime);
-          gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
-          oscillator.start(ctx.currentTime);
-          oscillator.stop(ctx.currentTime + 0.2);
-          break;
+        case 'streak': {
+          // Exciting rising sparkle
+          const sparkleFreqs = [1000, 1200, 1400, 1600];
+          sparkleFreqs.forEach((freq, i) => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(freq, ctx.currentTime + i * 0.06);
+            gain.gain.setValueAtTime(0.12, ctx.currentTime + i * 0.06);
+            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + i * 0.06 + 0.15);
+            osc.start(ctx.currentTime + i * 0.06);
+            osc.stop(ctx.currentTime + i * 0.06 + 0.15);
+          });
+          return;
+        }
       }
     } catch (e) {
       // Audio context not supported - silently ignore
@@ -421,154 +465,178 @@ export class FlipCardsGameComponent implements OnInit, OnDestroy {
     const card2 = this.currentFlipped[1];
 
     const isMatch = card1.pairId === card2.pairId;
+    const isVirtualSession = !this.gameData?.id || this.gameData.id <= 0;
 
     if (isMatch) {
-      this.gameService.recordMatch({
-        sessionId: this.gameData!.id,
-        pairId: card1.pairId,
-        card1FlippedAtMs: Date.now(),
-        card2FlippedAtMs: Date.now() + 100,
-        attemptsBeforeMatch: this.moves,
-        hintUsed: card1.isHinted || card2.isHinted || false
-      }).subscribe({
-        next: (result) => {
-          card1.isMatched = true;
-          card2.isMatched = true;
-          card1.celebrate = true;
-          card2.celebrate = true;
-          this.matchedPairs++;
-          this.score = result.totalScore;
-
-          // Streak tracking
-          this.streak++;
-          if (this.streak > this.bestStreak) this.bestStreak = this.streak;
-
-          // Phase 3: Streak bonus multiplier
-          if (this.streak >= 3) {
-            const bonus = (this.streak - 2) * 5;
-            this.streakBonusPoints += bonus;
-            this.showStreakBadge = true;
-            this.playSound('streak');
-            setTimeout(() => this.showStreakBadge = false, 2000);
-          } else {
-            this.playSound('match');
+      if (isVirtualSession) {
+        // Virtual session (anonymous) - handle locally
+        this.applyMatchSuccess(card1, card2, 10);
+      } else {
+        // Real session - call API
+        this.gameService.recordMatch({
+          sessionId: this.gameData!.id,
+          pairId: card1.pairId,
+          card1FlippedAtMs: Date.now(),
+          card2FlippedAtMs: Date.now() + 100,
+          attemptsBeforeMatch: this.moves,
+          hintUsed: card1.isHinted || card2.isHinted || false
+        }).subscribe({
+          next: (result) => {
+            this.applyMatchSuccess(card1, card2, result.totalScore, result.explanation);
+          },
+          error: (err) => {
+            console.error('Error recording match', err);
+            // Fallback: still apply match locally so game isn't stuck
+            this.applyMatchSuccess(card1, card2, 10);
           }
-
-          // Phase 3: Show explanation if available
-          if (result.explanation) {
-            this.showPairExplanation(card1.text || card2.text, result.explanation);
-          }
-
-          this.currentFlipped = [];
-          this.isProcessing = false;
-
-          if (this.matchedPairs >= this.totalPairs) {
-            this.finishGame();
-          }
-        },
-        error: (err) => {
-          console.error('Error recording match', err);
-          this.currentFlipped = [];
-          this.isProcessing = false;
-        }
-      });
+        });
+      }
     } else {
       // Wrong match
-      this.streak = 0; // Reset streak
-      this.gameService.recordWrongMatch({
-        sessionId: this.gameData!.id,
-        card1Id: card1.id,
-        card2Id: card2.id
-      }).subscribe({
-        next: () => {
-          this.playSound('wrong');
-          card1.shake = true;
-          card2.shake = true;
-          setTimeout(() => {
-            card1.isFlipped = false;
-            card2.isFlipped = false;
-            card1.shake = false;
-            card2.shake = false;
-            this.currentFlipped = [];
-            this.isProcessing = false;
-          }, 1000);
-        },
-        error: (err) => {
-          console.error('Error recording wrong match', err);
-          this.playSound('wrong');
-          card1.shake = true;
-          card2.shake = true;
-          setTimeout(() => {
-            card1.isFlipped = false;
-            card2.isFlipped = false;
-            card1.shake = false;
-            card2.shake = false;
-            this.currentFlipped = [];
-            this.isProcessing = false;
-          }, 1000);
-        }
-      });
+      this.streak = 0;
+      this.showWrongMatchToast();
+      const handleWrongMatch = () => {
+        this.playSound('wrong');
+        card1.shake = true;
+        card2.shake = true;
+        setTimeout(() => {
+          card1.isFlipped = false;
+          card2.isFlipped = false;
+          card1.shake = false;
+          card2.shake = false;
+          this.currentFlipped = [];
+          this.isProcessing = false;
+        }, 1000);
+      };
+
+      if (isVirtualSession) {
+        handleWrongMatch();
+      } else {
+        this.gameService.recordWrongMatch({
+          sessionId: this.gameData!.id,
+          card1Id: card1.id,
+          card2Id: card2.id
+        }).subscribe({
+          next: () => handleWrongMatch(),
+          error: () => handleWrongMatch()
+        });
+      }
     }
+  }
+
+  /** Shared match-success logic for both API and local matches */
+  private applyMatchSuccess(card1: CardViewModel, card2: CardViewModel, scoreOrPoints: number, explanation?: string): void {
+    card1.isMatched = true;
+    card2.isMatched = true;
+    card1.celebrate = true;
+    card2.celebrate = true;
+    this.matchedPairs++;
+
+    const isVirtualSession = !this.gameData?.id || this.gameData.id <= 0;
+    if (isVirtualSession) {
+      this.score += scoreOrPoints; // Add points locally
+    } else {
+      this.score = scoreOrPoints; // Use server total
+    }
+
+    // Show match feedback toast
+    this.showMatchToast();
+
+    // Streak tracking
+    this.streak++;
+    if (this.streak > this.bestStreak) this.bestStreak = this.streak;
+
+    if (this.streak >= 3) {
+      const bonus = (this.streak - 2) * 5;
+      this.streakBonusPoints += bonus;
+      this.showStreakBadge = true;
+      this.playSound('streak');
+      setTimeout(() => this.showStreakBadge = false, 2000);
+    } else {
+      this.playSound('match');
+    }
+
+    if (explanation) {
+      this.showPairExplanation(card1.text || card2.text, explanation);
+    }
+
+    this.currentFlipped = [];
+    this.isProcessing = false;
+
+    if (this.matchedPairs >= this.totalPairs) {
+      setTimeout(() => this.finishGame(), 600);
+    }
+  }
+
+  /** Show a brief "correct match" toast */
+  private showMatchToast(): void {
+    const messages = ['أحسنت! 🌟', 'رائع! 👏', 'ممتاز! 🎉', 'صحيح! 🎯', 'عظيم! 🤩'];
+    this.matchFeedbackText = messages[Math.floor(Math.random() * messages.length)];
+    this.matchFeedbackType = 'success';
+    this.showMatchFeedback = true;
+    setTimeout(() => {
+      this.showMatchFeedback = false;
+    }, 1500);
+  }
+
+  /** Show a brief "wrong match" toast */
+  private showWrongMatchToast(): void {
+    const messages = ['حاول مرة أخرى! 💪', 'ليس صحيحاً ❌', 'فكر أكثر! 🧠', 'لا تستسلم! 💪', 'قاربت! 🤔'];
+    this.matchFeedbackText = messages[Math.floor(Math.random() * messages.length)];
+    this.matchFeedbackType = 'error';
+    this.showMatchFeedback = true;
+    setTimeout(() => {
+      this.showMatchFeedback = false;
+    }, 1500);
   }
 
   // ========== MATCH MODE LOGIC ==========
   onDrop(event: CdkDragDrop<CardViewModel[]> | any, targetCard: CardViewModel): void {
     const sourceCard: CardViewModel = event.item.data;
     this.moves++;
+    const isVirtualSession = !this.gameData?.id || this.gameData.id <= 0;
 
     if (sourceCard.pairId === targetCard.pairId) {
-      this.gameService.recordMatch({
-        sessionId: this.gameData!.id,
-        pairId: sourceCard.pairId,
-        card1FlippedAtMs: Date.now(),
-        card2FlippedAtMs: Date.now() + 100,
-        attemptsBeforeMatch: this.moves,
-        hintUsed: false
-      }).subscribe({
-        next: (result) => {
-          sourceCard.isMatched = true;
-          targetCard.isMatched = true;
-          targetCard.celebrate = true;
-          this.matchedPairs++;
-          this.score = result.totalScore;
-
-          this.streak++;
-          if (this.streak > this.bestStreak) this.bestStreak = this.streak;
-          if (this.streak >= 3) {
-            this.showStreakBadge = true;
-            this.playSound('streak');
-            setTimeout(() => this.showStreakBadge = false, 2000);
-          } else {
-            this.playSound('match');
+      if (isVirtualSession) {
+        this.applyMatchSuccess(sourceCard, targetCard, 10);
+      } else {
+        this.gameService.recordMatch({
+          sessionId: this.gameData!.id,
+          pairId: sourceCard.pairId,
+          card1FlippedAtMs: Date.now(),
+          card2FlippedAtMs: Date.now() + 100,
+          attemptsBeforeMatch: this.moves,
+          hintUsed: false
+        }).subscribe({
+          next: (result) => {
+            this.applyMatchSuccess(sourceCard, targetCard, result.totalScore, result.explanation);
+          },
+          error: (err) => {
+            console.error('Error recording match', err);
+            this.applyMatchSuccess(sourceCard, targetCard, 10);
           }
-
-          if (this.matchedPairs >= this.totalPairs) {
-            this.finishGame();
-          }
-        },
-        error: (err) => {
-          console.error('Error recording match', err);
-        }
-      });
+        });
+      }
     } else {
       this.streak = 0;
-      this.gameService.recordWrongMatch({
-        sessionId: this.gameData!.id,
-        card1Id: sourceCard.id,
-        card2Id: targetCard.id
-      }).subscribe({
-        next: () => {
-          this.playSound('wrong');
-          targetCard.shake = true;
-          setTimeout(() => targetCard.shake = false, 500);
-        },
-        error: (err) => {
-          console.error('Error recording wrong match', err);
-          this.playSound('wrong');
-          targetCard.shake = true;
-          setTimeout(() => targetCard.shake = false, 500);
-        }
-      });
+      const handleWrong = () => {
+        this.playSound('wrong');
+        targetCard.shake = true;
+        setTimeout(() => targetCard.shake = false, 500);
+      };
+
+      if (isVirtualSession) {
+        handleWrong();
+      } else {
+        this.gameService.recordWrongMatch({
+          sessionId: this.gameData!.id,
+          card1Id: sourceCard.id,
+          card2Id: targetCard.id
+        }).subscribe({
+          next: () => handleWrong(),
+          error: () => handleWrong()
+        });
+      }
     }
   }
 
@@ -721,19 +789,66 @@ export class FlipCardsGameComponent implements OnInit, OnDestroy {
     this.playSound('complete');
     this.triggerConfetti();
 
-    this.gameService.completeSession(this.gameData!.id).subscribe({
-      next: (res) => {
-        this.score = res.finalScore;
-        this.stars = res.starRating;
-        this.achievements = res.achievements || [];
-        this.isCalculatingResult = false;
+    const isVirtualSession = !this.gameData?.id || this.gameData.id <= 0;
+
+    if (isVirtualSession) {
+      // Calculate results locally for anonymous users
+      this.calculateStarsLocally();
+      this.isCalculatingResult = false;
+    } else {
+      // Real session - call API
+      this.gameService.completeSession(this.gameData!.id).subscribe({
+        next: (res) => {
+          this.score = res.finalScore;
+          this.stars = res.starRating;
+          this.achievements = res.achievements || [];
+          this.isCalculatingResult = false;
+          // Check difficulty progression
+          this.canPlayHarder = this.stars >= 3;
+          // Fetch leaderboard
+          this.fetchLeaderboard();
+        },
+        error: (err) => {
+          console.error('Complete session error:', err);
+          this.calculateStarsLocally();
+          this.isCalculatingResult = false;
+        }
+      });
+    }
+
+    // For anonymous users, still check difficulty progression
+    this.canPlayHarder = this.stars >= 3;
+  }
+
+  private calculateStarsLocally(): void {
+    const minMoves = this.totalPairs;
+    if (this.moves <= minMoves * 1.5) this.stars = 3;
+    else if (this.moves <= minMoves * 2.5) this.stars = 2;
+    else this.stars = 1;
+  }
+
+  private fetchLeaderboard(): void {
+    const gradeId = this.gameData?.question?.id ? getSelectedGrade() : 0;
+    const subjectId = this.gameData?.question?.id ? getSelectedSubject() : 0;
+    this.gameService.getLeaderboard(gradeId, subjectId).subscribe({
+      next: (entries: any[]) => {
+        this.leaderboardEntries = entries.map((e, i) => ({
+          rank: e.rank || i + 1,
+          studentName: e.studentName || 'لاعب',
+          totalScore: e.totalScore || 0,
+          testsCompleted: e.testsCompleted || 0
+        }));
+        this.showLeaderboard = this.leaderboardEntries.length > 0;
       },
-      error: (err) => {
-        console.error('Complete session error:', err);
-        this.stars = 3;
-        this.isCalculatingResult = false;
+      error: () => {
+        this.showLeaderboard = false;
       }
     });
+  }
+
+  playNextDifficulty(): void {
+    // Start a new game — the backend will give a different/harder question
+    this.playAgain();
   }
 
   playAgain(): void {

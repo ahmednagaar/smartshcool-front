@@ -17,6 +17,12 @@
         🔥 {{ streak }}x سلسلة! <span class="streak-bonus">+{{ (streak - 2) * 5 }}</span>
     </div>
 
+    <!-- Match Feedback Toast -->
+    <div *ngIf="showMatchFeedback" class="match-feedback-toast" [class.success]="matchFeedbackType === 'success'"
+        [class.error]="matchFeedbackType === 'error'">
+        {{ matchFeedbackText }}
+    </div>
+
     <!-- Card Preview Overlay (Phase 3 - P2) -->
     <div *ngIf="isPreviewPhase" class="preview-overlay">
         <div class="preview-badge">
@@ -327,6 +333,24 @@
                         </span>
                     </div>
                 </div>
+
+                <!-- Leaderboard -->
+                <div *ngIf="showLeaderboard" class="leaderboard-section">
+                    <h3>🏆 لوحة المتصدرين</h3>
+                    <div class="leaderboard-list">
+                        <div *ngFor="let entry of leaderboardEntries; let i = index" class="leaderboard-entry"
+                            [class.top-three]="i < 3">
+                            <span class="lb-rank">{{ entry.rank }}</span>
+                            <span class="lb-name">{{ entry.studentName }}</span>
+                            <span class="lb-score">{{ entry.totalScore }} نقطة</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Difficulty Progression -->
+                <button *ngIf="canPlayHarder" class="next-difficulty-button" (click)="playNextDifficulty()">
+                    🚀 تحدي أصعب!
+                </button>
 
                 <button class="replay-button" (click)="playAgain()">
                     العب مرة أخرى 🔄
