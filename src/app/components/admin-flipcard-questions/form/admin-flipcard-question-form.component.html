@@ -56,12 +56,13 @@
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div class="col-span-2">
-                    <label class="block text-sm font-medium text-gray-700 mb-1">عنوان اللعبة</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">عنوان اللعبة <span
+                            class="text-red-500">*</span></label>
                     <input formControlName="gameTitle" type="text"
                         class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 py-2 px-3 border"
                         placeholder="مثال: مطابقة الحيوانات">
                     <p *ngIf="questionForm.get('gameTitle')?.touched && questionForm.get('gameTitle')?.invalid"
-                        class="text-red-500 text-xs mt-1">العنوان مطلوب.</p>
+                        class="text-red-500 text-xs mt-1">العنوان مطلوب (3 أحرف على الأقل).</p>
                 </div>
 
                 <div class="col-span-2">
@@ -72,7 +73,8 @@
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">الصف الدراسي</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">الصف الدراسي <span
+                            class="text-red-500">*</span></label>
                     <select formControlName="gradeId"
                         class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 py-2 px-3 border">
                         <option [ngValue]="null">اختر الصف</option>
@@ -81,10 +83,13 @@
                         <option [ngValue]="GradeLevel.Grade5">الصف الخامس</option>
                         <option [ngValue]="GradeLevel.Grade6">الصف السادس</option>
                     </select>
+                    <p *ngIf="questionForm.get('gradeId')?.touched && questionForm.get('gradeId')?.invalid"
+                        class="text-red-500 text-xs mt-1">اختر الصف الدراسي.</p>
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">المادة</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">المادة <span
+                            class="text-red-500">*</span></label>
                     <select formControlName="subjectId"
                         class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 py-2 px-3 border">
                         <option [ngValue]="null">اختر المادة</option>
@@ -92,6 +97,8 @@
                         <option [ngValue]="SubjectType.Math">الرياضيات</option>
                         <option [ngValue]="SubjectType.Science">العلوم</option>
                     </select>
+                    <p *ngIf="questionForm.get('subjectId')?.touched && questionForm.get('subjectId')?.invalid"
+                        class="text-red-500 text-xs mt-1">اختر المادة.</p>
                 </div>
 
                 <div>
@@ -100,13 +107,13 @@
                         <button type="button" (click)="questionForm.patchValue({gameMode: FlipCardGameMode.Classic})"
                             [class.ring-2]="questionForm.get('gameMode')?.value === FlipCardGameMode.Classic"
                             class="flex-1 p-4 border rounded-lg text-center hover:bg-gray-50 focus:outline-none ring-indigo-500">
-                            <div class="font-bold">لعبة الذاكرة</div>
+                            <div class="font-bold">🧠 لعبة الذاكرة</div>
                             <div class="text-xs text-gray-500">اقلب البطاقات للعثور على الأزواج</div>
                         </button>
                         <button type="button" (click)="questionForm.patchValue({gameMode: FlipCardGameMode.Match})"
                             [class.ring-2]="questionForm.get('gameMode')?.value === FlipCardGameMode.Match"
                             class="flex-1 p-4 border rounded-lg text-center hover:bg-gray-50 focus:outline-none ring-indigo-500">
-                            <div class="font-bold">لعبة المطابقة</div>
+                            <div class="font-bold">🔗 لعبة المطابقة</div>
                             <div class="text-xs text-gray-500">اسحب لتوصيل الأزواج</div>
                         </button>
                     </div>
@@ -180,55 +187,100 @@
 
         <!-- STEP 3: Pairs -->
         <div *ngIf="currentStep === 3" class="space-y-6 animate-fade-in">
+
+            <!-- Pairs Header with Counter -->
             <div class="flex justify-between items-center border-b pb-2">
-                <h2 class="text-xl font-semibold text-gray-800">أزواج المحتوى</h2>
-                <button type="button" (click)="addPair()"
-                    class="text-sm bg-indigo-50 text-indigo-700 hover:bg-indigo-100 px-3 py-1 rounded-lg flex items-center gap-1">
+                <div>
+                    <h2 class="text-xl font-semibold text-gray-800">أزواج المحتوى</h2>
+                    <p class="text-xs text-gray-500 mt-1">
+                        الأزواج: {{ pairs.length }} / {{ MAX_PAIRS }}
+                        &nbsp;·&nbsp;
+                        الحد الأدنى: {{ MIN_PAIRS }} أزواج
+                    </p>
+                </div>
+                <button type="button" (click)="addPair()" [disabled]="pairs.length >= MAX_PAIRS"
+                    class="text-sm bg-indigo-50 text-indigo-700 hover:bg-indigo-100 px-3 py-1 rounded-lg flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed">
                     <lucide-icon name="plus" class="w-4 h-4"></lucide-icon> إضافة زوج
                 </button>
             </div>
 
+            <!-- Pairs Progress Bar -->
+            <div class="w-full bg-gray-100 rounded-full h-2">
+                <div class="h-2 rounded-full transition-all duration-300"
+                    [style.width.%]="(pairs.length / MAX_PAIRS) * 100" [class.bg-red-400]="pairs.length < MIN_PAIRS"
+                    [class.bg-indigo-500]="pairs.length >= MIN_PAIRS && pairs.length <= MAX_PAIRS">
+                </div>
+            </div>
+
             <div formArrayName="pairs" class="space-y-4">
                 <div *ngFor="let pair of pairs.controls; let i=index" [formGroupName]="i"
-                    class="bg-gray-50 p-4 rounded-xl border border-gray-200 relative">
-                    <button type="button" (click)="removePair(i)"
-                        class="absolute top-2 left-2 text-gray-400 hover:text-red-500">
-                        <lucide-icon name="trash-2" class="w-4 h-4"></lucide-icon>
-                    </button>
+                    class="p-4 rounded-xl border relative transition-all" [class.bg-green-50]="pair.valid"
+                    [class.border-green-300]="pair.valid" [class.bg-gray-50]="pair.invalid && !pair.touched"
+                    [class.border-gray-200]="pair.invalid && !pair.touched"
+                    [class.bg-red-50]="pair.invalid && pair.touched"
+                    [class.border-red-300]="pair.invalid && pair.touched">
+
+                    <!-- Pair Header -->
+                    <div class="flex justify-between items-center mb-3">
+                        <div class="flex items-center gap-2">
+                            <span class="font-medium text-sm text-gray-700">الزوج {{ i + 1 }}</span>
+                            <span *ngIf="pair.valid" class="text-green-500 text-xs">✓ مكتمل</span>
+                            <span *ngIf="pair.invalid && pair.touched" class="text-red-500 text-xs">⚠️ غير مكتمل</span>
+                        </div>
+                        <button type="button" (click)="removePair(i)" [disabled]="pairs.length <= MIN_PAIRS"
+                            class="text-gray-400 hover:text-red-500 disabled:opacity-30 disabled:cursor-not-allowed"
+                            [title]="pairs.length <= MIN_PAIRS ? 'الحد الأدنى ' + MIN_PAIRS + ' أزواج' : 'حذف'">
+                            <lucide-icon name="trash-2" class="w-4 h-4"></lucide-icon>
+                        </button>
+                    </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <!-- Card 1 -->
                         <div class="space-y-3">
                             <div class="font-medium text-sm text-indigo-600">البطاقة ١</div>
-                            <div class="flex gap-2 mb-2">
-                                <button type="button"
-                                    (click)="pair.get('card1Type')?.setValue(FlipCardContentType.Text)"
-                                    [class.bg-white]="pair.get('card1Type')?.value === FlipCardContentType.Text"
-                                    [class.shadow-sm]="pair.get('card1Type')?.value === FlipCardContentType.Text"
-                                    class="p-1 rounded text-gray-500 hover:text-indigo-600 transition-all border border-transparent"
-                                    [class.border-gray-200]="pair.get('card1Type')?.value === FlipCardContentType.Text">
-                                    <lucide-icon name="type" class="w-4 h-4"></lucide-icon>
-                                </button>
-                                <button type="button"
-                                    (click)="pair.get('card1Type')?.setValue(FlipCardContentType.Image)"
-                                    [class.bg-white]="pair.get('card1Type')?.value === FlipCardContentType.Image"
-                                    [class.shadow-sm]="pair.get('card1Type')?.value === FlipCardContentType.Image"
-                                    class="p-1 rounded text-gray-500 hover:text-indigo-600 transition-all border border-transparent"
-                                    [class.border-gray-200]="pair.get('card1Type')?.value === FlipCardContentType.Image">
-                                    <lucide-icon name="image" class="w-4 h-4"></lucide-icon>
-                                </button>
+
+                            <!-- Card 1 Type Selection -->
+                            <div>
+                                <label class="block text-xs font-medium text-gray-500 mb-1">نوع المحتوى</label>
+                                <select formControlName="card1Type"
+                                    class="w-full border-gray-300 rounded shadow-sm py-1.5 px-3 border text-sm">
+                                    <option [ngValue]="FlipCardContentType.Text">📝 نص</option>
+                                    <option [ngValue]="FlipCardContentType.Image">🖼️ صورة</option>
+                                    <option [ngValue]="FlipCardContentType.Audio">🔊 صوت</option>
+                                </select>
                             </div>
 
-                            <!-- Inputs based on type -->
+                            <!-- Card 1 Text (shown for Text type, optional for others) -->
                             <div *ngIf="pair.get('card1Type')?.value === FlipCardContentType.Text">
+                                <label class="block text-xs font-medium text-gray-500 mb-1">النص <span
+                                        class="text-red-500">*</span></label>
                                 <input formControlName="card1Text" type="text" placeholder="أدخل النص..."
+                                    class="w-full border-gray-300 rounded shadow-sm py-1.5 px-3 border text-sm">
+                                <p *ngIf="pair.get('card1Text')?.touched && pair.get('card1Text')?.invalid"
+                                    class="text-red-500 text-xs mt-1">النص مطلوب</p>
+                            </div>
+
+                            <!-- Card 1 Image fields -->
+                            <div *ngIf="pair.get('card1Type')?.value === FlipCardContentType.Image">
+                                <label class="block text-xs font-medium text-gray-500 mb-1">رابط الصورة <span
+                                        class="text-red-500">*</span></label>
+                                <input formControlName="card1ImageUrl" type="text" placeholder="رابط الصورة..."
+                                    class="w-full border-gray-300 rounded shadow-sm py-1.5 px-3 border text-sm mb-2">
+                                <p *ngIf="pair.get('card1ImageUrl')?.touched && pair.get('card1ImageUrl')?.invalid"
+                                    class="text-red-500 text-xs mt-1">رابط الصورة مطلوب</p>
+                                <input formControlName="card1Text" type="text" placeholder="نص بديل (اختياري)..."
                                     class="w-full border-gray-300 rounded shadow-sm py-1.5 px-3 border text-sm">
                             </div>
 
-                            <div *ngIf="pair.get('card1Type')?.value === FlipCardContentType.Image">
-                                <input formControlName="card1ImageUrl" type="text" placeholder="رابط الصورة..."
+                            <!-- Card 1 Audio fields -->
+                            <div *ngIf="pair.get('card1Type')?.value === FlipCardContentType.Audio">
+                                <label class="block text-xs font-medium text-gray-500 mb-1">رابط الصوت <span
+                                        class="text-red-500">*</span></label>
+                                <input formControlName="card1AudioUrl" type="text" placeholder="رابط الصوت..."
                                     class="w-full border-gray-300 rounded shadow-sm py-1.5 px-3 border text-sm mb-2">
-                                <input formControlName="card1Text" type="text" placeholder="نص بديل..."
+                                <p *ngIf="pair.get('card1AudioUrl')?.touched && pair.get('card1AudioUrl')?.invalid"
+                                    class="text-red-500 text-xs mt-1">رابط الصوت مطلوب</p>
+                                <input formControlName="card1Text" type="text" placeholder="نص اختياري..."
                                     class="w-full border-gray-300 rounded shadow-sm py-1.5 px-3 border text-sm">
                             </div>
                         </div>
@@ -236,38 +288,70 @@
                         <!-- Card 2 -->
                         <div class="space-y-3">
                             <div class="font-medium text-sm text-pink-600">البطاقة ٢</div>
-                            <div class="flex gap-2 mb-2">
-                                <button type="button"
-                                    (click)="pair.get('card2Type')?.setValue(FlipCardContentType.Text)"
-                                    [class.bg-white]="pair.get('card2Type')?.value === FlipCardContentType.Text"
-                                    [class.shadow-sm]="pair.get('card2Type')?.value === FlipCardContentType.Text"
-                                    class="p-1 rounded text-gray-500 hover:text-indigo-600 transition-all border border-transparent"
-                                    [class.border-gray-200]="pair.get('card2Type')?.value === FlipCardContentType.Text">
-                                    <lucide-icon name="type" class="w-4 h-4"></lucide-icon>
-                                </button>
-                                <button type="button"
-                                    (click)="pair.get('card2Type')?.setValue(FlipCardContentType.Image)"
-                                    [class.bg-white]="pair.get('card2Type')?.value === FlipCardContentType.Image"
-                                    [class.shadow-sm]="pair.get('card2Type')?.value === FlipCardContentType.Image"
-                                    class="p-1 rounded text-gray-500 hover:text-indigo-600 transition-all border border-transparent"
-                                    [class.border-gray-200]="pair.get('card2Type')?.value === FlipCardContentType.Image">
-                                    <lucide-icon name="image" class="w-4 h-4"></lucide-icon>
-                                </button>
+
+                            <!-- Card 2 Type Selection -->
+                            <div>
+                                <label class="block text-xs font-medium text-gray-500 mb-1">نوع المحتوى</label>
+                                <select formControlName="card2Type"
+                                    class="w-full border-gray-300 rounded shadow-sm py-1.5 px-3 border text-sm">
+                                    <option [ngValue]="FlipCardContentType.Text">📝 نص</option>
+                                    <option [ngValue]="FlipCardContentType.Image">🖼️ صورة</option>
+                                    <option [ngValue]="FlipCardContentType.Audio">🔊 صوت</option>
+                                </select>
                             </div>
 
-                            <!-- Inputs based on type -->
+                            <!-- Card 2 Text -->
                             <div *ngIf="pair.get('card2Type')?.value === FlipCardContentType.Text">
+                                <label class="block text-xs font-medium text-gray-500 mb-1">النص <span
+                                        class="text-red-500">*</span></label>
                                 <input formControlName="card2Text" type="text" placeholder="أدخل النص..."
+                                    class="w-full border-gray-300 rounded shadow-sm py-1.5 px-3 border text-sm">
+                                <p *ngIf="pair.get('card2Text')?.touched && pair.get('card2Text')?.invalid"
+                                    class="text-red-500 text-xs mt-1">النص مطلوب</p>
+                            </div>
+
+                            <!-- Card 2 Image fields -->
+                            <div *ngIf="pair.get('card2Type')?.value === FlipCardContentType.Image">
+                                <label class="block text-xs font-medium text-gray-500 mb-1">رابط الصورة <span
+                                        class="text-red-500">*</span></label>
+                                <input formControlName="card2ImageUrl" type="text" placeholder="رابط الصورة..."
+                                    class="w-full border-gray-300 rounded shadow-sm py-1.5 px-3 border text-sm mb-2">
+                                <p *ngIf="pair.get('card2ImageUrl')?.touched && pair.get('card2ImageUrl')?.invalid"
+                                    class="text-red-500 text-xs mt-1">رابط الصورة مطلوب</p>
+                                <input formControlName="card2Text" type="text" placeholder="نص بديل (اختياري)..."
                                     class="w-full border-gray-300 rounded shadow-sm py-1.5 px-3 border text-sm">
                             </div>
 
-                            <div *ngIf="pair.get('card2Type')?.value === FlipCardContentType.Image">
-                                <input formControlName="card2ImageUrl" type="text" placeholder="رابط الصورة..."
+                            <!-- Card 2 Audio fields -->
+                            <div *ngIf="pair.get('card2Type')?.value === FlipCardContentType.Audio">
+                                <label class="block text-xs font-medium text-gray-500 mb-1">رابط الصوت <span
+                                        class="text-red-500">*</span></label>
+                                <input formControlName="card2AudioUrl" type="text" placeholder="رابط الصوت..."
                                     class="w-full border-gray-300 rounded shadow-sm py-1.5 px-3 border text-sm mb-2">
-                                <input formControlName="card2Text" type="text" placeholder="نص بديل..."
+                                <p *ngIf="pair.get('card2AudioUrl')?.touched && pair.get('card2AudioUrl')?.invalid"
+                                    class="text-red-500 text-xs mt-1">رابط الصوت مطلوب</p>
+                                <input formControlName="card2Text" type="text" placeholder="نص اختياري..."
                                     class="w-full border-gray-300 rounded shadow-sm py-1.5 px-3 border text-sm">
                             </div>
                         </div>
+                    </div>
+
+                    <!-- Pair Preview -->
+                    <div class="mt-3 pt-3 border-t border-gray-200 flex items-center gap-3 text-xs text-gray-400">
+                        <span>معاينة:</span>
+                        <span class="bg-white px-2 py-1 rounded border text-gray-600">
+                            <span *ngIf="pair.get('card1Type')?.value === FlipCardContentType.Text">{{
+                                pair.get('card1Text')?.value || '...' }}</span>
+                            <span *ngIf="pair.get('card1Type')?.value === FlipCardContentType.Image">🖼️ صورة</span>
+                            <span *ngIf="pair.get('card1Type')?.value === FlipCardContentType.Audio">🔊 صوت</span>
+                        </span>
+                        <span class="text-gray-300">↔</span>
+                        <span class="bg-white px-2 py-1 rounded border text-gray-600">
+                            <span *ngIf="pair.get('card2Type')?.value === FlipCardContentType.Text">{{
+                                pair.get('card2Text')?.value || '...' }}</span>
+                            <span *ngIf="pair.get('card2Type')?.value === FlipCardContentType.Image">🖼️ صورة</span>
+                            <span *ngIf="pair.get('card2Type')?.value === FlipCardContentType.Audio">🔊 صوت</span>
+                        </span>
                     </div>
                 </div>
 
@@ -279,7 +363,7 @@
         </div>
 
         <!-- Actions -->
-        <div class="mt-8 pt-6 border-t border-gray-100 flex justify-between">
+        <div class="mt-8 pt-6 border-t border-gray-100 flex justify-between items-center">
             <button type="button" (click)="prevStep()" [disabled]="currentStep === 1"
                 class="px-5 py-2 rounded-lg text-gray-600 hover:bg-gray-100 font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
                 <lucide-icon name="chevron-right" class="w-4 h-4"></lucide-icon> السابق
@@ -290,11 +374,20 @@
                 التالي <lucide-icon name="chevron-left" class="w-4 h-4"></lucide-icon>
             </button>
 
-            <button *ngIf="currentStep === 3" type="submit" [disabled]="loading || questionForm.invalid"
-                class="px-6 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 font-medium flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
-                <lucide-icon name="save" class="w-4 h-4"></lucide-icon>
-                {{ isEditMode ? 'تحديث اللعبة' : 'إنشاء اللعبة' }}
-            </button>
+            <!-- Save Button (Step 3 only) -->
+            <div *ngIf="currentStep === 3" class="flex flex-col items-end gap-1">
+                <button type="submit" [disabled]="loading || questionForm.invalid"
+                    class="px-6 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 font-medium flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all">
+                    <lucide-icon *ngIf="!loading" name="save" class="w-4 h-4"></lucide-icon>
+                    <span *ngIf="loading"
+                        class="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                    <span *ngIf="!loading">{{ isEditMode ? 'تحديث اللعبة' : 'إنشاء اللعبة' }}</span>
+                    <span *ngIf="loading">جاري الحفظ...</span>
+                </button>
+                <p *ngIf="questionForm.invalid" class="text-xs text-amber-600">
+                    ⚠️ أكمل جميع الحقول المطلوبة لتفعيل الحفظ
+                </p>
+            </div>
         </div>
     </form>
 </div>
