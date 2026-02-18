@@ -25,6 +25,6 @@ export class TestTypeSelectionComponent {
   }
 
   goBack() {
-    this.location.back();
+    this.router.navigate(['/welcome']);
   }
 }
