@@ -20,7 +20,8 @@ export class AudioService {
             tick: 'assets/sounds/tick.wav',
             complete: 'assets/sounds/complete.wav',
             click: 'assets/sounds/click.wav',
-            achievement: 'assets/sounds/achievement.wav'
+            achievement: 'assets/sounds/achievement.wav',
+            victory: 'assets/sounds/complete.wav'
         };
 
         // Preload each sound

@@ -1,4 +1,18 @@
-<div class="container mx-auto px-4 py-8 max-w-4xl">
+<!-- Toast Notification -->
+<div *ngIf="toastVisible"
+    class="toast-notification"
+    [class.toast-success]="toastType === 'success'"
+    [class.toast-error]="toastType === 'error'"
+    [class.toast-info]="toastType === 'info'">
+    <div class="flex items-center gap-3">
+        <span class="toast-icon" *ngIf="toastType === 'success'">✅</span>
+        <span class="toast-icon" *ngIf="toastType === 'error'">❌</span>
+        <span class="toast-icon" *ngIf="toastType === 'info'">ℹ️</span>
+        <span class="font-medium">{{ toastMessage }}</span>
+    </div>
+</div>
+
+<div class="container mx-auto px-4 py-8 max-w-4xl" dir="rtl">
     <!-- Header -->
     <div class="flex items-center gap-4 mb-8">
         <button [routerLink]="['/admin/wheel-questions']"
@@ -15,9 +29,34 @@
         </div>
     </div>
 
+    <!-- Loading -->
     <div *ngIf="loading" class="text-center py-12">
         <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
         <p class="mt-4 text-slate-500">جاري تحميل البيانات...</p>
+    </div>
+
+    <!-- Form Completion Progress -->
+    <div *ngIf="!loading" class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 mb-6">
+        <div class="flex items-center justify-between mb-2">
+            <span class="text-sm font-medium text-slate-700">اكتمال النموذج</span>
+            <span class="text-sm font-bold" [class.text-green-600]="completionPercentage === 100"
+                [class.text-blue-600]="completionPercentage < 100">
+                {{ completionPercentage }}%
+            </span>
+        </div>
+        <div class="w-full bg-slate-200 rounded-full h-2.5">
+            <div class="h-2.5 rounded-full transition-all duration-500"
+                [class.bg-green-500]="completionPercentage === 100"
+                [class.bg-blue-500]="completionPercentage < 100"
+                [style.width.%]="completionPercentage">
+            </div>
+        </div>
+        <div class="flex flex-wrap gap-2 mt-3" *ngIf="submitted && !isFormValid">
+            <span *ngFor="let error of getFormErrors()"
+                class="text-xs text-red-600 bg-red-50 px-2 py-1 rounded-full">
+                ⚠️ {{ error }}
+            </span>
+        </div>
     </div>
 
     <form *ngIf="!loading" (ngSubmit)="saveQuestion()" class="grid grid-cols-1 md:grid-cols-2 gap-6 pb-20">
@@ -29,7 +68,8 @@
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <!-- Grade -->
                 <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-1">الصف الدراسي</label>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">الصف الدراسي <span
+                            class="text-red-500">*</span></label>
                     <select [(ngModel)]="model.gradeId" name="gradeId"
                         class="w-full px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 outline-none">
                         <option [ngValue]="3">الصف الثالث</option>
@@ -37,28 +77,33 @@
                         <option [ngValue]="5">الصف الخامس</option>
                         <option [ngValue]="6">الصف السادس</option>
                     </select>
+                    <p class="text-xs text-slate-400 mt-1">💡 اختر الصف الدراسي المستهدف</p>
                 </div>
 
                 <!-- Subject -->
                 <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-1">المادة</label>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">المادة <span
+                            class="text-red-500">*</span></label>
                     <select [(ngModel)]="model.subjectId" name="subjectId"
                         class="w-full px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 outline-none">
                         <option [ngValue]="1">اللغة العربية</option>
                         <option [ngValue]="2">الرياضيات</option>
                         <option [ngValue]="3">العلوم</option>
                     </select>
+                    <p class="text-xs text-slate-400 mt-1">💡 المادة الدراسية للسؤال</p>
                 </div>
 
                 <!-- Difficulty -->
                 <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-1">مستوى الصعوبة</label>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">مستوى الصعوبة <span
+                            class="text-red-500">*</span></label>
                     <select [(ngModel)]="model.difficultyLevel" name="difficultyLevel"
                         class="w-full px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 outline-none">
                         <option [ngValue]="1">سهل</option>
                         <option [ngValue]="2">متوسط</option>
                         <option [ngValue]="3">صعب</option>
                     </select>
+                    <p class="text-xs text-slate-400 mt-1">💡 سهل = صف 3-4، متوسط = صف 5، صعب = صف 6</p>
                 </div>
             </div>
 
@@ -67,8 +112,24 @@
                 <label class="block text-sm font-medium text-slate-700 mb-1">نص السؤال <span
                         class="text-red-500">*</span></label>
                 <textarea [(ngModel)]="model.questionText" name="questionText" rows="3" required
-                    class="w-full px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 outline-none"
-                    placeholder="اكتب نص السؤال هنا..."></textarea>
+                    class="w-full px-4 py-2 rounded-lg border focus:ring-2 outline-none transition-colors"
+                    [class.border-red-400]="submitted && !isQuestionTextValid"
+                    [class.focus:ring-red-300]="submitted && !isQuestionTextValid"
+                    [class.border-slate-300]="!submitted || isQuestionTextValid"
+                    [class.focus:ring-blue-500]="!submitted || isQuestionTextValid"
+                    placeholder="اكتب نص السؤال هنا... مثال: ما هي عاصمة مصر؟"></textarea>
+                <div class="flex justify-between items-center mt-1">
+                    <p *ngIf="submitted && !isQuestionTextValid" class="text-xs text-red-500">
+                        ⚠️ نص السؤال مطلوب (5 أحرف على الأقل)
+                    </p>
+                    <p *ngIf="!submitted || isQuestionTextValid" class="text-xs text-slate-400">
+                        💡 اكتب سؤالاً واضحاً يفهمه الطلاب
+                    </p>
+                    <span class="text-xs" [class.text-slate-400]="model.questionText.length < 5"
+                        [class.text-green-500]="model.questionText.length >= 5">
+                        {{ model.questionText.length }} حرف
+                    </span>
+                </div>
             </div>
 
             <!-- Category Tag -->
@@ -77,42 +138,95 @@
                 <input type="text" [(ngModel)]="model.categoryTag" name="categoryTag"
                     class="w-full px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 outline-none"
                     placeholder="مثال: نحو، فلك، هندسة...">
+                <p class="text-xs text-slate-400 mt-1">💡 يساعد في تصنيف الأسئلة لسهولة البحث</p>
             </div>
         </div>
 
         <!-- Answers Card -->
         <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 md:col-span-2 space-y-6">
-            <h2 class="text-lg font-semibold text-slate-800 border-b pb-2 mb-4">الإجابات والخيارات</h2>
+            <div class="flex justify-between items-center border-b pb-2 mb-4">
+                <h2 class="text-lg font-semibold text-slate-800">الإجابات والخيارات</h2>
+                <span class="text-sm font-medium px-3 py-1 rounded-full"
+                    [class.bg-blue-100]="!hasDuplicateAnswers" [class.text-blue-700]="!hasDuplicateAnswers"
+                    [class.bg-red-100]="hasDuplicateAnswers" [class.text-red-700]="hasDuplicateAnswers">
+                    {{ hasDuplicateAnswers ? '⚠️ يوجد تكرار!' : 'الخيارات: ' + (model.wrongAnswers.length + 1) }}
+                </span>
+            </div>
 
             <!-- Correct Answer -->
             <div>
-                <label class="block text-sm font-medium text-slate-700 mb-1">الإجابة الصحيحة <span
-                        class="text-red-500">*</span></label>
+                <label class="block text-sm font-medium text-slate-700 mb-1">
+                    ✅ الإجابة الصحيحة <span class="text-red-500">*</span>
+                </label>
                 <input type="text" [(ngModel)]="model.correctAnswer" name="correctAnswer" required
-                    class="w-full px-4 py-2 rounded-lg border border-green-300 focus:ring-2 focus:ring-green-500 outline-none bg-green-50"
+                    class="w-full px-4 py-2 rounded-lg border focus:ring-2 outline-none transition-colors"
+                    [class.border-red-400]="submitted && !isCorrectAnswerValid"
+                    [class.border-green-300]="!submitted || isCorrectAnswerValid"
+                    [class.focus:ring-green-500]="!submitted || isCorrectAnswerValid"
+                    [class.bg-green-50]="!submitted || isCorrectAnswerValid"
                     placeholder="اكتب الإجابة الصحيحة">
+                <p *ngIf="submitted && !isCorrectAnswerValid" class="text-xs text-red-500 mt-1">
+                    ⚠️ الإجابة الصحيحة مطلوبة
+                </p>
+                <p *ngIf="!submitted || isCorrectAnswerValid" class="text-xs text-slate-400 mt-1">
+                    💡 هذه الإجابة التي ستظهر باللون الأخضر للطالب
+                </p>
             </div>
 
             <!-- Wrong Answers -->
             <div>
-                <label class="block text-sm font-medium text-slate-700 mb-2">الإجابات الخاطئة (المشتتات)</label>
+                <div class="flex justify-between items-center mb-2">
+                    <label class="block text-sm font-medium text-slate-700">
+                        ❌ الإجابات الخاطئة (المشتتات) <span class="text-red-500">*</span>
+                    </label>
+                    <span class="text-xs font-medium px-2 py-1 rounded-full bg-slate-100 text-slate-600">
+                        {{ model.wrongAnswers.length }} / {{ MAX_WRONG_ANSWERS }}
+                    </span>
+                </div>
+
                 <div class="space-y-3">
                     <div *ngFor="let wrong of model.wrongAnswers; let i = index; trackBy: trackByIndex"
-                        class="flex gap-2">
+                        class="flex gap-2 items-center">
+                        <span
+                            class="flex-shrink-0 w-7 h-7 rounded-full bg-red-100 text-red-600 flex items-center justify-center text-xs font-bold">
+                            {{ i + 1 }}
+                        </span>
                         <input type="text" [(ngModel)]="model.wrongAnswers[i]" [name]="'wrongAnswer' + i"
-                            class="flex-1 px-4 py-2 rounded-lg border border-red-200 focus:ring-2 focus:ring-red-200 outline-none bg-red-50"
-                            placeholder="إجابة خاطئة">
-                        <button type="button" (click)="removeWrongAnswer(i)"
-                            class="p-2 text-red-400 hover:text-red-600 hover:bg-red-100 rounded-lg transition-colors">
+                            class="flex-1 px-4 py-2 rounded-lg border focus:ring-2 outline-none transition-colors"
+                            [class.border-red-400]="submitted && !model.wrongAnswers[i].trim()"
+                            [class.border-red-200]="!submitted || model.wrongAnswers[i].trim()"
+                            [class.focus:ring-red-200]="true"
+                            [class.bg-red-50]="true"
+                            placeholder="إجابة خاطئة {{ i + 1 }}">
+                        <button type="button" (click)="removeWrongAnswer(i)" [disabled]="!canRemove"
+                            class="p-2 rounded-lg transition-colors"
+                            [class.text-red-400]="canRemove" [class.hover:text-red-600]="canRemove"
+                            [class.hover:bg-red-100]="canRemove"
+                            [class.text-slate-300]="!canRemove" [class.cursor-not-allowed]="!canRemove">
                             <lucide-icon name="trash-2" class="w-5 h-5"></lucide-icon>
                         </button>
                     </div>
                 </div>
-                <button type="button" (click)="addWrongAnswer()"
-                    class="mt-3 text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1">
-                    <lucide-icon name="plus" class="w-4 h-4"></lucide-icon>
-                    إضافة خيار خاطئ آخر
-                </button>
+
+                <div class="flex items-center justify-between mt-3">
+                    <button type="button" (click)="addWrongAnswer()" [disabled]="!canAddMore"
+                        class="text-sm font-medium flex items-center gap-1 px-3 py-1.5 rounded-lg transition-colors"
+                        [class.text-blue-600]="canAddMore" [class.hover:bg-blue-50]="canAddMore"
+                        [class.text-slate-400]="!canAddMore" [class.cursor-not-allowed]="!canAddMore">
+                        <lucide-icon name="plus" class="w-4 h-4"></lucide-icon>
+                        إضافة خيار خاطئ آخر
+                    </button>
+                    <span *ngIf="submitted && hasEmptyWrongAnswers" class="text-xs text-red-500">
+                        ⚠️ جميع الخانات يجب ملؤها
+                    </span>
+                </div>
+
+                <!-- Duplicate Warning -->
+                <div *ngIf="hasDuplicateAnswers"
+                    class="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-center gap-2">
+                    <span class="text-amber-500 text-lg">⚠️</span>
+                    <span class="text-sm text-amber-700">يوجد تكرار في الإجابات! تأكد أن كل إجابة مختلفة عن الأخرى</span>
+                </div>
             </div>
         </div>
 
@@ -120,12 +234,13 @@
         <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 md:col-span-2 space-y-6">
             <h2 class="text-lg font-semibold text-slate-800 border-b pb-2 mb-4">إعدادات إضافية</h2>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <!-- Points -->
                 <div>
                     <label class="block text-sm font-medium text-slate-700 mb-1">قيمة النقاط</label>
                     <input type="number" [(ngModel)]="model.pointsValue" name="pointsValue"
                         class="w-full px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 outline-none">
+                    <p class="text-xs text-slate-400 mt-1">💡 تُحسب تلقائياً حسب الصعوبة إن تُركت 0</p>
                 </div>
 
                 <!-- Time Limit -->
@@ -133,22 +248,36 @@
                     <label class="block text-sm font-medium text-slate-700 mb-1">وقت الإجابة (ثواني)</label>
                     <input type="number" [(ngModel)]="model.timeLimit" name="timeLimit"
                         class="w-full px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 outline-none">
+                    <p class="text-xs text-slate-400 mt-1">💡 الافتراضي 30 ثانية</p>
+                </div>
+
+                <!-- Test Type -->
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">نوع الاختبار</label>
+                    <select [(ngModel)]="testType" name="testType"
+                        class="w-full px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 outline-none">
+                        <option [ngValue]="1">اختبار نافس</option>
+                        <option [ngValue]="2">الاختبار المركزي</option>
+                    </select>
+                    <p class="text-xs text-slate-400 mt-1">💡 نوع الاختبار الذي ينتمي إليه السؤال</p>
                 </div>
 
                 <!-- Hint -->
-                <div class="md:col-span-2">
+                <div class="md:col-span-3">
                     <label class="block text-sm font-medium text-slate-700 mb-1">تلميح (اختياري)</label>
                     <input type="text" [(ngModel)]="model.hintText" name="hintText"
                         class="w-full px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 outline-none"
                         placeholder="تلميح يظهر للطالب عند الطلب...">
+                    <p class="text-xs text-slate-400 mt-1">💡 يستخدم الطالب التلميح مقابل خصم نقاط</p>
                 </div>
 
                 <!-- Explanation -->
-                <div class="md:col-span-2">
+                <div class="md:col-span-3">
                     <label class="block text-sm font-medium text-slate-700 mb-1">الشرح (يظهر بعد الإجابة)</label>
                     <textarea [(ngModel)]="model.explanation" name="explanation" rows="2"
                         class="w-full px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 outline-none"
                         placeholder="شرح سبب الإجابة الصحيحة..."></textarea>
+                    <p class="text-xs text-slate-400 mt-1">💡 يظهر للطالب بعد اختيار إجابته لتعليمه</p>
                 </div>
             </div>
         </div>
@@ -161,8 +290,9 @@
             </button>
             <button type="submit" [disabled]="saving"
                 class="px-8 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 transition-colors shadow-lg shadow-blue-200">
-                <lucide-icon name="save" class="w-5 h-5"></lucide-icon>
-                <span>{{ saving ? 'جاري الحفظ...' : 'حفظ السؤال' }}</span>
+                <div *ngIf="saving" class="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
+                <lucide-icon *ngIf="!saving" name="save" class="w-5 h-5"></lucide-icon>
+                <span>{{ saving ? 'جاري الحفظ...' : (isEditMode ? 'تحديث السؤال' : 'حفظ السؤال') }}</span>
             </button>
         </div>
 

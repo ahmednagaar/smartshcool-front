@@ -1,11 +1,50 @@
-<div class="container mx-auto px-4 py-8">
+<!-- Toast Notification -->
+<div *ngIf="toastVisible" class="toast-notification" [class.toast-success]="toastType === 'success'"
+    [class.toast-error]="toastType === 'error'" [class.toast-info]="toastType === 'info'">
+    <div class="flex items-center gap-3 justify-center">
+        <span *ngIf="toastType === 'success'">✅</span>
+        <span *ngIf="toastType === 'error'">❌</span>
+        <span *ngIf="toastType === 'info'">ℹ️</span>
+        <span class="font-medium">{{ toastMessage }}</span>
+    </div>
+</div>
+
+<!-- Delete Confirmation Dialog -->
+<div *ngIf="showDeleteDialog" class="delete-overlay" (click)="cancelDelete()">
+    <div class="delete-dialog" (click)="$event.stopPropagation()" dir="rtl">
+        <div class="text-center">
+            <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100 mb-4">
+                <span class="text-3xl">🗑️</span>
+            </div>
+            <h3 class="text-lg font-bold text-slate-800 mb-2">تأكيد الحذف</h3>
+            <p class="text-slate-500 mb-6">هل أنت متأكد من حذف هذا السؤال؟ لا يمكن التراجع عن هذا الإجراء.</p>
+            <div class="flex gap-3 justify-center">
+                <button (click)="cancelDelete()"
+                    class="px-6 py-2.5 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors font-medium">
+                    إلغاء
+                </button>
+                <button (click)="executeDelete()" [disabled]="deleting"
+                    class="px-6 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 transition-colors font-medium flex items-center gap-2">
+                    <div *ngIf="deleting"
+                        class="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                    {{ deleting ? 'جاري الحذف...' : 'نعم، احذف' }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container mx-auto px-4 py-8" dir="rtl">
     <div class="flex justify-between items-center mb-6">
         <div>
             <h1 class="text-2xl font-bold text-slate-800">إدارة أسئلة العجلة الدوارة</h1>
-            <p class="text-slate-500 mt-1">عرض وإدارة بنك الأسئلة للمسابقة</p>
+            <p class="text-slate-500 mt-1">
+                عرض وإدارة بنك الأسئلة للمسابقة
+                <span *ngIf="!loading" class="text-blue-600 font-medium">({{ totalCount }} سؤال)</span>
+            </p>
         </div>
         <button [routerLink]="['/admin/wheel-questions/new']"
-            class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors">
+            class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors shadow-lg shadow-blue-200">
             <lucide-icon name="plus" class="w-5 h-5"></lucide-icon>
             <span>سؤال جديد</span>
         </button>
@@ -13,9 +52,9 @@
 
     <!-- Filters -->
     <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 mb-6">
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
             <!-- Search -->
-            <div class="relative">
+            <div class="relative md:col-span-2">
                 <lucide-icon name="search"
                     class="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400"></lucide-icon>
                 <input type="text" [(ngModel)]="searchTerm" (input)="onFilterChange()" placeholder="بحث في الأسئلة..."
@@ -40,11 +79,50 @@
                 <option [ngValue]="2">الرياضيات</option>
                 <option [ngValue]="3">العلوم</option>
             </select>
+
+            <!-- Difficulty Filter -->
+            <select [(ngModel)]="difficultyFilter" (change)="onFilterChange()"
+                class="w-full px-4 py-2 rounded-lg border border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none bg-white">
+                <option [ngValue]="undefined">كل المستويات</option>
+                <option [ngValue]="1">سهل</option>
+                <option [ngValue]="2">متوسط</option>
+                <option [ngValue]="3">صعب</option>
+            </select>
         </div>
     </div>
 
+    <!-- Loading -->
+    <div *ngIf="loading" class="text-center py-12">
+        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+        <p class="mt-4 text-slate-500">جاري تحميل الأسئلة...</p>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="!loading && questions.length === 0 && !searchTerm && !gradeFilter && !subjectFilter"
+        class="bg-white rounded-xl shadow-sm border border-slate-200 p-12 text-center">
+        <div class="text-6xl mb-4">🎡</div>
+        <h3 class="text-xl font-bold text-slate-800 mb-2">لا توجد أسئلة بعد</h3>
+        <p class="text-slate-500 mb-6 max-w-md mx-auto">ابدأ بإنشاء أسئلة جديدة للعجلة الدوارة. كل سؤال سيظهر للطلاب
+            أثناء
+            اللعب.</p>
+        <button [routerLink]="['/admin/wheel-questions/new']"
+            class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg inline-flex items-center gap-2 transition-colors shadow-lg shadow-blue-200 text-lg font-medium">
+            <lucide-icon name="plus" class="w-6 h-6"></lucide-icon>
+            أنشئ أول سؤال
+        </button>
+    </div>
+
+    <!-- Empty Search State -->
+    <div *ngIf="!loading && questions.length === 0 && (searchTerm || gradeFilter || subjectFilter)"
+        class="bg-white rounded-xl shadow-sm border border-slate-200 p-12 text-center">
+        <div class="text-5xl mb-4">🔍</div>
+        <h3 class="text-lg font-bold text-slate-800 mb-2">لا توجد نتائج</h3>
+        <p class="text-slate-500">لا توجد أسئلة تطابق معايير البحث. جرّب تغيير الفلاتر.</p>
+    </div>
+
     <!-- Table -->
-    <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+    <div *ngIf="!loading && questions.length > 0"
+        class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
         <div class="overflow-x-auto">
             <table class="w-full text-right">
                 <thead class="bg-slate-50 border-b border-slate-200">
@@ -61,65 +139,64 @@
                     <tr *ngFor="let q of questions" class="hover:bg-slate-50 transition-colors">
                         <td class="px-6 py-4">
                             <div class="font-medium text-slate-800 line-clamp-2">{{ q.questionText }}</div>
-                            <div class="text-xs text-slate-500 mt-1">الإجابة: {{ q.correctAnswer }}</div>
+                            <div class="text-xs text-green-600 mt-1">✅ {{ q.correctAnswer }}</div>
                         </td>
                         <td class="px-6 py-4">
                             <div class="flex flex-col gap-1">
-                                <span class="text-sm text-slate-700">
-                                    {{ q.subjectId === 1 ? 'لغة عربية' : q.subjectId === 2 ? 'رياضيات' : 'علوم' }}
-                                </span>
-                                <span class="text-xs text-slate-500">
-                                    الصف {{ q.gradeId }}
-                                </span>
+                                <span class="text-sm text-slate-700">{{ getSubjectName(q.subjectId) }}</span>
+                                <span class="text-xs text-slate-500">{{ getGradeName(q.gradeId) }}</span>
                             </div>
                         </td>
                         <td class="px-6 py-4">
                             <span
                                 [class]="'px-2 py-1 rounded-full text-xs font-medium ' + getDifficultyColor(q.difficultyLevel)">
-                                {{ q.difficultyLevel === 1 ? 'سهل' : q.difficultyLevel === 2 ? 'متوسط' : 'صعب' }}
+                                {{ getDifficultyName(q.difficultyLevel) }}
                             </span>
                         </td>
                         <td class="px-6 py-4 text-sm text-slate-600">
                             {{ q.pointsValue }}
                         </td>
                         <td class="px-6 py-4">
-                            <span
-                                [class]="'w-2.5 h-2.5 rounded-full inline-block ' + (q.isActive ? 'bg-green-500' : 'bg-red-500')"></span>
+                            <span class="flex items-center gap-1.5">
+                                <span
+                                    [class]="'w-2.5 h-2.5 rounded-full inline-block ' + (q.isActive ? 'bg-green-500' : 'bg-red-500')"></span>
+                                <span class="text-xs" [class.text-green-600]="q.isActive"
+                                    [class.text-red-500]="!q.isActive">
+                                    {{ q.isActive ? 'نشط' : 'معطل' }}
+                                </span>
+                            </span>
                         </td>
                         <td class="px-6 py-4">
                             <div class="flex items-center gap-2">
                                 <button [routerLink]="['/admin/wheel-questions/edit', q.id]"
-                                    class="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
+                                    class="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                    title="تعديل">
                                     <lucide-icon name="edit" class="w-4 h-4"></lucide-icon>
                                 </button>
-                                <button (click)="deleteQuestion(q.id)"
-                                    class="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                                <button (click)="confirmDelete(q.id)"
+                                    class="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                    title="حذف">
                                     <lucide-icon name="trash-2" class="w-4 h-4"></lucide-icon>
                                 </button>
                             </div>
-                        </td>
-                    </tr>
-                    <tr *ngIf="questions.length === 0 && !loading">
-                        <td colspan="6" class="px-6 py-12 text-center text-slate-500">
-                            لا توجد أسئلة تطابق البحث
                         </td>
                     </tr>
                 </tbody>
             </table>
         </div>
 
-        <!-- Pagination (Simple implementation) -->
+        <!-- Pagination -->
         <div class="px-6 py-4 border-t border-slate-200 flex justify-between items-center"
             *ngIf="totalCount > pageSize">
             <button [disabled]="page === 1" (click)="onPageChange(page - 1)"
-                class="px-4 py-2 border border-slate-300 rounded-lg text-sm disabled:opacity-50 hover:bg-slate-50">
+                class="px-4 py-2 border border-slate-300 rounded-lg text-sm disabled:opacity-50 hover:bg-slate-50 transition-colors">
                 السابق
             </button>
             <span class="text-sm text-slate-600">
-                صفحة {{ page }}
+                صفحة {{ page }} من {{ totalPages }}
             </span>
             <button [disabled]="page * pageSize >= totalCount" (click)="onPageChange(page + 1)"
-                class="px-4 py-2 border border-slate-300 rounded-lg text-sm disabled:opacity-50 hover:bg-slate-50">
+                class="px-4 py-2 border border-slate-300 rounded-lg text-sm disabled:opacity-50 hover:bg-slate-50 transition-colors">
                 التالي
             </button>
         </div>

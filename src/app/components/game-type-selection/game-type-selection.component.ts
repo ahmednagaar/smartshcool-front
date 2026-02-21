@@ -5,17 +5,17 @@ import { Router } from '@angular/router';
 export type GameType = 'matching' | 'wheel' | 'dragdrop' | 'flipcards';
 
 interface GameOption {
-    value: GameType;
-    label: string;
-    description: string;
-    iconClass: string;
+  value: GameType;
+  label: string;
+  description: string;
+  iconClass: string;
 }
 
 @Component({
-    selector: 'app-game-type-selection',
-    standalone: true,
-    imports: [CommonModule],
-    template: `
+  selector: 'app-game-type-selection',
+  standalone: true,
+  imports: [CommonModule],
+  template: `
     <div class="bg-v0-gradient min-h-screen p-4">
       <div class="container max-w-6xl py-8">
         <button (click)="goBack()" class="btn-ghost mb-6">
@@ -52,45 +52,46 @@ interface GameOption {
   `
 })
 export class GameTypeSelectionComponent {
-    games: GameOption[] = [
-        {
-            value: 'matching',
-            label: 'لعبة المطابقة',
-            description: 'اربط الأسئلة بالإجابات الصحيحة',
-            iconClass: 'matching'
-        },
-        {
-            value: 'wheel',
-            label: 'العجلة الدوارة',
-            description: 'أدر العجلة واختبر معلوماتك',
-            iconClass: 'wheel'
-        },
-        {
-            value: 'dragdrop',
-            label: 'السحب والإفلات',
-            description: 'رتب العناصر في المكان الصحيح',
-            iconClass: 'dragdrop'
-        },
-        {
-            value: 'flipcards',
-            label: 'بطاقات الذاكرة',
-            description: 'اقلب البطاقات واكتشف المحتوى',
-            iconClass: 'flipcards'
-        }
-    ];
-
-    constructor(private router: Router) { }
-
-    selectGame(type: GameType) {
-        sessionStorage.setItem('gameType', type);
-        if (type === 'wheel') {
-            this.router.navigate(['/wheel']);
-        } else {
-            this.router.navigate(['/game', type]);
-        }
+  games: GameOption[] = [
+    {
+      value: 'matching',
+      label: 'لعبة المطابقة',
+      description: 'اربط الأسئلة بالإجابات الصحيحة',
+      iconClass: 'matching'
+    },
+    {
+      value: 'wheel',
+      label: 'العجلة الدوارة',
+      description: 'أدر العجلة واختبر معلوماتك',
+      iconClass: 'wheel'
+    },
+    {
+      value: 'dragdrop',
+      label: 'السحب والإفلات',
+      description: 'رتب العناصر في المكان الصحيح',
+      iconClass: 'dragdrop'
     }
+    // Flip Cards game hidden from student UI (code preserved)
+    // {
+    //     value: 'flipcards',
+    //     label: 'بطاقات الذاكرة',
+    //     description: 'اقلب البطاقات واكتشف المحتوى',
+    //     iconClass: 'flipcards'
+    // }
+  ];
 
-    goBack() {
-        this.router.navigate(['/training-type']);
+  constructor(private router: Router) { }
+
+  selectGame(type: GameType) {
+    sessionStorage.setItem('gameType', type);
+    if (type === 'wheel') {
+      this.router.navigate(['/wheel']);
+    } else {
+      this.router.navigate(['/game', type]);
     }
+  }
+
+  goBack() {
+    this.router.navigate(['/training-type']);
+  }
 }
