@@ -1,305 +1,384 @@
-<div class="game-container min-h-screen font-cairo" dir="rtl" cdkDropListGroup [class.high-contrast]="highContrastMode"
-    [class]="uiThemeClass" role="application" (touchstart)="onContainerTouch($event)">
+<!-- ========== LOADING SCREEN ========== -->
+<div class="game-container" *ngIf="!isLoading && session; else loadingTpl" (touchstart)="onContainerTouch($event)">
 
-    <!-- Loading State -->
-    <div *ngIf="isLoading" class="loading-screen">
-        <div class="loading-content">
-            <div class="loading-spinner"></div>
-            <p class="loading-text">جاري تحميل اللعبة...</p>
+    <!-- Toast Notification -->
+    <div class="toast-notification" *ngIf="showToast" [class.toast-success]="toastType === 'success'"
+        [class.toast-error]="toastType === 'error'" [class.toast-info]="toastType === 'info'" role="alert"
+        aria-live="polite">
+        {{ toastMessage }}
+    </div>
+
+    <!-- Explanation Overlay -->
+    <div class="explanation-overlay" *ngIf="showExplanation" (click)="dismissExplanation()">
+        <div class="explanation-bubble">
+            <span class="explanation-icon">💡</span>
+            <p>{{ explanationText }}</p>
         </div>
     </div>
 
-    <div *ngIf="!isLoading">
-        <!-- Parallax Background -->
-        <div class="parallax-bg"></div>
+    <!-- Streak Celebration -->
+    <div class="streak-celebration" *ngIf="showStreakCelebration">
+        <span class="streak-fire">🔥</span>
+        <span class="streak-count">{{ currentStreak }}</span>
+    </div>
 
-        <!-- Tutorial Overlay -->
-        <div *ngIf="showTutorial" class="tutorial-overlay" (click)="dismissTutorial()">
-            <div class="tutorial-content" (click)="$event.stopPropagation()">
-                <div class="tutorial-icon">🎮</div>
-                <h2 class="tutorial-title">أهلاً! دعنا نتعلم كيف نلعب</h2>
+    <!-- Tutorial Overlay -->
+    <div class="tutorial-overlay" *ngIf="showTutorial" (click)="$event.stopPropagation()">
+        <div class="tutorial-card animate-bounce-in">
+            <h2 class="tutorial-title">🎮 كيف تلعب؟</h2>
+            <div class="tutorial-steps">
+                <div class="tutorial-step">
+                    <span class="step-number">1</span>
+                    <p *ngIf="inputMode === 'tap'">اضغط على البطاقة من المخزن</p>
+                    <p *ngIf="inputMode === 'drag'">اسحب البطاقة من المخزن</p>
+                </div>
+                <div class="tutorial-step">
+                    <span class="step-number">2</span>
+                    <p *ngIf="inputMode === 'tap'">ثم اضغط على المنطقة الصحيحة</p>
+                    <p *ngIf="inputMode === 'drag'">أفلتها في المنطقة الصحيحة</p>
+                </div>
+                <div class="tutorial-step">
+                    <span class="step-number">3</span>
+                    <p>أكمل جميع البطاقات لإنهاء اللعبة! 🏆</p>
+                </div>
+            </div>
+            <div class="tutorial-tips">
+                <p>💡 اضغط "مساعدة" إذا احتجت تلميح</p>
+                <p>⌨️ يمكنك استخدام الأسهم + Enter</p>
+                <p>🔀 اضغط زر الخلط لتغيير ترتيب البطاقات</p>
+            </div>
+            <label class="tutorial-checkbox">
+                <input type="checkbox" [(ngModel)]="neverShowTutorial" />
+                لا تعرض مرة أخرى
+            </label>
+            <button class="tutorial-btn" (click)="dismissTutorial()">فهمت! ابدأ اللعب 🎮</button>
+        </div>
+    </div>
 
-                <div class="tutorial-steps">
-                    <div class="tutorial-step">
-                        <span class="step-number">1</span>
-                        <span class="step-text" *ngIf="inputMode === 'tap'">اضغط على البطاقة لاختيارها</span>
-                        <span class="step-text" *ngIf="inputMode === 'drag'">اسحب البطاقة من المخزن</span>
-                    </div>
-                    <div class="tutorial-step">
-                        <span class="step-number">2</span>
-                        <span class="step-text" *ngIf="inputMode === 'tap'">ثم اضغط على المنطقة الصحيحة</span>
-                        <span class="step-text" *ngIf="inputMode === 'drag'">أفلتها في المنطقة المناسبة</span>
-                    </div>
-                    <div class="tutorial-step">
-                        <span class="step-number">3</span>
-                        <span class="step-text">إذا أخطأت، لا تقلق! حاول مرة أخرى</span>
+    <!-- ========== GAME SCREEN ========== -->
+    <div class="container game-area relative z-10">
+
+        <!-- Header -->
+        <header class="game-header">
+            <button (click)="goBack()" class="btn-ghost" aria-label="رجوع">
+                <span class="text-xl">→</span>
+                <span class="font-bold text-white">خروج</span>
+            </button>
+
+            <div class="header-center">
+                <h1 class="game-title">
+                    {{ session?.gameTitle }}
+                </h1>
+                <p class="game-instructions">{{ session?.instructions || 'اسحب العناصر إلى التصنيف الصحيح' }}</p>
+            </div>
+
+            <div class="header-right">
+                <!-- Timer -->
+                <div class="timer-badge" *ngIf="timerEnabled" [class.timer-green]="timerColor === 'green'"
+                    [class.timer-yellow]="timerColor === 'yellow'" [class.timer-red]="timerColor === 'red'" role="timer"
+                    [attr.aria-label]="'الوقت المتبقي: ' + formatTimer(timerSeconds)">
+                    <span class="timer-icon">⏱️</span>
+                    <span class="timer-text">{{ formatTimer(timerSeconds) }}</span>
+                    <div class="timer-bar">
+                        <div class="timer-bar-fill" [style.width.%]="timerPercentage"></div>
                     </div>
                 </div>
 
-                <div class="tutorial-actions">
-                    <button (click)="dismissTutorial()" class="btn-primary tutorial-btn">فهمت! ابدأ اللعب 🎮</button>
-                    <label class="tutorial-checkbox">
-                        <input type="checkbox" [(ngModel)]="neverShowTutorial" />
-                        <span>لا تعرض هذا مرة أخرى</span>
-                    </label>
+                <!-- Streak -->
+                <div class="streak-badge" *ngIf="currentStreak >= 2" [class.streak-hot]="currentStreak >= 5"
+                    role="status" [attr.aria-label]="'سلسلة: ' + currentStreak">
+                    🔥 {{ currentStreak }}
                 </div>
-            </div>
-        </div>
 
-        <!-- Toast Notification -->
-        <div class="toast-container" [class.show]="showToast">
-            <div class="toast" [class.toast-success]="toastType === 'success'"
-                [class.toast-error]="toastType === 'error'">
-                <span class="toast-icon">{{ toastType === 'success' ? '🎉' : '💪' }}</span>
-                <span class="toast-message">{{ toastMessage }}</span>
-            </div>
-        </div>
-
-        <!-- ========== GAME SCREEN ========== -->
-        <div class="container game-area relative z-10">
-
-            <!-- Header -->
-            <header class="game-header">
-                <button (click)="goBack()" class="btn-ghost" aria-label="رجوع">
-                    <span class="text-xl">→</span>
-                    <span class="font-bold text-white">خروج</span>
+                <!-- Shuffle -->
+                <button (click)="shuffleItems()" class="shuffle-btn" [disabled]="availableItems.length <= 1"
+                    title="خلط البطاقات" aria-label="خلط البطاقات">
+                    🔀
                 </button>
 
-                <div class="header-center">
-                    <h1 class="game-title">
-                        {{ session?.gameTitle }}
-                    </h1>
-                    <p class="game-instructions">{{ session?.instructions || 'اسحب العناصر إلى التصنيف الصحيح' }}</p>
+                <!-- Undo -->
+                <button (click)="undoLastMove()" class="undo-btn" [disabled]="!canUndo" title="تراجع"
+                    aria-label="تراجع عن آخر حركة">
+                    ↩️
+                </button>
+
+                <!-- Input Mode Toggle (mobile only) -->
+                <button *ngIf="isMobile" (click)="toggleInputMode()" class="mode-toggle-btn"
+                    [title]="inputMode === 'tap' ? 'التبديل إلى السحب' : 'التبديل إلى الضغط'">
+                    {{ inputMode === 'tap' ? '👆' : '✋' }}
+                </button>
+
+                <!-- Hint Button -->
+                <button (click)="useHint()" class="hint-btn" [disabled]="hintsRemaining <= 0"
+                    [title]="'مساعدة (' + hintsRemaining + ')'">
+                    💡
+                    <span class="hint-count">{{ hintsRemaining }}</span>
+                </button>
+
+                <button (click)="toggleMute()" class="mute-btn">
+                    {{ isMuted ? '🔇' : '🔊' }}
+                </button>
+
+                <div class="score-badge" role="status">
+                    <span class="score-value">{{ currentScore }}</span>
+                    <span class="score-label">نقطة</span>
                 </div>
-
-                <div class="header-right">
-                    <!-- Input Mode Toggle (mobile only) -->
-                    <button *ngIf="isMobile" (click)="toggleInputMode()" class="mode-toggle-btn"
-                        [title]="inputMode === 'tap' ? 'التبديل إلى السحب' : 'التبديل إلى الضغط'">
-                        {{ inputMode === 'tap' ? '👆' : '✋' }}
-                    </button>
-
-                    <!-- Hint Button -->
-                    <button (click)="useHint()" class="hint-btn" [disabled]="hintsRemaining <= 0"
-                        [title]="'مساعدة (' + hintsRemaining + ')'">
-                        💡
-                        <span class="hint-count">{{ hintsRemaining }}</span>
-                    </button>
-
-                    <button (click)="toggleMute()" class="mute-btn">
-                        {{ isMuted ? '🔇' : '🔊' }}
-                    </button>
-
-                    <div class="score-badge" role="status">
-                        <span class="score-value">{{ currentScore }}</span>
-                        <span class="score-label">نقطة</span>
-                    </div>
-                </div>
-            </header>
-
-            <!-- Progress Bar -->
-            <div class="progress-bar-container">
-                <div class="progress-bar">
-                    <div class="progress-fill" [style.width.%]="progressPercentage"></div>
-                </div>
-                <span class="progress-text">{{ placedItemsCount }}/{{ totalItemsCount }} بطاقات</span>
             </div>
+        </header>
 
-            <!-- ========== DESKTOP LAYOUT (≥1024px) ========== -->
-            <div class="desktop-layout">
-                <div class="grid lg:grid-cols-12 gap-6 items-start">
+        <!-- Progress Bar -->
+        <div class="progress-bar-container">
+            <div class="progress-bar">
+                <div class="progress-fill" [style.width.%]="progressPercentage"></div>
+            </div>
+            <span class="progress-text">{{ placedItemsCount }}/{{ totalItemsCount }} بطاقات</span>
+        </div>
 
-                    <!-- Source Store (Desktop) -->
-                    <div class="lg:col-span-4 lg:order-2">
-                        <div class="store-card glass-card p-5">
-                            <h3 class="store-title">
-                                <span>📦</span> المخزن
-                                <span class="store-count">{{ availableItems.length }} متبقية</span>
-                            </h3>
+        <!-- ========== DESKTOP LAYOUT (≥1024px) ========== -->
+        <div class="desktop-layout">
+            <div class="grid lg:grid-cols-12 gap-6 items-start">
 
-                            <div cdkDropList [cdkDropListData]="availableItems" class="store-items-list"
-                                (cdkDropListDropped)="drop($event, -1)" [id]="'store-list'">
+                <!-- Source Store (Desktop) -->
+                <div class="lg:col-span-4 lg:order-2">
+                    <div class="store-card glass-card p-5">
+                        <h3 class="store-title">
+                            <span>📦</span> المخزن
+                            <span class="store-count">{{ availableItems.length }} متبقية</span>
+                        </h3>
 
-                                <div *ngFor="let item of availableItems; let i = index" cdkDrag [cdkDragData]="item"
-                                    class="item-card glass-shimmer" [class.selected]="selectedItem?.id === item.id"
-                                    [class.hint-highlight]="hintItemId === item.id" (click)="onItemTap(item)"
-                                    (cdkDragStarted)="onDragStarted($event)" (cdkDragEnded)="onDragEnded($event)"
-                                    [attr.aria-label]="item.text">
+                        <div cdkDropList [cdkDropListData]="availableItems" class="store-items-list"
+                            (cdkDropListDropped)="drop($event, -1)" [id]="'store-list'">
 
-                                    <div class="item-content">
-                                        <span class="item-text">{{ item.text }}</span>
+                            <div *ngFor="let item of availableItems; let i = index" cdkDrag [cdkDragData]="item"
+                                class="item-card glass-shimmer" [class.selected]="selectedItem?.id === item.id"
+                                [class.hint-highlight]="hintItemId === item.id"
+                                [class.keyboard-focused]="focusedItemIndex === i"
+                                [class.shake-error]="shakeItemId === item.id" (click)="onItemTap(item)"
+                                (cdkDragStarted)="onDragStarted($event)" (cdkDragEnded)="onDragEnded($event)"
+                                [attr.aria-label]="item.text" [attr.tabindex]="0" role="button">
+
+                                <div class="item-content">
+                                    <img *ngIf="item.imageUrl" [src]="item.imageUrl" class="item-image"
+                                        [alt]="item.text" />
+                                    <span class="item-text">{{ item.text }}</span>
+                                    <div class="item-actions">
+                                        <button *ngIf="item.audioUrl" class="item-audio-btn"
+                                            (click)="playItemAudio(item, $event)"
+                                            [class.playing]="playingAudioItemId === item.id" aria-label="تشغيل الصوت">
+                                            {{ playingAudioItemId === item.id ? '⏸️' : '🔊' }}
+                                        </button>
                                         <span class="drag-handle" *ngIf="inputMode === 'drag'">⋮⋮</span>
                                         <span class="tap-indicator"
                                             *ngIf="inputMode === 'tap' && selectedItem?.id === item.id">✓</span>
                                     </div>
-
-                                    <div *cdkDragPlaceholder class="drag-placeholder">
-                                        <span class="placeholder-text">{{ item.text }}</span>
-                                    </div>
                                 </div>
 
-                                <div *ngIf="availableItems.length === 0" class="empty-store">
-                                    <p>✨ أحسنت! انتهت العناصر!</p>
+                                <div *cdkDragPlaceholder class="drag-placeholder">
+                                    <span class="placeholder-text">{{ item.text }}</span>
                                 </div>
+                            </div>
+
+                            <div *ngIf="availableItems.length === 0" class="empty-store">
+                                <p class="empty-store-celebration">✨ أحسنت! انتهت العناصر!</p>
                             </div>
                         </div>
                     </div>
+                </div>
 
-                    <!-- Drop Zones (Desktop) -->
-                    <div class="lg:col-span-8 lg:order-1">
-                        <div class="grid gap-5" [ngClass]="getZoneGridClass()">
-                            <div *ngFor="let zone of zones"
-                                class="zone-card glass-card overflow-hidden transition-all duration-300"
-                                [class.zone-droppable]="isDragging || selectedItem"
-                                [class.zone-hint]="hintZoneId === zone.id" [style.borderColor]="zone.colorCode"
-                                (click)="onZoneTap(zone.id)">
+                <!-- Drop Zones (Desktop) -->
+                <div class="lg:col-span-8 lg:order-1">
+                    <div class="grid gap-5" [ngClass]="getZoneGridClass()">
+                        <div *ngFor="let zone of zones; let zi = index"
+                            class="zone-card glass-card overflow-hidden transition-all duration-300"
+                            [class.zone-droppable]="isDragging || selectedItem"
+                            [class.zone-hint]="hintZoneId === zone.id"
+                            [class.keyboard-focused]="focusedZoneIndex === zi" [style.borderColor]="zone.colorCode"
+                            (click)="onZoneTap(zone.id)" [attr.tabindex]="0" role="region"
+                            [attr.aria-label]="'منطقة: ' + zone.label">
 
-                                <div class="zone-header" [style.background]="zone.colorCode">
+                            <div class="zone-header" [style.background]="zone.colorCode">
+                                <div class="zone-header-left">
+                                    <span class="zone-number-badge">{{ getZoneNumber(zone.id) }}</span>
                                     <h3 class="zone-label">
                                         {{ zone.label }}
                                         <img *ngIf="zone.iconUrl" [src]="zone.iconUrl" class="zone-icon" />
                                     </h3>
-                                    <span class="zone-count" *ngIf="zoneItems[zone.id]?.length">{{
-                                        zoneItems[zone.id].length }}</span>
+                                </div>
+                                <span class="zone-count-badge">
+                                    {{ getZonePlacedCount(zone.id) }}/{{ getZoneExpectedCount(zone.id) }}
+                                </span>
+                            </div>
+
+                            <div cdkDropList [cdkDropListData]="zoneItems[zone.id]" class="zone-content"
+                                (cdkDropListDropped)="drop($event, zone.id)" [id]="'zone-' + zone.id">
+
+                                <div *ngFor="let item of zoneItems[zone.id]" cdkDrag [cdkDragDisabled]="true"
+                                    class="zone-item item-correct" [style.borderLeftColor]="zone.colorCode">
+                                    <img *ngIf="item.imageUrl" [src]="item.imageUrl" class="zone-item-image"
+                                        [alt]="item.text" />
+                                    <span class="item-text">{{ item.text }}</span>
+                                    <span class="result-check">✓</span>
                                 </div>
 
-                                <div cdkDropList [cdkDropListData]="zoneItems[zone.id]" class="zone-content"
-                                    (cdkDropListDropped)="drop($event, zone.id)" [id]="'zone-' + zone.id">
-
-                                    <div *ngFor="let item of zoneItems[zone.id]" cdkDrag [cdkDragDisabled]="true"
-                                        class="zone-item item-correct">
-                                        <span class="item-text">{{ item.text }}</span>
-                                        <span class="result-check">✓</span>
-                                    </div>
-
-                                    <div *ngIf="!zoneItems[zone.id]?.length" class="zone-empty">
-                                        <p *ngIf="selectedItem">اضغط هنا للإفلات</p>
-                                        <p *ngIf="!selectedItem">اسحب هنا</p>
-                                    </div>
+                                <div *ngIf="!zoneItems[zone.id]?.length" class="zone-empty">
+                                    <p *ngIf="selectedItem">اضغط هنا للإفلات</p>
+                                    <p *ngIf="!selectedItem">اسحب هنا</p>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
+        </div>
 
-            <!-- ========== MOBILE LAYOUT (<1024px) ========== -->
-            <div class="mobile-layout">
-                <div class="mobile-game-area">
+        <!-- ========== MOBILE LAYOUT (<1024px) ========== -->
+        <div class="mobile-layout" *ngIf="isMobile">
+            <div class="mobile-game-area">
 
-                    <!-- Store (Mobile - Left Side) -->
-                    <div class="mobile-store">
-                        <h3 class="mobile-store-title">📦 المخزن</h3>
+                <!-- Mobile Store (Left side) -->
+                <div class="mobile-store">
+                    <h3 class="mobile-store-title">📦 المخزن ({{ availableItems.length }})</h3>
 
-                        <div cdkDropList [cdkDropListData]="availableItems" class="mobile-store-items"
-                            (cdkDropListDropped)="drop($event, -1)" [id]="'store-list-mobile'">
+                    <div cdkDropList [cdkDropListData]="availableItems" class="mobile-store-items"
+                        (cdkDropListDropped)="drop($event, -1)" [id]="'mobile-store-list'">
 
-                            <div *ngFor="let item of availableItems" cdkDrag [cdkDragData]="item"
-                                class="mobile-item-card" [class.selected]="selectedItem?.id === item.id"
-                                [class.hint-highlight]="hintItemId === item.id"
-                                [class.shake-error]="shakeItemId === item.id" (click)="onItemTap(item)"
-                                (cdkDragStarted)="onDragStarted($event)" (cdkDragEnded)="onDragEnded($event)"
-                                [attr.aria-label]="item.text">
+                        <div *ngFor="let item of availableItems" cdkDrag [cdkDragData]="item" class="mobile-item-card"
+                            [class.selected]="selectedItem?.id === item.id"
+                            [class.hint-highlight]="hintItemId === item.id"
+                            [class.shake-error]="shakeItemId === item.id" (click)="onItemTap(item)"
+                            (cdkDragStarted)="onDragStarted($event)" (cdkDragEnded)="onDragEnded($event)"
+                            [attr.aria-label]="item.text">
 
-                                <span class="mobile-item-text">{{ item.text }}</span>
-                                <span class="mobile-tap-check" *ngIf="selectedItem?.id === item.id">✓</span>
+                            <img *ngIf="item.imageUrl" [src]="item.imageUrl" class="mobile-item-image"
+                                [alt]="item.text" />
+                            <span class="mobile-item-text">{{ item.text }}</span>
+                            <div class="mobile-item-actions">
+                                <button *ngIf="item.audioUrl" class="mobile-audio-btn"
+                                    (click)="playItemAudio(item, $event)"
+                                    [class.playing]="playingAudioItemId === item.id">
+                                    {{ playingAudioItemId === item.id ? '⏸' : '🔊' }}
+                                </button>
+                                <span class="mobile-tap-check"
+                                    *ngIf="inputMode === 'tap' && selectedItem?.id === item.id">✓</span>
+                            </div>
 
-                                <div *cdkDragPlaceholder class="drag-placeholder mobile-placeholder">
+                            <div *cdkDragPlaceholder class="mobile-placeholder">
+                                <span>{{ item.text }}</span>
+                            </div>
+                        </div>
+
+                        <div *ngIf="availableItems.length === 0" class="mobile-empty-store">
+                            <span>✨</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Mobile Zones (Right side, horizontal scroll) -->
+                <div class="mobile-zones-wrapper">
+                    <!-- Zone Dots -->
+                    <div class="zone-dots">
+                        <span *ngFor="let zone of zones; let i = index" class="zone-dot"
+                            [class.active]="i === activeZoneIndex" (click)="scrollToZone(i)"></span>
+                    </div>
+
+                    <div class="mobile-zones-scroll" #mobileZonesScroll (scroll)="onZoneScroll($event)">
+                        <div *ngFor="let zone of zones; let zi = index" class="mobile-zone-card"
+                            [class.zone-droppable]="isDragging || selectedItem"
+                            [class.zone-hint]="hintZoneId === zone.id" (click)="onZoneTap(zone.id)">
+
+                            <div class="mobile-zone-header" [style.background]="zone.colorCode + '33'">
+                                <div class="mobile-zone-header-left">
+                                    <span class="zone-number-badge small">{{ zi + 1 }}</span>
+                                    <span class="mobile-zone-label">{{ zone.label }}</span>
+                                </div>
+                                <span class="mobile-zone-counter">
+                                    {{ getZonePlacedCount(zone.id) }}/{{ getZoneExpectedCount(zone.id) }}
+                                </span>
+                            </div>
+
+                            <div cdkDropList [cdkDropListData]="zoneItems[zone.id]" class="mobile-zone-content"
+                                (cdkDropListDropped)="drop($event, zone.id)" [id]="'mobile-zone-' + zone.id">
+
+                                <div *ngFor="let item of zoneItems[zone.id]" class="mobile-zone-item"
+                                    [style.borderLeftColor]="zone.colorCode">
+                                    <img *ngIf="item.imageUrl" [src]="item.imageUrl" class="zone-item-image"
+                                        [alt]="item.text" />
                                     <span>{{ item.text }}</span>
-                                </div>
-                            </div>
-
-                            <div *ngIf="availableItems.length === 0" class="mobile-empty-store">
-                                <span>✨</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Zones (Mobile - Right Side, Horizontal Scroll) -->
-                    <div class="mobile-zones-wrapper">
-                        <!-- Zone Dots -->
-                        <div class="zone-dots" *ngIf="zones.length > 1">
-                            <span *ngFor="let zone of zones; let i = index" class="zone-dot"
-                                [class.active]="activeZoneIndex === i" (click)="scrollToZone(i)"></span>
-                        </div>
-
-                        <div class="mobile-zones-scroll" #mobileZonesScroll (scroll)="onZoneScroll($event)">
-                            <div *ngFor="let zone of zones; let i = index" class="mobile-zone-card"
-                                [class.zone-droppable]="isDragging || selectedItem"
-                                [class.zone-hint]="hintZoneId === zone.id" [style.borderColor]="zone.colorCode"
-                                (click)="onZoneTap(zone.id)" [id]="'mobile-zone-' + zone.id">
-
-                                <div class="mobile-zone-header" [style.background]="zone.colorCode">
-                                    <h3 class="mobile-zone-label">{{ zone.label }}</h3>
-                                    <span class="mobile-zone-counter">{{ zoneItems[zone.id]?.length || 0 }}</span>
+                                    <span class="result-check">✓</span>
                                 </div>
 
-                                <div cdkDropList [cdkDropListData]="zoneItems[zone.id]" class="mobile-zone-content"
-                                    (cdkDropListDropped)="drop($event, zone.id)" [id]="'zone-mobile-' + zone.id">
-
-                                    <div *ngFor="let item of zoneItems[zone.id]" cdkDrag [cdkDragDisabled]="true"
-                                        class="mobile-zone-item item-correct">
-                                        <span>{{ item.text }}</span>
-                                        <span class="result-check">✓</span>
-                                    </div>
-
-                                    <div *ngIf="!zoneItems[zone.id]?.length" class="mobile-zone-empty">
-                                        <div class="zone-empty-icon">🎯</div>
-                                        <p *ngIf="selectedItem" class="zone-empty-action">اضغط هنا!</p>
-                                        <p *ngIf="!selectedItem" class="zone-empty-hint">اسحب أو اضغط بطاقة</p>
-                                    </div>
+                                <div *ngIf="!zoneItems[zone.id]?.length" class="mobile-zone-empty">
+                                    <span class="zone-empty-icon">📥</span>
+                                    <span class="zone-empty-action" *ngIf="selectedItem">اضغط هنا!</span>
+                                    <span class="zone-empty-hint" *ngIf="!selectedItem">{{ inputMode === 'tap' ? 'اختر
+                                        بطاقة ثم اضغط هنا' : 'اسحب بطاقة هنا' }}</span>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-
-                <!-- Selected Item Floating Indicator (Mobile) -->
-                <div *ngIf="selectedItem && inputMode === 'tap'" class="selected-indicator">
-                    <span class="selected-indicator-text">✓ {{ selectedItem.text }} — اضغط على المنطقة الصحيحة</span>
-                    <button (click)="deselectItem()" class="deselect-btn">✕</button>
-                </div>
             </div>
+        </div>
 
-            <!-- ========== HINT OVERLAY ========== -->
-            <div *ngIf="showHintLine" class="hint-line-overlay">
-                <div class="hint-message">💡 هذه البطاقة تذهب هنا</div>
+        <!-- Mobile Selected Item Indicator -->
+        <div class="selected-item-bar" *ngIf="isMobile && selectedItem">
+            <span>✓ {{ selectedItem.text }} — اضغط على المنطقة الصحيحة</span>
+        </div>
+
+    </div>
+</div>
+
+<!-- Loading Template -->
+<ng-template #loadingTpl>
+    <div class="game-container loading-container">
+        <div class="spinner"></div>
+        <p class="loading-text">جاري تحميل اللعبة...</p>
+    </div>
+</ng-template>
+
+<!-- ========== RESULTS MODAL ========== -->
+<div class="modal-overlay animate-fade-in" *ngIf="showResults && gameResult">
+    <div class="modal-content animate-bounce-in">
+
+        <div class="confetti-container">
+            <div *ngFor="let piece of confettiPieces" class="confetti-piece" [style.left.%]="piece.x"
+                [style.animationDelay.s]="piece.delay" [style.backgroundColor]="piece.color"></div>
+        </div>
+
+        <div class="result-icon-large">
+            {{ gameResult.stars === 3 ? '🏆' : gameResult.stars === 2 ? '👏' : '👍' }}
+        </div>
+        <h2 class="result-title">{{ getCompletionMessage() }}</h2>
+
+        <!-- Stars -->
+        <div class="stars-row">
+            <span *ngFor="let s of [1,2,3]" class="star" [class.earned]="gameResult.stars >= s"
+                [style.animationDelay.ms]="s * 200">
+                {{ gameResult.stars >= s ? '⭐' : '☆' }}
+            </span>
+        </div>
+
+        <!-- Stats Grid -->
+        <div class="result-stats-grid">
+            <div class="stat-item">
+                <span class="stat-value">{{ gameResult.totalScore }}/{{ gameResult.maxPossibleScore }}</span>
+                <span class="stat-label">النقاط</span>
             </div>
-
-            <!-- Results Modal -->
-            <div *ngIf="showResults" class="modal-overlay animate-fade-in">
-                <div class="modal-content animate-bounce-in">
-                    <!-- Confetti -->
-                    <div class="confetti-container">
-                        <div *ngFor="let c of confettiPieces" class="confetti-piece" [style.left.%]="c.x"
-                            [style.animationDelay.s]="c.delay" [style.background]="c.color"></div>
-                    </div>
-
-                    <div class="result-icon-large">
-                        {{ gameResult?.stars === 3 ? '🏆' : (gameResult?.stars === 2 ? '👏' : '👍') }}
-                    </div>
-                    <h3 class="result-title">{{ getCompletionMessage() }}</h3>
-                    <p class="result-subtitle">
-                        النقاط: <strong class="score-highlight">{{ gameResult?.totalScore }}</strong> / {{
-                        gameResult?.maxPossibleScore }}
-                    </p>
-
-                    <div class="stars-row">
-                        <span *ngFor="let s of [1,2,3]" class="star" [class.earned]="(gameResult?.stars || 0) >= s"
-                            [style.animationDelay.ms]="s * 200">⭐</span>
-                    </div>
-
-                    <div *ngIf="gameResult?.timeSpentSeconds" class="time-display">
-                        ⏱️ أكملت في {{ formatTime(gameResult!.timeSpentSeconds) }}
-                    </div>
-
-                    <div class="modal-actions">
-                        <button (click)="restartGame()" class="btn-secondary">🔄 العب مرة أخرى</button>
-                        <button (click)="goBack()" class="btn-primary">🏠 العودة</button>
-                    </div>
-                </div>
+            <div class="stat-item">
+                <span class="stat-value">{{ getAccuracyPercentage() }}%</span>
+                <span class="stat-label">الدقة</span>
             </div>
+            <div class="stat-item">
+                <span class="stat-value">{{ bestStreak }}</span>
+                <span class="stat-label">🔥 أفضل سلسلة</span>
+            </div>
+        </div>
 
+        <p class="time-display">⏱️ {{ formatTime(gameResult.timeSpentSeconds) }}</p>
+
+        <div class="modal-actions">
+            <button class="btn-primary" (click)="restartGame()">العب مرة أخرى 🔄</button>
+            <button class="btn-secondary" (click)="goBack()">العودة ←</button>
         </div>
     </div>
 </div>

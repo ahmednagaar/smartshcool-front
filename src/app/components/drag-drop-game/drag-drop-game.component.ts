@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef, ViewChild, ElementRef, AfterViewInit, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
@@ -46,10 +46,24 @@ export class DragDropGameComponent implements OnInit, AfterViewInit, OnDestroy {
     return this.totalItemsCount > 0 ? (this.placedItemsCount / this.totalItemsCount) * 100 : 0;
   }
 
+  // ─── Timer ───
+  timerEnabled = false;
+  timerSeconds = 0;
+  timerTotal = 0;
+  timerPercentage = 100;
+  timerColor: 'green' | 'yellow' | 'red' = 'green';
+  private timerInterval: any;
+
+  // ─── Streak ───
+  currentStreak = 0;
+  bestStreak = 0;
+  showStreakCelebration = false;
+  private streakTimer: any;
+
   // ─── Toast ───
   showToast = false;
   toastMessage = '';
-  toastType: 'success' | 'error' = 'success';
+  toastType: 'success' | 'error' | 'info' = 'success';
   private toastTimer: any;
 
   // ─── Tutorial ───
@@ -82,13 +96,39 @@ export class DragDropGameComponent implements OnInit, AfterViewInit, OnDestroy {
     'تقريباً! جرب منطقة أخرى 🎯',
     'لا تقلق، حاول مجدداً! 🌈'
   ];
+  private streakMessages = [
+    '🔥 سلسلة 3!', '🔥🔥 سلسلة 5!', '🔥🔥🔥 لا يُوقف! سلسلة 7!'
+  ];
 
   // ─── Error counter (for auto-hint) ───
   private consecutiveErrors = 0;
 
-  // ─── Orientation ───
+  // ─── Undo ───
+  canUndo = false;
+  private lastMove: { item: DragDropItemDto; zoneId: number } | null = null;
+
+  // ─── Explanation ───
+  showExplanation = false;
+  explanationText = '';
+  private explanationTimer: any;
+
+  // ─── Keyboard Navigation ───
+  focusedItemIndex = -1;
+  focusedZoneIndex = -1;
+
+  // ─── Zone expected counts ───
+  zoneExpectedCounts: { [zoneId: number]: number } = {};
+
+  // ─── Fly animation ───
+  flyingItem: { text: string; fromX: number; fromY: number; toX: number; toY: number } | null = null;
+
+  // ─── Orientation & Multi-touch ───
   private orientationHandler: (() => void) | null = null;
   private multiTouchHandler: ((e: TouchEvent) => void) | null = null;
+
+  // ─── Audio item playback ───
+  private audioPlayer: HTMLAudioElement | null = null;
+  playingAudioItemId: number | null = null;
 
   @ViewChild('mobileZonesScroll') mobileZonesScroll!: ElementRef;
 
@@ -111,14 +151,12 @@ export class DragDropGameComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit(): void {
-    // Prevent pinch zoom on game container
     const container = document.querySelector('.game-container');
     if (container) {
       container.addEventListener('gesturestart', (e) => e.preventDefault());
       container.addEventListener('gesturechange', (e) => e.preventDefault());
     }
 
-    // Multi-touch prevention: ignore second finger during drag
     this.multiTouchHandler = (e: TouchEvent) => {
       if (this.isDragging && e.touches.length > 1) {
         e.preventDefault();
@@ -126,12 +164,11 @@ export class DragDropGameComponent implements OnInit, AfterViewInit, OnDestroy {
     };
     document.addEventListener('touchstart', this.multiTouchHandler, { passive: false });
 
-    // Orientation change guidance
     this.orientationHandler = () => {
       if (window.innerWidth < 768) {
         const isLandscape = window.innerWidth > window.innerHeight;
         if (isLandscape) {
-          this.displayToast('📱 اللعب في الوضع الرأسي أسهل', 'success');
+          this.displayToast('📱 اللعب في الوضع الرأسي أسهل', 'info');
         }
       }
     };
@@ -140,9 +177,8 @@ export class DragDropGameComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    if (this.multiTouchHandler) {
-      document.removeEventListener('touchstart', this.multiTouchHandler);
-    }
+    this.stopTimer();
+    if (this.multiTouchHandler) document.removeEventListener('touchstart', this.multiTouchHandler);
     if (this.orientationHandler) {
       window.removeEventListener('orientationchange', this.orientationHandler);
       window.removeEventListener('resize', this.orientationHandler);
@@ -150,6 +186,12 @@ export class DragDropGameComponent implements OnInit, AfterViewInit, OnDestroy {
     clearTimeout(this.toastTimer);
     clearTimeout(this.hintTimer);
     clearTimeout(this.shakeTimer);
+    clearTimeout(this.streakTimer);
+    clearTimeout(this.explanationTimer);
+    if (this.audioPlayer) {
+      this.audioPlayer.pause();
+      this.audioPlayer = null;
+    }
   }
 
   // ═══════════════════════════════════════════
@@ -158,12 +200,7 @@ export class DragDropGameComponent implements OnInit, AfterViewInit, OnDestroy {
 
   startGame(questionId: number | null) {
     this.isLoading = true;
-    this.selectedItem = null;
-    this.showResults = false;
-    this.gameResult = null;
-    this.consecutiveErrors = 0;
-    this.hintsRemaining = 3;
-    this.clearHint();
+    this.resetGameState();
 
     const gradeId = getSelectedGrade() as GradeLevel;
     const subjectId = getSelectedSubject() as SubjectType;
@@ -175,53 +212,93 @@ export class DragDropGameComponent implements OnInit, AfterViewInit, OnDestroy {
     };
 
     this.gameService.startSession(req).subscribe({
-      next: (session) => {
-        this.session = session;
-        this.zones = session.zones;
-        this.availableItems = session.items;
-        this.currentScore = session.currentScore;
-        this.totalItemsCount = session.items.length;
-        this.placedItemsCount = 0;
-
-        this.zones.forEach(z => this.zoneItems[z.id] = []);
-
-        if (session.completedItemIds && session.completedItemIds.length > 0) {
-          const completed = this.availableItems.filter(i => session.completedItemIds.includes(i.id));
-          this.availableItems = this.availableItems.filter(i => !session.completedItemIds.includes(i.id));
-
-          completed.forEach(item => {
-            if (this.zoneItems[item.correctZoneId]) {
-              this.zoneItems[item.correctZoneId].push(item);
-            }
-          });
-          this.placedItemsCount = completed.length;
-        }
-
-        this.isLoading = false;
-
-        // Show tutorial on first play
-        if (!localStorage.getItem('dd_tutorial_shown')) {
-          this.showTutorial = true;
-        }
-
-        this.cdr.markForCheck();
-      },
+      next: (session) => this.initializeSession(session),
       error: (err) => {
         console.error(err);
         this.displayToast('تعذر بدء اللعبة - لا توجد أسئلة متاحة', 'error');
-        setTimeout(() => this.goBack(), 2000);
+        this.isLoading = false;
+        this.cdr.markForCheck();
+        setTimeout(() => this.goBack(), 2500);
       }
     });
   }
 
+  private resetGameState(): void {
+    this.selectedItem = null;
+    this.showResults = false;
+    this.gameResult = null;
+    this.consecutiveErrors = 0;
+    this.hintsRemaining = 3;
+    this.currentStreak = 0;
+    this.bestStreak = 0;
+    this.canUndo = false;
+    this.lastMove = null;
+    this.showExplanation = false;
+    this.focusedItemIndex = -1;
+    this.focusedZoneIndex = -1;
+    this.flyingItem = null;
+    this.playingAudioItemId = null;
+    this.clearHint();
+    this.stopTimer();
+  }
+
+  private initializeSession(session: GameSessionDto): void {
+    this.session = session;
+    this.zones = session.zones;
+    this.availableItems = [...session.items];
+    this.currentScore = session.currentScore;
+    this.totalItemsCount = session.items.length;
+    this.placedItemsCount = 0;
+
+    // Initialize zone items and expected counts
+    this.zones.forEach(z => {
+      this.zoneItems[z.id] = [];
+      this.zoneExpectedCounts[z.id] = session.items.filter(i => i.correctZoneId === z.id).length;
+    });
+
+    // Restore completed items
+    if (session.completedItemIds && session.completedItemIds.length > 0) {
+      const completed = this.availableItems.filter(i => session.completedItemIds.includes(i.id));
+      this.availableItems = this.availableItems.filter(i => !session.completedItemIds.includes(i.id));
+      completed.forEach(item => {
+        if (this.zoneItems[item.correctZoneId]) {
+          this.zoneItems[item.correctZoneId].push(item);
+        }
+      });
+      this.placedItemsCount = completed.length;
+    }
+
+    // Start timer if timeLimit is set
+    if (session.timeLimit && session.timeLimit > 0) {
+      this.timerEnabled = true;
+      this.timerTotal = session.timeLimit;
+      this.timerSeconds = session.timeLimit - (session.timeElapsedSeconds || 0);
+      this.startTimer();
+    }
+
+    this.isLoading = false;
+
+    if (!localStorage.getItem('dd_tutorial_shown')) {
+      this.showTutorial = true;
+    }
+
+    this.cdr.markForCheck();
+  }
+
   completeGame() {
-    this.gameService.completeGame(this.session!.sessionId).subscribe(res => {
-      this.gameResult = res;
-      this.showResults = true;
-      this.generateConfetti();
-      this.audioService.play('complete');
-      this.vibrate([100, 80, 100, 80, 100]);
-      this.cdr.markForCheck();
+    this.stopTimer();
+    this.gameService.completeGame(this.session!.sessionId).subscribe({
+      next: (res) => {
+        this.gameResult = res;
+        this.showResults = true;
+        this.generateConfetti();
+        this.audioService.play('complete');
+        this.vibrate([100, 80, 100, 80, 100]);
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.displayToast('تعذر حفظ النتيجة - تحقق من الاتصال', 'error');
+      }
     });
   }
 
@@ -237,16 +314,54 @@ export class DragDropGameComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   // ═══════════════════════════════════════════
+  // TIMER
+  // ═══════════════════════════════════════════
+
+  private startTimer(): void {
+    this.updateTimerColor();
+    this.timerInterval = setInterval(() => {
+      this.timerSeconds--;
+      this.timerPercentage = (this.timerSeconds / this.timerTotal) * 100;
+      this.updateTimerColor();
+
+      if (this.timerSeconds <= 0) {
+        this.stopTimer();
+        this.completeGame();
+      }
+      this.cdr.markForCheck();
+    }, 1000);
+  }
+
+  private stopTimer(): void {
+    if (this.timerInterval) {
+      clearInterval(this.timerInterval);
+      this.timerInterval = null;
+    }
+  }
+
+  private updateTimerColor(): void {
+    const pct = this.timerPercentage;
+    if (pct > 50) this.timerColor = 'green';
+    else if (pct > 20) this.timerColor = 'yellow';
+    else this.timerColor = 'red';
+  }
+
+  formatTimer(seconds: number): string {
+    const m = Math.floor(Math.max(0, seconds) / 60);
+    const s = Math.max(0, seconds) % 60;
+    return `${m}:${s.toString().padStart(2, '0')}`;
+  }
+
+  // ═══════════════════════════════════════════
   // DRAG & DROP HANDLER
   // ═══════════════════════════════════════════
 
   onDragStarted(event: CdkDragStart): void {
     this.isDragging = true;
-    this.selectedItem = null; // cancel any tap selection
+    this.selectedItem = null;
     this.audioService.play('click');
     this.vibrate([40]);
 
-    // Lock page scroll on mobile during drag
     if (this.isMobile) {
       document.body.style.overflow = 'hidden';
       document.body.style.touchAction = 'none';
@@ -256,8 +371,6 @@ export class DragDropGameComponent implements OnInit, AfterViewInit, OnDestroy {
 
   onDragEnded(event: CdkDragEnd): void {
     this.isDragging = false;
-
-    // Unlock page scroll
     if (this.isMobile) {
       document.body.style.overflow = '';
       document.body.style.touchAction = '';
@@ -267,8 +380,6 @@ export class DragDropGameComponent implements OnInit, AfterViewInit, OnDestroy {
 
   drop(event: CdkDragDrop<DragDropItemDto[]>, zoneId: number) {
     this.isDragging = false;
-
-    // Unlock scroll
     if (this.isMobile) {
       document.body.style.overflow = '';
       document.body.style.touchAction = '';
@@ -305,7 +416,6 @@ export class DragDropGameComponent implements OnInit, AfterViewInit, OnDestroy {
 
   onZoneTap(zoneId: number): void {
     if (!this.selectedItem || this.isDragging) return;
-
     const item = this.selectedItem;
     this.submitPlacement(item, zoneId, null);
   }
@@ -316,12 +426,9 @@ export class DragDropGameComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   onContainerTouch(event: TouchEvent): void {
-    // If tapping on empty space (not an item or zone), deselect
     const target = event.target as HTMLElement;
     if (!target.closest('.item-card, .mobile-item-card, .zone-card, .mobile-zone-card, .zone-content, .mobile-zone-content')) {
-      if (this.selectedItem) {
-        this.deselectItem();
-      }
+      if (this.selectedItem) this.deselectItem();
     }
   }
 
@@ -344,10 +451,24 @@ export class DragDropGameComponent implements OnInit, AfterViewInit, OnDestroy {
           this.consecutiveErrors = 0;
 
           if (res.isGameComplete) {
-            this.completeGame();
+            setTimeout(() => this.completeGame(), 800);
           }
         } else {
           this.handleWrongDrop(item, res.message);
+        }
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        console.error('Submit attempt failed:', err);
+        this.displayToast('خطأ في الاتصال - حاول مرة أخرى 📶', 'error');
+        // Return item to store if it was moved by CDK
+        if (cdkEvent) {
+          transferArrayItem(
+            cdkEvent.container.data,
+            cdkEvent.previousContainer.data,
+            cdkEvent.currentIndex,
+            cdkEvent.previousIndex,
+          );
         }
         this.cdr.markForCheck();
       }
@@ -364,7 +485,6 @@ export class DragDropGameComponent implements OnInit, AfterViewInit, OnDestroy {
         cdkEvent.currentIndex,
       );
     } else {
-      // Tap mode: manually move
       const idx = this.availableItems.findIndex(i => i.id === item.id);
       if (idx > -1) {
         this.availableItems.splice(idx, 1);
@@ -375,18 +495,39 @@ export class DragDropGameComponent implements OnInit, AfterViewInit, OnDestroy {
     this.placedItemsCount++;
     this.selectedItem = null;
 
-    // Feedback
-    this.audioService.play('correct');
+    // Save for undo
+    this.lastMove = { item, zoneId };
+    this.canUndo = true;
+
+    // Streak
+    this.currentStreak++;
+    if (this.currentStreak > this.bestStreak) this.bestStreak = this.currentStreak;
+
+    // Sound with pitch variety
+    this.playCorrectSound();
     this.vibrate([80, 50, 40]);
+
+    // Toast
     const msg = this.correctMessages[Math.floor(Math.random() * this.correctMessages.length)];
     this.displayToast(msg, 'success');
+
+    // Streak celebration at milestones
+    if (this.currentStreak === 3 || this.currentStreak === 5 || this.currentStreak === 7) {
+      this.triggerStreakCelebration();
+    }
+
+    // Show explanation if available
+    if (item.explanation) {
+      this.showItemExplanation(item.explanation);
+    }
   }
 
   private handleWrongDrop(item: DragDropItemDto, serverMessage?: string): void {
     this.consecutiveErrors++;
+    this.currentStreak = 0;
     this.selectedItem = null;
+    this.canUndo = false;
 
-    // Audio + haptic
     this.audioService.play('wrong');
     this.vibrate([50, 30, 50]);
 
@@ -398,7 +539,6 @@ export class DragDropGameComponent implements OnInit, AfterViewInit, OnDestroy {
       this.cdr.markForCheck();
     }, 600);
 
-    // Toast message (not a blocking modal!)
     const msg = this.wrongMessages[Math.floor(Math.random() * this.wrongMessages.length)];
     this.displayToast(msg, 'error');
 
@@ -409,10 +549,116 @@ export class DragDropGameComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   // ═══════════════════════════════════════════
+  // UNDO LAST MOVE
+  // ═══════════════════════════════════════════
+
+  undoLastMove(): void {
+    if (!this.canUndo || !this.lastMove) return;
+
+    const { item, zoneId } = this.lastMove;
+    const zoneArr = this.zoneItems[zoneId];
+    const idx = zoneArr.findIndex(i => i.id === item.id);
+    if (idx > -1) {
+      zoneArr.splice(idx, 1);
+      this.availableItems.unshift(item);
+      this.placedItemsCount--;
+      this.currentStreak = 0;
+    }
+
+    this.canUndo = false;
+    this.lastMove = null;
+    this.displayToast('↩️ تم التراجع', 'info');
+    this.cdr.markForCheck();
+  }
+
+  // ═══════════════════════════════════════════
+  // STREAK
+  // ═══════════════════════════════════════════
+
+  private triggerStreakCelebration(): void {
+    this.showStreakCelebration = true;
+    this.vibrate([60, 40, 60, 40, 60]);
+
+    let idx = 0;
+    if (this.currentStreak >= 7) idx = 2;
+    else if (this.currentStreak >= 5) idx = 1;
+    this.displayToast(this.streakMessages[idx], 'success');
+
+    clearTimeout(this.streakTimer);
+    this.streakTimer = setTimeout(() => {
+      this.showStreakCelebration = false;
+      this.cdr.markForCheck();
+    }, 1500);
+  }
+
+  // ═══════════════════════════════════════════
+  // SOUND WITH PITCH VARIETY
+  // ═══════════════════════════════════════════
+
+  private playCorrectSound(): void {
+    this.audioService.play('correct');
+  }
+
+  // ═══════════════════════════════════════════
+  // ITEM AUDIO PLAYBACK
+  // ═══════════════════════════════════════════
+
+  playItemAudio(item: DragDropItemDto, event: Event): void {
+    event.stopPropagation();
+    if (!item.audioUrl) return;
+
+    if (this.playingAudioItemId === item.id) {
+      this.stopItemAudio();
+      return;
+    }
+
+    this.stopItemAudio();
+    this.playingAudioItemId = item.id;
+    this.audioPlayer = new Audio(item.audioUrl);
+    this.audioPlayer.play();
+    this.audioPlayer.onended = () => {
+      this.playingAudioItemId = null;
+      this.cdr.markForCheck();
+    };
+    this.cdr.markForCheck();
+  }
+
+  private stopItemAudio(): void {
+    if (this.audioPlayer) {
+      this.audioPlayer.pause();
+      this.audioPlayer.currentTime = 0;
+      this.audioPlayer = null;
+    }
+    this.playingAudioItemId = null;
+  }
+
+  // ═══════════════════════════════════════════
+  // EXPLANATION
+  // ═══════════════════════════════════════════
+
+  private showItemExplanation(text: string): void {
+    this.explanationText = text;
+    this.showExplanation = true;
+    this.cdr.markForCheck();
+
+    clearTimeout(this.explanationTimer);
+    this.explanationTimer = setTimeout(() => {
+      this.showExplanation = false;
+      this.cdr.markForCheck();
+    }, 4000);
+  }
+
+  dismissExplanation(): void {
+    this.showExplanation = false;
+    clearTimeout(this.explanationTimer);
+    this.cdr.markForCheck();
+  }
+
+  // ═══════════════════════════════════════════
   // TOAST NOTIFICATIONS
   // ═══════════════════════════════════════════
 
-  private displayToast(message: string, type: 'success' | 'error'): void {
+  private displayToast(message: string, type: 'success' | 'error' | 'info'): void {
     clearTimeout(this.toastTimer);
     this.toastMessage = message;
     this.toastType = type;
@@ -435,23 +681,17 @@ export class DragDropGameComponent implements OnInit, AfterViewInit, OnDestroy {
     this.hintsRemaining--;
     const item = this.availableItems[0];
 
-    // Highlight item and its correct zone
     this.hintItemId = item.id;
     this.hintZoneId = item.correctZoneId;
     this.showHintLine = true;
     this.vibrate([30]);
 
-    // Scroll to the correct zone on mobile
     if (this.isMobile) {
       const zoneIdx = this.zones.findIndex(z => z.id === item.correctZoneId);
-      if (zoneIdx > -1) {
-        this.scrollToZone(zoneIdx);
-      }
+      if (zoneIdx > -1) this.scrollToZone(zoneIdx);
     }
 
     this.cdr.markForCheck();
-
-    // Clear hint after 3 seconds
     clearTimeout(this.hintTimer);
     this.hintTimer = setTimeout(() => this.clearHint(), 3000);
   }
@@ -461,6 +701,24 @@ export class DragDropGameComponent implements OnInit, AfterViewInit, OnDestroy {
     this.hintZoneId = null;
     this.showHintLine = false;
     clearTimeout(this.hintTimer);
+    this.cdr.markForCheck();
+  }
+
+  // ═══════════════════════════════════════════
+  // SHUFFLE
+  // ═══════════════════════════════════════════
+
+  shuffleItems(): void {
+    if (this.availableItems.length <= 1) return;
+
+    for (let i = this.availableItems.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [this.availableItems[i], this.availableItems[j]] = [this.availableItems[j], this.availableItems[i]];
+    }
+
+    this.audioService.play('click');
+    this.vibrate([30]);
+    this.displayToast('🔀 تم خلط البطاقات', 'info');
     this.cdr.markForCheck();
   }
 
@@ -485,10 +743,7 @@ export class DragDropGameComponent implements OnInit, AfterViewInit, OnDestroy {
     if (this.mobileZonesScroll?.nativeElement) {
       const scrollEl = this.mobileZonesScroll.nativeElement as HTMLElement;
       const zoneWidth = scrollEl.firstElementChild?.clientWidth || scrollEl.clientWidth;
-      scrollEl.scrollTo({
-        left: index * (zoneWidth + 8),
-        behavior: 'smooth'
-      });
+      scrollEl.scrollTo({ left: index * (zoneWidth + 8), behavior: 'smooth' });
     }
     this.cdr.markForCheck();
   }
@@ -500,6 +755,63 @@ export class DragDropGameComponent implements OnInit, AfterViewInit, OnDestroy {
       this.activeZoneIndex = Math.round(el.scrollLeft / (zoneWidth + 8));
       this.cdr.markForCheck();
     }
+  }
+
+  // ═══════════════════════════════════════════
+  // KEYBOARD NAVIGATION
+  // ═══════════════════════════════════════════
+
+  @HostListener('window:keydown', ['$event'])
+  onKeyDown(event: KeyboardEvent): void {
+    if (this.showResults || this.showTutorial || this.isLoading) return;
+
+    switch (event.key) {
+      case 'ArrowDown':
+        event.preventDefault();
+        this.focusedItemIndex = Math.min(this.focusedItemIndex + 1, this.availableItems.length - 1);
+        this.focusedZoneIndex = -1;
+        break;
+      case 'ArrowUp':
+        event.preventDefault();
+        this.focusedItemIndex = Math.max(this.focusedItemIndex - 1, 0);
+        this.focusedZoneIndex = -1;
+        break;
+      case 'ArrowRight':
+        event.preventDefault();
+        if (this.selectedItem) {
+          this.focusedZoneIndex = Math.max(this.focusedZoneIndex - 1, 0);
+          this.focusedItemIndex = -1;
+        }
+        break;
+      case 'ArrowLeft':
+        event.preventDefault();
+        if (this.selectedItem) {
+          this.focusedZoneIndex = Math.min(this.focusedZoneIndex + 1, this.zones.length - 1);
+          this.focusedItemIndex = -1;
+        }
+        break;
+      case 'Enter':
+      case ' ':
+        event.preventDefault();
+        if (this.focusedItemIndex >= 0 && this.focusedItemIndex < this.availableItems.length) {
+          this.onItemTap(this.availableItems[this.focusedItemIndex]);
+        } else if (this.focusedZoneIndex >= 0 && this.focusedZoneIndex < this.zones.length && this.selectedItem) {
+          this.onZoneTap(this.zones[this.focusedZoneIndex].id);
+        }
+        break;
+      case 'Escape':
+        this.deselectItem();
+        this.focusedItemIndex = -1;
+        this.focusedZoneIndex = -1;
+        break;
+      case 'h':
+        this.useHint();
+        break;
+      case 'z':
+        if (event.ctrlKey) this.undoLastMove();
+        break;
+    }
+    this.cdr.markForCheck();
   }
 
   // ═══════════════════════════════════════════
@@ -517,7 +829,7 @@ export class DragDropGameComponent implements OnInit, AfterViewInit, OnDestroy {
     localStorage.setItem('dd_input_mode', this.inputMode);
     this.displayToast(
       this.inputMode === 'tap' ? '👆 وضع الضغط — اضغط البطاقة ثم المنطقة' : '✋ وضع السحب — اسحب البطاقة إلى المنطقة',
-      'success'
+      'info'
     );
     this.cdr.markForCheck();
   }
@@ -526,6 +838,18 @@ export class DragDropGameComponent implements OnInit, AfterViewInit, OnDestroy {
     if (this.zones.length <= 2) return 'grid-cols-2';
     if (this.zones.length === 3) return 'grid-cols-3';
     return 'grid-cols-2';
+  }
+
+  getZonePlacedCount(zoneId: number): number {
+    return this.zoneItems[zoneId]?.length || 0;
+  }
+
+  getZoneExpectedCount(zoneId: number): number {
+    return this.zoneExpectedCounts[zoneId] || 0;
+  }
+
+  getZoneNumber(zoneId: number): number {
+    return this.zones.findIndex(z => z.id === zoneId) + 1;
   }
 
   getCompletionMessage(): string {
@@ -543,6 +867,12 @@ export class DragDropGameComponent implements OnInit, AfterViewInit, OnDestroy {
     return `${m} دقائق و ${s} ثانية`;
   }
 
+  getAccuracyPercentage(): number {
+    if (!this.gameResult) return 0;
+    const total = this.gameResult.correctPlacements + this.gameResult.wrongPlacements;
+    return total > 0 ? Math.round((this.gameResult.correctPlacements / total) * 100) : 0;
+  }
+
   // ═══════════════════════════════════════════
   // HAPTIC FEEDBACK
   // ═══════════════════════════════════════════
@@ -550,9 +880,7 @@ export class DragDropGameComponent implements OnInit, AfterViewInit, OnDestroy {
   private vibrate(pattern: number[]): void {
     if (this.isMuted) return;
     try {
-      if ('vibrate' in navigator) {
-        navigator.vibrate(pattern);
-      }
+      if ('vibrate' in navigator) navigator.vibrate(pattern);
     } catch { /* no vibration support */ }
   }
 
@@ -574,15 +902,16 @@ export class DragDropGameComponent implements OnInit, AfterViewInit, OnDestroy {
 
   private detectMobile(): void {
     this.isMobile = window.innerWidth < 1024 || 'ontouchstart' in window;
-    if (this.isMobile) {
-      this.inputMode = 'tap'; // Default to tap mode on mobile
-    }
+    if (this.isMobile) this.inputMode = 'tap';
   }
 
   private loadPreferences(): void {
     const savedMode = localStorage.getItem('dd_input_mode');
-    if (savedMode === 'drag' || savedMode === 'tap') {
-      this.inputMode = savedMode;
+    if (savedMode === 'drag' || savedMode === 'tap') this.inputMode = savedMode;
+    const mutedPref = localStorage.getItem('dd_muted');
+    if (mutedPref === 'true') {
+      this.isMuted = true;
+      this.audioService.setMuted(true);
     }
   }
 }
