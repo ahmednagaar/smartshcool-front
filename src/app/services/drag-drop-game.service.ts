@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 import {
@@ -64,19 +64,33 @@ export class DragDropGameService {
 
     constructor(private http: HttpClient) { }
 
+    // Auth headers for protected endpoints
+    private getAuthHeaders(): HttpHeaders {
+        const token = localStorage.getItem('accessToken');
+        return new HttpHeaders().set('Authorization', `Bearer ${token}`);
+    }
+
     startSession(request: StartGameRequestDto): Observable<GameSessionDto> {
-        return this.http.post<GameSessionDto>(`${this.apiUrl}/start`, request);
+        return this.http.post<GameSessionDto>(`${this.apiUrl}/start`, request, {
+            headers: this.getAuthHeaders()
+        });
     }
 
     submitAttempt(request: SubmitAttemptRequestDto): Observable<SubmitAttemptResponseDto> {
-        return this.http.post<SubmitAttemptResponseDto>(`${this.apiUrl}/attempt`, request);
+        return this.http.post<SubmitAttemptResponseDto>(`${this.apiUrl}/attempt`, request, {
+            headers: this.getAuthHeaders()
+        });
     }
 
     completeGame(sessionId: number): Observable<GameResultDto> {
-        return this.http.post<GameResultDto>(`${this.apiUrl}/complete/${sessionId}`, {});
+        return this.http.post<GameResultDto>(`${this.apiUrl}/complete/${sessionId}`, {}, {
+            headers: this.getAuthHeaders()
+        });
     }
 
     getActiveSession(): Observable<GameSessionDto | null> {
-        return this.http.get<GameSessionDto | null>(`${this.apiUrl}/active`);
+        return this.http.get<GameSessionDto | null>(`${this.apiUrl}/active`, {
+            headers: this.getAuthHeaders()
+        });
     }
 }

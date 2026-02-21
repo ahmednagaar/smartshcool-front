@@ -1404,13 +1404,51 @@
         z-index: 1000;
     }
 
+    /* Drag preview floats ABOVE the finger on touch devices
+       so children can see what they're dragging */
     .cdk-drag-preview {
-        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
-        transform: scale(1.08);
+        box-shadow: 0 15px 45px rgba(0, 0, 0, 0.45) !important;
+        transform: scale(1.1) translateY(-60px) !important;
         opacity: 0.95;
+        border-radius: 12px;
+        z-index: 10001 !important;
+        pointer-events: none;
     }
 
     .cdk-drop-list {
         min-height: 60px;
+    }
+
+    /* Larger touch targets for zone empty state */
+    .mobile-zone-empty {
+        min-height: 120px;
+    }
+}
+
+/* ═══════════════════════════════════════════
+   LANDSCAPE ORIENTATION HINT
+   ═══════════════════════════════════════════ */
+@media (max-width: 767px) and (orientation: landscape) {
+    .game-header {
+        height: 40px;
+        padding: 4px 10px;
+    }
+
+    .game-title {
+        font-size: 13px;
+    }
+
+    .progress-bar-container {
+        margin-bottom: 4px;
+    }
+
+    .mobile-game-area {
+        height: calc(100vh - 100px);
+        height: calc(100dvh - 100px);
+    }
+
+    .mobile-store-title {
+        font-size: 12px;
+        padding: 6px 8px 4px;
     }
 }

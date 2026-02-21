@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectionStrategy, ChangeDetectorRef, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
@@ -16,7 +16,7 @@ import { getSelectedGrade, getSelectedSubject } from '../../models/shared-enums'
   templateUrl: './drag-drop-game.component.html',
   styleUrls: ['./drag-drop-game.component.css']
 })
-export class DragDropGameComponent implements OnInit, AfterViewInit {
+export class DragDropGameComponent implements OnInit, AfterViewInit, OnDestroy {
   // ─── Core Game State ───
   isLoading = true;
   session: GameSessionDto | null = null;
@@ -86,6 +86,10 @@ export class DragDropGameComponent implements OnInit, AfterViewInit {
   // ─── Error counter (for auto-hint) ───
   private consecutiveErrors = 0;
 
+  // ─── Orientation ───
+  private orientationHandler: (() => void) | null = null;
+  private multiTouchHandler: ((e: TouchEvent) => void) | null = null;
+
   @ViewChild('mobileZonesScroll') mobileZonesScroll!: ElementRef;
 
   constructor(
@@ -113,6 +117,39 @@ export class DragDropGameComponent implements OnInit, AfterViewInit {
       container.addEventListener('gesturestart', (e) => e.preventDefault());
       container.addEventListener('gesturechange', (e) => e.preventDefault());
     }
+
+    // Multi-touch prevention: ignore second finger during drag
+    this.multiTouchHandler = (e: TouchEvent) => {
+      if (this.isDragging && e.touches.length > 1) {
+        e.preventDefault();
+      }
+    };
+    document.addEventListener('touchstart', this.multiTouchHandler, { passive: false });
+
+    // Orientation change guidance
+    this.orientationHandler = () => {
+      if (window.innerWidth < 768) {
+        const isLandscape = window.innerWidth > window.innerHeight;
+        if (isLandscape) {
+          this.displayToast('📱 اللعب في الوضع الرأسي أسهل', 'success');
+        }
+      }
+    };
+    window.addEventListener('orientationchange', this.orientationHandler);
+    window.addEventListener('resize', this.orientationHandler);
+  }
+
+  ngOnDestroy(): void {
+    if (this.multiTouchHandler) {
+      document.removeEventListener('touchstart', this.multiTouchHandler);
+    }
+    if (this.orientationHandler) {
+      window.removeEventListener('orientationchange', this.orientationHandler);
+      window.removeEventListener('resize', this.orientationHandler);
+    }
+    clearTimeout(this.toastTimer);
+    clearTimeout(this.hintTimer);
+    clearTimeout(this.shakeTimer);
   }
 
   // ═══════════════════════════════════════════
@@ -203,7 +240,40 @@ export class DragDropGameComponent implements OnInit, AfterViewInit {
   // DRAG & DROP HANDLER
   // ═══════════════════════════════════════════
 
+  onDragStarted(event: CdkDragStart): void {
+    this.isDragging = true;
+    this.selectedItem = null; // cancel any tap selection
+    this.audioService.play('click');
+    this.vibrate([40]);
+
+    // Lock page scroll on mobile during drag
+    if (this.isMobile) {
+      document.body.style.overflow = 'hidden';
+      document.body.style.touchAction = 'none';
+    }
+    this.cdr.markForCheck();
+  }
+
+  onDragEnded(event: CdkDragEnd): void {
+    this.isDragging = false;
+
+    // Unlock page scroll
+    if (this.isMobile) {
+      document.body.style.overflow = '';
+      document.body.style.touchAction = '';
+    }
+    this.cdr.markForCheck();
+  }
+
   drop(event: CdkDragDrop<DragDropItemDto[]>, zoneId: number) {
+    this.isDragging = false;
+
+    // Unlock scroll
+    if (this.isMobile) {
+      document.body.style.overflow = '';
+      document.body.style.touchAction = '';
+    }
+
     if (event.previousContainer === event.container) {
       moveItemInArray(event.container.data, event.previousIndex, event.currentIndex);
       return;

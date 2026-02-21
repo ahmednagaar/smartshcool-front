@@ -123,6 +123,7 @@
                                 <div *ngFor="let item of availableItems; let i = index" cdkDrag [cdkDragData]="item"
                                     class="item-card glass-shimmer" [class.selected]="selectedItem?.id === item.id"
                                     [class.hint-highlight]="hintItemId === item.id" (click)="onItemTap(item)"
+                                    (cdkDragStarted)="onDragStarted($event)" (cdkDragEnded)="onDragEnded($event)"
                                     [attr.aria-label]="item.text">
 
                                     <div class="item-content">
@@ -197,6 +198,7 @@
                                 class="mobile-item-card" [class.selected]="selectedItem?.id === item.id"
                                 [class.hint-highlight]="hintItemId === item.id"
                                 [class.shake-error]="shakeItemId === item.id" (click)="onItemTap(item)"
+                                (cdkDragStarted)="onDragStarted($event)" (cdkDragEnded)="onDragEnded($event)"
                                 [attr.aria-label]="item.text">
 
                                 <span class="mobile-item-text">{{ item.text }}</span>
