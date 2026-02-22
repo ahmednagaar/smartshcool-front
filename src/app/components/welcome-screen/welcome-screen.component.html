@@ -27,17 +27,29 @@
       </div>
 
       <!-- Actions -->
-      <div class="flex flex-col gap-4 delay-200 animate-slide-up pt-4">
+      <div class="flex flex-col gap-3 delay-200 animate-slide-up pt-4">
         <button (click)="continueToTestType()"
-          class="btn-primary w-full text-xl font-bold py-5 rounded-xl shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 group">
-          <span>{{ studentName.trim() ? 'متابعة باسم ' + studentName : 'متابعة بدون اسم' }}</span>
+          class="w-full text-xl font-bold py-5 rounded-2xl transition-all duration-300 flex items-center justify-center gap-3 group"
+          [class]="studentName.trim()
+            ? 'bg-gradient-to-l from-emerald-500 to-emerald-600 text-white shadow-lg shadow-emerald-200 hover:shadow-xl hover:shadow-emerald-300 hover:scale-[1.02]'
+            : 'bg-gradient-to-l from-blue-600 to-blue-700 text-white shadow-lg shadow-blue-200 hover:shadow-xl hover:shadow-blue-300 hover:scale-[1.02]'">
+          <span class="transition-all duration-300">{{ studentName.trim() ? '✨ متابعة باسم ' + studentName : 'متابعة بدون اسم' }}</span>
           <lucide-icon [img]="icons.ArrowLeft"
-            class="w-5 h-5 transition-transform group-hover:-translate-x-1"></lucide-icon>
+            class="w-5 h-5 transition-transform duration-300 group-hover:-translate-x-1.5"></lucide-icon>
         </button>
 
+        <!-- Divider -->
+        <div class="flex items-center gap-3 py-1">
+          <div class="flex-1 h-px bg-slate-200"></div>
+          <span class="text-sm text-slate-400 font-medium">أو</span>
+          <div class="flex-1 h-px bg-slate-200"></div>
+        </div>
+
         <button (click)="goBack()"
-          class="btn-ghost w-full text-lg font-medium py-3 text-muted hover:text-foreground transition-colors">
-          رجوع
+          class="w-full text-base font-medium py-2.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 group">
+          <span>رجوع</span>
+          <lucide-icon [img]="icons.ArrowRight"
+            class="w-4 h-4 transition-transform duration-200 group-hover:translate-x-1"></lucide-icon>
         </button>
       </div>
 

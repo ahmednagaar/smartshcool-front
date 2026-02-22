@@ -2,7 +2,7 @@ import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { LucideAngularModule, Hand, ArrowLeft } from 'lucide-angular';
+import { LucideAngularModule, Hand, ArrowLeft, ArrowRight } from 'lucide-angular';
 import { AnalyticsService } from '../../services/analytics.service';
 
 @Component({
@@ -14,7 +14,7 @@ import { AnalyticsService } from '../../services/analytics.service';
 })
 export class WelcomeScreenComponent {
   studentName = '';
-  readonly icons = { Hand, ArrowLeft };
+  readonly icons = { Hand, ArrowLeft, ArrowRight };
 
   constructor(
     private router: Router,
