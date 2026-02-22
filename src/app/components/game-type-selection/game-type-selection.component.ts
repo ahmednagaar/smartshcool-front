@@ -8,77 +8,61 @@ interface GameOption {
   value: GameType;
   label: string;
   description: string;
-  iconClass: string;
+  emoji: string;
+  gradient: string;
+  glowColor: string;
+  features: string[];
 }
 
 @Component({
   selector: 'app-game-type-selection',
   standalone: true,
   imports: [CommonModule],
-  template: `
-    <div class="bg-v0-gradient min-h-screen p-4">
-      <div class="container max-w-6xl py-8">
-        <button (click)="goBack()" class="btn-ghost mb-6">
-          <span>→</span>
-          رجوع
-        </button>
-
-        <div class="text-center mb-10">
-          <h2 class="text-3xl md:text-4xl font-bold text-foreground mb-4">اختر اللعبة التفاعلية</h2>
-          <p class="text-muted text-lg">اختر اللعبة التي تفضلها للتدريب</p>
-        </div>
-
-        <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div
-            *ngFor="let game of games"
-            class="game-card"
-            (click)="selectGame(game.value)"
-          >
-            <div class="game-card-icon" [ngClass]="game.iconClass">
-              <span *ngIf="game.value === 'matching'">🧩</span>
-              <span *ngIf="game.value === 'wheel'">🎡</span>
-              <span *ngIf="game.value === 'dragdrop'">↔️</span>
-              <span *ngIf="game.value === 'flipcards'">🃏</span>
-            </div>
-            <div class="space-y-2">
-              <h3 class="text-xl font-bold text-foreground">{{ game.label }}</h3>
-              <p class="text-sm text-muted leading-relaxed">{{ game.description }}</p>
-            </div>
-            <button class="btn-primary w-full mt-4">ابدأ اللعب</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  `
+  templateUrl: './game-type-selection.component.html',
+  styleUrls: ['./game-type-selection.component.css']
 })
 export class GameTypeSelectionComponent {
   games: GameOption[] = [
     {
       value: 'matching',
       label: 'لعبة المطابقة',
-      description: 'اربط الأسئلة بالإجابات الصحيحة',
-      iconClass: 'matching'
+      description: 'اربط كل سؤال بالإجابة الصحيحة واختبر سرعتك في التفكير!',
+      emoji: '🧩',
+      gradient: 'linear-gradient(135deg, #3b82f6, #06b6d4)',
+      glowColor: 'rgba(59, 130, 246, 0.35)',
+      features: ['تحدي الوقت', 'مستويات متعددة']
     },
     {
       value: 'wheel',
       label: 'العجلة الدوارة',
-      description: 'أدر العجلة واختبر معلوماتك',
-      iconClass: 'wheel'
+      description: 'أدر العجلة واختبر معلوماتك مع أسئلة عشوائية ممتعة!',
+      emoji: '🎡',
+      gradient: 'linear-gradient(135deg, #a855f7, #ec4899)',
+      glowColor: 'rgba(168, 85, 247, 0.35)',
+      features: ['أسئلة عشوائية', 'مفاجآت ممتعة']
     },
     {
       value: 'dragdrop',
       label: 'السحب والإفلات',
-      description: 'رتب العناصر في المكان الصحيح',
-      iconClass: 'dragdrop'
+      description: 'رتّب العناصر في المكان الصحيح واكتشف قدراتك في التصنيف!',
+      emoji: '🎯',
+      gradient: 'linear-gradient(135deg, #22c55e, #10b981)',
+      glowColor: 'rgba(34, 197, 94, 0.35)',
+      features: ['تصنيف ذكي', 'تلميحات مساعدة']
     }
     // Flip Cards game hidden from student UI (code preserved)
     // {
     //     value: 'flipcards',
     //     label: 'بطاقات الذاكرة',
     //     description: 'اقلب البطاقات واكتشف المحتوى',
-    //     iconClass: 'flipcards'
+    //     emoji: '🃏',
+    //     gradient: 'linear-gradient(135deg, #f97316, #ef4444)',
+    //     glowColor: 'rgba(249, 115, 22, 0.35)',
+    //     features: ['تنشيط الذاكرة', 'بطاقات ملونة']
     // }
   ];
+
+  hoveredGame: GameType | null = null;
 
   constructor(private router: Router) { }
 
@@ -93,5 +77,13 @@ export class GameTypeSelectionComponent {
 
   goBack() {
     this.router.navigate(['/training-type']);
+  }
+
+  onCardHover(type: GameType) {
+    this.hoveredGame = type;
+  }
+
+  onCardLeave() {
+    this.hoveredGame = null;
   }
 }

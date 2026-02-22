@@ -1,0 +1,65 @@
+<div class="gts-page">
+    <!-- Animated Background Orbs -->
+    <div class="bg-orb orb-1"></div>
+    <div class="bg-orb orb-2"></div>
+    <div class="bg-orb orb-3"></div>
+
+    <div class="gts-container">
+
+        <!-- Back Button -->
+        <button (click)="goBack()" class="gts-back-btn">
+            <span class="back-arrow">→</span>
+            <span>رجوع</span>
+        </button>
+
+        <!-- Hero Section -->
+        <div class="gts-hero">
+            <div class="hero-emoji-row">
+                <span class="hero-emoji bounce-1">🎮</span>
+                <span class="hero-emoji bounce-2">🏆</span>
+                <span class="hero-emoji bounce-3">⭐</span>
+            </div>
+            <h1 class="gts-title">اختر لعبتك المفضلة!</h1>
+            <p class="gts-subtitle">استعد للمتعة والتعلم — اختر واحدة وابدأ التحدي 🚀</p>
+        </div>
+
+        <!-- Game Cards Grid -->
+        <div class="gts-grid">
+            <div *ngFor="let game of games; let i = index" class="gts-card" [style.--card-gradient]="game.gradient"
+                [style.--card-glow]="game.glowColor" [style.animationDelay.ms]="i * 120"
+                (mouseenter)="onCardHover(game.value)" (mouseleave)="onCardLeave()" (click)="selectGame(game.value)">
+
+                <!-- Card Glow -->
+                <div class="card-glow"></div>
+
+                <!-- Icon Circle -->
+                <div class="card-icon-circle" [style.background]="game.gradient">
+                    <span class="card-emoji">{{ game.emoji }}</span>
+                </div>
+
+                <!-- Content -->
+                <h3 class="card-title">{{ game.label }}</h3>
+                <p class="card-description">{{ game.description }}</p>
+
+                <!-- Feature Tags -->
+                <div class="card-features">
+                    <span *ngFor="let feat of game.features" class="feature-tag" [style.borderColor]="game.glowColor">
+                        {{ feat }}
+                    </span>
+                </div>
+
+                <!-- Play Button -->
+                <button class="card-play-btn" [style.background]="game.gradient">
+                    <span>ابدأ اللعب</span>
+                    <span class="play-icon">▶</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Footer Tip -->
+        <div class="gts-footer">
+            <p>💡 <strong>نصيحة:</strong> جرّب كل الألعاب لتكتشف المفضلة لديك!</p>
+        </div>
+
+    </div>
+</div>
