@@ -31,6 +31,14 @@
     user-select: none;
 }
 
+/* ========== Game Area ========== */
+.game-area {
+    max-width: 1400px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 10;
+}
+
 .loading-container {
     display: flex;
     flex-direction: column;
@@ -92,6 +100,15 @@
 
 .btn-ghost:hover {
     background: rgba(255, 255, 255, 0.1);
+}
+
+.back-icon {
+    font-size: 20px;
+}
+
+.back-label {
+    font-weight: 700;
+    color: white;
 }
 
 .header-center {
@@ -1294,18 +1311,6 @@
 /* ═══════════════════════════════════════════
    GRID HELPERS
    ═══════════════════════════════════════════ */
-.grid {
-    display: grid;
-}
-
-.gap-5 {
-    gap: 20px;
-}
-
-.gap-6 {
-    gap: 24px;
-}
-
 .grid-cols-2 {
     grid-template-columns: repeat(2, 1fr);
 }
@@ -1314,59 +1319,39 @@
     grid-template-columns: repeat(3, 1fr);
 }
 
-.items-start {
+/* ═══════════════════════════════════════════
+   DESKTOP LAYOUT
+   ═══════════════════════════════════════════ */
+.desktop-grid {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 24px;
     align-items: start;
 }
 
-.p-5 {
+.desktop-store-col {
+    order: 2;
+}
+
+.desktop-zones-col {
+    order: 1;
+}
+
+.zones-grid {
+    display: grid;
+    gap: 20px;
+}
+
+.store-card {
+    position: sticky;
+    top: 16px;
     padding: 20px;
 }
 
 /* ═══════════════════════════════════════════
-   DESKTOP LAYOUT (shown ≥1024px)
-   ═══════════════════════════════════════════ */
-.desktop-layout {
-    display: block;
-}
-
-.mobile-layout {
-    display: none;
-}
-
-@media (min-width: 1024px) {
-    .lg\:grid-cols-12 {
-        grid-template-columns: repeat(12, 1fr);
-    }
-
-    .lg\:col-span-4 {
-        grid-column: span 4;
-    }
-
-    .lg\:col-span-8 {
-        grid-column: span 8;
-    }
-
-    .lg\:order-1 {
-        order: 1;
-    }
-
-    .lg\:order-2 {
-        order: 2;
-    }
-}
-
-/* ═══════════════════════════════════════════
-   MOBILE LAYOUT (shown <1024px)
+   MOBILE LAYOUT (≤1023px)
    ═══════════════════════════════════════════ */
 @media (max-width: 1023px) {
-    .desktop-layout {
-        display: none;
-    }
-
-    .mobile-layout {
-        display: block;
-    }
-
     .game-container {
         padding: 8px;
     }

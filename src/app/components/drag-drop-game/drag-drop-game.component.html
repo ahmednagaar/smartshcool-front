@@ -56,20 +56,20 @@
     </div>
 
     <!-- ========== GAME SCREEN ========== -->
-    <div class="container game-area relative z-10">
+    <div class="game-area">
 
         <!-- Header -->
         <header class="game-header">
             <button (click)="goBack()" class="btn-ghost" aria-label="رجوع">
-                <span class="text-xl">→</span>
-                <span class="font-bold text-white">خروج</span>
+                <span class="back-icon">→</span>
+                <span class="back-label">خروج</span>
             </button>
 
             <div class="header-center">
                 <h1 class="game-title">
-                    {{ session?.gameTitle }}
+                    {{ session.gameTitle }}
                 </h1>
-                <p class="game-instructions">{{ session?.instructions || 'اسحب العناصر إلى التصنيف الصحيح' }}</p>
+                <p class="game-instructions">{{ session.instructions || 'اسحب العناصر إلى التصنيف الصحيح' }}</p>
             </div>
 
             <div class="header-right">
@@ -135,19 +135,20 @@
         </div>
 
         <!-- ========== DESKTOP LAYOUT (≥1024px) ========== -->
-        <div class="desktop-layout">
-            <div class="grid lg:grid-cols-12 gap-6 items-start">
+        <div class="desktop-layout" *ngIf="!isMobile">
+            <div class="desktop-grid">
 
                 <!-- Source Store (Desktop) -->
-                <div class="lg:col-span-4 lg:order-2">
-                    <div class="store-card glass-card p-5">
+                <div class="desktop-store-col">
+                    <div class="store-card glass-card">
                         <h3 class="store-title">
                             <span>📦</span> المخزن
                             <span class="store-count">{{ availableItems.length }} متبقية</span>
                         </h3>
 
                         <div cdkDropList [cdkDropListData]="availableItems" class="store-items-list"
-                            (cdkDropListDropped)="drop($event, -1)" [id]="'store-list'">
+                            [cdkDropListConnectedTo]="desktopStoreConnections" (cdkDropListDropped)="drop($event, -1)"
+                            [id]="'store-list'">
 
                             <div *ngFor="let item of availableItems; let i = index" cdkDrag [cdkDragData]="item"
                                 class="item-card glass-shimmer" [class.selected]="selectedItem?.id === item.id"
@@ -186,10 +187,9 @@
                 </div>
 
                 <!-- Drop Zones (Desktop) -->
-                <div class="lg:col-span-8 lg:order-1">
-                    <div class="grid gap-5" [ngClass]="getZoneGridClass()">
-                        <div *ngFor="let zone of zones; let zi = index"
-                            class="zone-card glass-card overflow-hidden transition-all duration-300"
+                <div class="desktop-zones-col">
+                    <div class="zones-grid" [ngClass]="getZoneGridClass()">
+                        <div *ngFor="let zone of zones; let zi = index" class="zone-card glass-card"
                             [class.zone-droppable]="isDragging || selectedItem"
                             [class.zone-hint]="hintZoneId === zone.id"
                             [class.keyboard-focused]="focusedZoneIndex === zi" [style.borderColor]="zone.colorCode"
@@ -210,10 +210,11 @@
                             </div>
 
                             <div cdkDropList [cdkDropListData]="zoneItems[zone.id]" class="zone-content"
+                                [cdkDropListConnectedTo]="getDesktopZoneConnections(zone.id)"
                                 (cdkDropListDropped)="drop($event, zone.id)" [id]="'zone-' + zone.id">
 
                                 <div *ngFor="let item of zoneItems[zone.id]" cdkDrag [cdkDragDisabled]="true"
-                                    class="zone-item item-correct" [style.borderLeftColor]="zone.colorCode">
+                                    class="zone-item" [style.borderLeftColor]="zone.colorCode">
                                     <img *ngIf="item.imageUrl" [src]="item.imageUrl" class="zone-item-image"
                                         [alt]="item.text" />
                                     <span class="item-text">{{ item.text }}</span>
@@ -240,7 +241,8 @@
                     <h3 class="mobile-store-title">📦 المخزن ({{ availableItems.length }})</h3>
 
                     <div cdkDropList [cdkDropListData]="availableItems" class="mobile-store-items"
-                        (cdkDropListDropped)="drop($event, -1)" [id]="'mobile-store-list'">
+                        [cdkDropListConnectedTo]="mobileStoreConnections" (cdkDropListDropped)="drop($event, -1)"
+                        [id]="'mobile-store-list'">
 
                         <div *ngFor="let item of availableItems" cdkDrag [cdkDragData]="item" class="mobile-item-card"
                             [class.selected]="selectedItem?.id === item.id"
@@ -297,6 +299,7 @@
                             </div>
 
                             <div cdkDropList [cdkDropListData]="zoneItems[zone.id]" class="mobile-zone-content"
+                                [cdkDropListConnectedTo]="getMobileZoneConnections(zone.id)"
                                 (cdkDropListDropped)="drop($event, zone.id)" [id]="'mobile-zone-' + zone.id">
 
                                 <div *ngFor="let item of zoneItems[zone.id]" class="mobile-zone-item"

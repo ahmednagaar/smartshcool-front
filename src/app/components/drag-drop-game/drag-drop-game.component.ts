@@ -2,6 +2,7 @@ import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRe
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
+import { Subscription } from 'rxjs';
 import { AudioService } from '../../services/audio.service';
 import { DragDropModule, CdkDragDrop, CdkDragStart, CdkDragEnd, moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
 import { DragDropGameService, StartGameRequestDto, GameSessionDto, GameResultDto } from '../../services/drag-drop-game.service';
@@ -130,7 +131,26 @@ export class DragDropGameComponent implements OnInit, AfterViewInit, OnDestroy {
   private audioPlayer: HTMLAudioElement | null = null;
   playingAudioItemId: number | null = null;
 
+  // ─── Subscription cleanup ───
+  private queryParamsSub: Subscription | null = null;
+
   @ViewChild('mobileZonesScroll') mobileZonesScroll!: ElementRef;
+
+  // ─── CDK Drop List Connection IDs ───
+  // Desktop lists
+  get desktopStoreConnections(): string[] {
+    return this.zones.map(z => 'zone-' + z.id);
+  }
+  getDesktopZoneConnections(zoneId: number): string[] {
+    return ['store-list', ...this.zones.filter(z => z.id !== zoneId).map(z => 'zone-' + z.id)];
+  }
+  // Mobile lists
+  get mobileStoreConnections(): string[] {
+    return this.zones.map(z => 'mobile-zone-' + z.id);
+  }
+  getMobileZoneConnections(zoneId: number): string[] {
+    return ['mobile-store-list', ...this.zones.filter(z => z.id !== zoneId).map(z => 'mobile-zone-' + z.id)];
+  }
 
   constructor(
     private gameService: DragDropGameService,
@@ -144,7 +164,7 @@ export class DragDropGameComponent implements OnInit, AfterViewInit, OnDestroy {
     this.detectMobile();
     this.loadPreferences();
 
-    this.route.queryParams.subscribe(params => {
+    this.queryParamsSub = this.route.queryParams.subscribe(params => {
       const questionId = params['questionId'] ? +params['questionId'] : null;
       this.startGame(questionId);
     });
@@ -178,6 +198,7 @@ export class DragDropGameComponent implements OnInit, AfterViewInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.stopTimer();
+    this.queryParamsSub?.unsubscribe();
     if (this.multiTouchHandler) document.removeEventListener('touchstart', this.multiTouchHandler);
     if (this.orientationHandler) {
       window.removeEventListener('orientationchange', this.orientationHandler);
@@ -238,6 +259,12 @@ export class DragDropGameComponent implements OnInit, AfterViewInit, OnDestroy {
     this.focusedZoneIndex = -1;
     this.flyingItem = null;
     this.playingAudioItemId = null;
+    // Timer full reset
+    this.timerEnabled = false;
+    this.timerSeconds = 0;
+    this.timerTotal = 0;
+    this.timerPercentage = 100;
+    this.timerColor = 'green';
     this.clearHint();
     this.stopTimer();
   }
@@ -821,6 +848,7 @@ export class DragDropGameComponent implements OnInit, AfterViewInit, OnDestroy {
   toggleMute(): void {
     this.isMuted = !this.isMuted;
     this.audioService.setMuted(this.isMuted);
+    localStorage.setItem('dd_muted', String(this.isMuted));
   }
 
   toggleInputMode(): void {
