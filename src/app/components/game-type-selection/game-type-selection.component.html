@@ -7,7 +7,7 @@
     <div class="gts-container">
 
         <!-- Back Button -->
-        <button (click)="goBack()" class="gts-back-btn">
+        <button (click)="goBack()" class="gts-back-btn" aria-label="رجوع للصفحة السابقة">
             <span class="back-arrow">→</span>
             <span>رجوع</span>
         </button>
@@ -24,10 +24,13 @@
         </div>
 
         <!-- Game Cards Grid -->
-        <div class="gts-grid">
-            <div *ngFor="let game of games; let i = index" class="gts-card" [style.--card-gradient]="game.gradient"
+        <div class="gts-grid" role="list">
+            <div *ngFor="let game of games; let i = index" class="gts-card" role="listitem" [attr.tabindex]="0"
+                [attr.aria-label]="game.label + ' — ' + game.description" [style.--card-gradient]="game.gradient"
                 [style.--card-glow]="game.glowColor" [style.animationDelay.ms]="i * 120"
-                (mouseenter)="onCardHover(game.value)" (mouseleave)="onCardLeave()" (click)="selectGame(game.value)">
+                (mouseenter)="onCardHover(game.value)" (mouseleave)="onCardLeave()" (click)="selectGame(game.value)"
+                (keydown.enter)="selectGame(game.value)"
+                (keydown.space)="$event.preventDefault(); selectGame(game.value)">
 
                 <!-- Card Glow -->
                 <div class="card-glow"></div>
@@ -42,14 +45,14 @@
                 <p class="card-description">{{ game.description }}</p>
 
                 <!-- Feature Tags -->
-                <div class="card-features">
+                <div class="card-features" aria-hidden="true">
                     <span *ngFor="let feat of game.features" class="feature-tag" [style.borderColor]="game.glowColor">
                         {{ feat }}
                     </span>
                 </div>
 
                 <!-- Play Button -->
-                <button class="card-play-btn" [style.background]="game.gradient">
+                <button class="card-play-btn" [style.background]="game.gradient" tabindex="-1" aria-hidden="true">
                     <span>ابدأ اللعب</span>
                     <span class="play-icon">▶</span>
                 </button>
