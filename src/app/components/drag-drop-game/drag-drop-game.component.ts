@@ -30,8 +30,6 @@ export class DragDropGameComponent implements OnInit, AfterViewInit, OnDestroy {
 
   // ─── UI State ───
   isMuted = false;
-  highContrastMode = false;
-  uiThemeClass = 'theme-modern';
 
   // ─── Mobile / Input Mode ───
   isMobile = false;
@@ -75,7 +73,6 @@ export class DragDropGameComponent implements OnInit, AfterViewInit, OnDestroy {
   hintsRemaining = 3;
   hintItemId: number | null = null;
   hintZoneId: number | null = null;
-  showHintLine = false;
   private hintTimer: any;
 
   // ─── Shake Animation ───
@@ -120,8 +117,7 @@ export class DragDropGameComponent implements OnInit, AfterViewInit, OnDestroy {
   // ─── Zone expected counts ───
   zoneExpectedCounts: { [zoneId: number]: number } = {};
 
-  // ─── Fly animation ───
-  flyingItem: { text: string; fromX: number; fromY: number; toX: number; toY: number } | null = null;
+
 
   // ─── Orientation & Multi-touch ───
   private orientationHandler: (() => void) | null = null;
@@ -135,6 +131,7 @@ export class DragDropGameComponent implements OnInit, AfterViewInit, OnDestroy {
   private queryParamsSub: Subscription | null = null;
 
   @ViewChild('mobileZonesScroll') mobileZonesScroll!: ElementRef;
+  @ViewChild('gameContainer', { static: false }) gameContainerRef!: ElementRef;
 
   // ─── CDK Drop List Connection IDs ───
   // Desktop lists
@@ -171,10 +168,10 @@ export class DragDropGameComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit(): void {
-    const container = document.querySelector('.game-container');
-    if (container) {
-      container.addEventListener('gesturestart', (e) => e.preventDefault());
-      container.addEventListener('gesturechange', (e) => e.preventDefault());
+    if (this.gameContainerRef?.nativeElement) {
+      const container = this.gameContainerRef.nativeElement;
+      container.addEventListener('gesturestart', (e: Event) => e.preventDefault());
+      container.addEventListener('gesturechange', (e: Event) => e.preventDefault());
     }
 
     this.multiTouchHandler = (e: TouchEvent) => {
@@ -247,6 +244,7 @@ export class DragDropGameComponent implements OnInit, AfterViewInit, OnDestroy {
   private resetGameState(): void {
     this.selectedItem = null;
     this.showResults = false;
+    this.isDragging = false;
     this.gameResult = null;
     this.consecutiveErrors = 0;
     this.hintsRemaining = 3;
@@ -257,7 +255,6 @@ export class DragDropGameComponent implements OnInit, AfterViewInit, OnDestroy {
     this.showExplanation = false;
     this.focusedItemIndex = -1;
     this.focusedZoneIndex = -1;
-    this.flyingItem = null;
     this.playingAudioItemId = null;
     // Timer full reset
     this.timerEnabled = false;
@@ -333,7 +330,8 @@ export class DragDropGameComponent implements OnInit, AfterViewInit, OnDestroy {
     this.showResults = false;
     this.gameResult = null;
     this.confettiPieces = [];
-    this.startGame(this.session!.questionId);
+    const qId = this.session?.questionId ?? null;
+    this.startGame(qId);
   }
 
   goBack() {
@@ -642,11 +640,19 @@ export class DragDropGameComponent implements OnInit, AfterViewInit, OnDestroy {
     this.stopItemAudio();
     this.playingAudioItemId = item.id;
     this.audioPlayer = new Audio(item.audioUrl);
-    this.audioPlayer.play();
     this.audioPlayer.onended = () => {
       this.playingAudioItemId = null;
       this.cdr.markForCheck();
     };
+    this.audioPlayer.onerror = () => {
+      this.playingAudioItemId = null;
+      this.displayToast('تعذر تشغيل الصوت', 'error');
+      this.cdr.markForCheck();
+    };
+    this.audioPlayer.play().catch(() => {
+      this.playingAudioItemId = null;
+      this.cdr.markForCheck();
+    });
     this.cdr.markForCheck();
   }
 
@@ -710,7 +716,6 @@ export class DragDropGameComponent implements OnInit, AfterViewInit, OnDestroy {
 
     this.hintItemId = item.id;
     this.hintZoneId = item.correctZoneId;
-    this.showHintLine = true;
     this.vibrate([30]);
 
     if (this.isMobile) {
@@ -726,7 +731,6 @@ export class DragDropGameComponent implements OnInit, AfterViewInit, OnDestroy {
   private clearHint(): void {
     this.hintItemId = null;
     this.hintZoneId = null;
-    this.showHintLine = false;
     clearTimeout(this.hintTimer);
     this.cdr.markForCheck();
   }
@@ -791,6 +795,10 @@ export class DragDropGameComponent implements OnInit, AfterViewInit, OnDestroy {
   @HostListener('window:keydown', ['$event'])
   onKeyDown(event: KeyboardEvent): void {
     if (this.showResults || this.showTutorial || this.isLoading) return;
+
+    // Don't handle shortcuts when typing in an input
+    const tag = (event.target as HTMLElement)?.tagName;
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
 
     switch (event.key) {
       case 'ArrowDown':
@@ -863,7 +871,8 @@ export class DragDropGameComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   getZoneGridClass(): string {
-    if (this.zones.length <= 2) return 'grid-cols-2';
+    if (this.zones.length <= 1) return 'grid-cols-1';
+    if (this.zones.length === 2) return 'grid-cols-2';
     if (this.zones.length === 3) return 'grid-cols-3';
     return 'grid-cols-2';
   }
@@ -929,7 +938,8 @@ export class DragDropGameComponent implements OnInit, AfterViewInit, OnDestroy {
   // ═══════════════════════════════════════════
 
   private detectMobile(): void {
-    this.isMobile = window.innerWidth < 1024 || 'ontouchstart' in window;
+    // Width-only check — don't flag touchscreen laptops as mobile
+    this.isMobile = window.innerWidth < 1024;
     if (this.isMobile) this.inputMode = 'tap';
   }
 

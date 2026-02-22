@@ -1,5 +1,6 @@
 <!-- ========== LOADING SCREEN ========== -->
-<div class="game-container" *ngIf="!isLoading && session; else loadingTpl" (touchstart)="onContainerTouch($event)">
+<div class="game-container" #gameContainer *ngIf="!isLoading && session; else loadingTpl"
+    (touchstart)="onContainerTouch($event)">
 
     <!-- Toast Notification -->
     <div class="toast-notification" *ngIf="showToast" [class.toast-success]="toastType === 'success'"
