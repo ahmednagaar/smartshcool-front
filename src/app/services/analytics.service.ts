@@ -26,14 +26,18 @@ export class AnalyticsService {
         return localStorage.getItem(this.visitorIdKey) || '';
     }
 
-    async logVisit() {
-        const visitData = {
+    async logVisit(studentName?: string) {
+        const visitData: any = {
             visitorId: this.getVisitorId(),
             pagePath: window.location.pathname,
             userAgent: navigator.userAgent,
             deviceType: this.detectDeviceType(),
             source: document.referrer || 'direct'
         };
+
+        if (studentName) {
+            visitData.studentName = studentName;
+        }
 
         try {
             await firstValueFrom(this.http.post(`${this.apiUrl}/visit`, visitData));

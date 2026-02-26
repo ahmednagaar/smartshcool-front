@@ -22,14 +22,17 @@ export class WelcomeScreenComponent {
   ) { }
 
   continueToTestType() {
-    const hasName = !!this.studentName.trim();
+    const trimmedName = this.studentName.trim();
+    const hasName = !!trimmedName;
 
-    // Analytics
+    // Analytics — log visit with student name
     this.analyticsService.logEvent('welcome_continue', { hasName });
+    this.analyticsService.logVisit(hasName ? trimmedName : undefined);
 
-    // Store name in session
+    // Store name in session and localStorage
     if (hasName) {
-      sessionStorage.setItem('studentName', this.studentName.trim());
+      sessionStorage.setItem('studentName', trimmedName);
+      localStorage.setItem('studentName', trimmedName);
     } else {
       sessionStorage.removeItem('studentName');
     }

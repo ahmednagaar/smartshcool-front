@@ -51,6 +51,7 @@ import { AdminDragDropQuestionFormComponent } from './components/admin-dragdrop-
 
 import { AdminFlipCardQuestionsListComponent } from './components/admin-flipcard-questions/list/admin-flipcard-questions-list.component';
 import { AdminFlipCardQuestionFormComponent } from './components/admin-flipcard-questions/form/admin-flipcard-question-form.component';
+import { AdminVisitorsComponent } from './components/admin-visitors/admin-visitors.component';
 
 import { QuestionWizardComponent } from './components/admin-questions/question-wizard/question-wizard.component';
 
@@ -149,6 +150,9 @@ export const routes: Routes = [
             { path: 'flipcard-questions', component: AdminFlipCardQuestionsListComponent },
             { path: 'flipcard-questions/new', component: AdminFlipCardQuestionFormComponent },
             { path: 'flipcard-questions/edit/:id', component: AdminFlipCardQuestionFormComponent },
+
+            // Visitors
+            { path: 'visitors', component: AdminVisitorsComponent },
 
             { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
         ]

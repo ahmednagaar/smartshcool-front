@@ -308,6 +308,15 @@ export class ApiService {
         );
     }
 
+    // Visitor Tracking Endpoints
+    getRecentVisitors(count: number = 20): Observable<any[]> {
+        return this.http.get<any[]>(`${this.apiUrl}/analytics/visitors?count=${count}`, { headers: this.getAuthHeaders() });
+    }
+
+    getVisitorStats(): Observable<any> {
+        return this.http.get<any>(`${this.apiUrl}/analytics/visitors/stats`, { headers: this.getAuthHeaders() });
+    }
+
     // NEW: Filtered Questions for V0 Flow
     getFilteredQuestions(grade: number, subject: number, testType: number): Observable<Question[]> {
         return this.getQuestions({

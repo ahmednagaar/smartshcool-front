@@ -453,6 +453,7 @@ export class AdminLayoutComponent {
       expanded: false,
       children: [
         { label: 'الطلاب', icon: '🎓', route: '/admin/students' },
+        { label: 'الزوار', icon: '🧑‍🎓', route: '/admin/visitors' },
         { label: 'المشرفين', icon: '🔑', route: '/admin/administrators' }
       ]
     },

@@ -9,6 +9,92 @@ import { ApiService } from '../../services/api.service';
   imports: [CommonModule, RouterLink],
   template: `
     <div class="dashboard-content">
+
+      <!-- Visitor Stats Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="card-nafes text-center card-hover-effect" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white;">
+          <div class="text-5xl mb-4">👤</div>
+          <h3 class="text-4xl font-bold mb-2" style="color: white;">{{ visitorStats.withName }}</h3>
+          <p style="color: rgba(255,255,255,0.85);">دخلوا بأسمائهم</p>
+        </div>
+
+        <div class="card-nafes text-center card-hover-effect" style="background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color: white;">
+          <div class="text-5xl mb-4">👻</div>
+          <h3 class="text-4xl font-bold mb-2" style="color: white;">{{ visitorStats.withoutName }}</h3>
+          <p style="color: rgba(255,255,255,0.85);">دخلوا بدون اسم</p>
+        </div>
+
+        <div class="card-nafes text-center card-hover-effect" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white;">
+          <div class="text-5xl mb-4">📊</div>
+          <h3 class="text-4xl font-bold mb-2" style="color: white;">{{ visitorStats.total }}</h3>
+          <p style="color: rgba(255,255,255,0.85);">إجمالي الزوار</p>
+        </div>
+      </div>
+
+      <!-- Recent Visitors Section -->
+      <div class="card-nafes mb-8 card-hover-effect">
+        <div class="flex justify-between items-center mb-4 border-b pb-3">
+          <h3 class="text-xl font-bold text-nafes-dark">🧑‍🎓 الطلاب الذين دخلوا الموقع</h3>
+          <a routerLink="/admin/visitors" class="text-sm font-medium px-4 py-2 rounded-lg transition-all"
+             style="background: #f0fdf4; color: #16a34a; cursor: pointer;"
+             onmouseover="this.style.background='#dcfce7'"
+             onmouseout="this.style.background='#f0fdf4'">
+            عرض الكل ←
+          </a>
+        </div>
+
+        <div *ngIf="recentVisitors.length === 0" class="text-center py-8">
+          <div class="text-6xl mb-4">📭</div>
+          <p class="text-gray-500 text-lg">لا يوجد زوار بعد</p>
+          <p class="text-gray-400 text-sm mt-1">سيظهر هنا أسماء الطلاب عند دخولهم الموقع</p>
+        </div>
+
+        <div *ngIf="recentVisitors.length > 0" class="overflow-x-auto">
+          <table class="w-full text-right">
+            <thead class="bg-gray-50 border-b-2" style="border-color: #e5e7eb;">
+              <tr>
+                <th class="p-3 font-bold text-gray-700">#</th>
+                <th class="p-3 font-bold text-gray-700">اسم الطالب</th>
+                <th class="p-3 font-bold text-gray-700">الجهاز</th>
+                <th class="p-3 font-bold text-gray-700">وقت الزيارة</th>
+                <th class="p-3 font-bold text-gray-700">عدد الزيارات</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let visitor of recentVisitors; let i = index"
+                  class="border-b hover:bg-gray-50 transition-colors duration-200"
+                  [style.animation]="'fadeInUp 0.3s ease forwards ' + (i * 0.05) + 's'">
+                <td class="p-3 font-bold" style="color: #d97706;">{{ i + 1 }}</td>
+                <td class="p-3">
+                  <div class="flex items-center gap-2">
+                    <span class="inline-flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold"
+                          style="background: linear-gradient(135deg, #dbeafe, #bfdbfe); color: #1d4ed8;">
+                      {{ visitor.name.charAt(0) }}
+                    </span>
+                    <span class="font-semibold text-gray-800">{{ visitor.name }}</span>
+                  </div>
+                </td>
+                <td class="p-3">
+                  <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium"
+                        [style.background]="visitor.deviceType === 'Mobile' ? '#fef3c7' : visitor.deviceType === 'Tablet' ? '#e0e7ff' : '#d1fae5'"
+                        [style.color]="visitor.deviceType === 'Mobile' ? '#92400e' : visitor.deviceType === 'Tablet' ? '#3730a3' : '#065f46'">
+                    {{ visitor.deviceType === 'Mobile' ? '📱' : visitor.deviceType === 'Tablet' ? '📋' : '💻' }}
+                    {{ visitor.deviceType === 'Mobile' ? 'جوال' : visitor.deviceType === 'Tablet' ? 'تابلت' : 'حاسوب' }}
+                  </span>
+                </td>
+                <td class="p-3 text-gray-600 text-sm">{{ getTimeAgo(visitor.visitedAt) }}</td>
+                <td class="p-3">
+                  <span class="inline-flex items-center justify-center min-w-[2rem] px-2 py-1 rounded-full text-xs font-bold"
+                        style="background: #fef3c7; color: #92400e;">
+                    {{ visitor.totalVisits }}
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
       <!-- Stats Cards -->
       <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
 
@@ -119,9 +205,10 @@ import { ApiService } from '../../services/api.service';
               <div class="font-bold text-xl">إدارة الاختبارات</div>
             </button>
 
-            <button routerLink="/admin/dashboard" class="p-6 bg-nafes-gold text-white rounded-xl card-hover-effect btn-hover-effect transition flex flex-col items-center justify-center">
-              <div class="text-4xl mb-2">📊</div>
-              <div class="font-bold text-xl">تحديث البيانات</div>
+            <button routerLink="/admin/visitors" class="p-6 rounded-xl card-hover-effect btn-hover-effect transition flex flex-col items-center justify-center"
+                    style="background: linear-gradient(135deg, #10b981, #059669); color: white;">
+              <div class="text-4xl mb-2">🧑‍🎓</div>
+              <div class="font-bold text-xl">إدارة الزوار</div>
             </button>
           </div>
         </div>
@@ -198,6 +285,10 @@ export class AdminDashboardComponent implements OnInit {
   // Question Stats
   questionStats: any = null;
 
+  // Visitor Data
+  recentVisitors: any[] = [];
+  visitorStats = { withName: 0, withoutName: 0, total: 0 };
+
   constructor(
     private router: Router,
     private api: ApiService
@@ -209,6 +300,7 @@ export class AdminDashboardComponent implements OnInit {
     this.loadLeaderboard();
     this.loadAnalytics();
     this.loadQuestionStats();
+    this.loadVisitorData();
   }
 
   loadStats() {
@@ -246,6 +338,24 @@ export class AdminDashboardComponent implements OnInit {
     });
   }
 
+  loadVisitorData() {
+    // Load recent named visitors
+    this.api.getRecentVisitors(10).subscribe({
+      next: (data) => {
+        this.recentVisitors = data;
+      },
+      error: (err) => console.error('Error loading visitors:', err)
+    });
+
+    // Load visitor stats (with name / without name / total)
+    this.api.getVisitorStats().subscribe({
+      next: (data) => {
+        this.visitorStats = data;
+      },
+      error: (err) => console.error('Error loading visitor stats:', err)
+    });
+  }
+
   loadAnalytics() {
     // 1. Activity Trends
     // Default to last 7 days
@@ -278,6 +388,22 @@ export class AdminDashboardComponent implements OnInit {
       // Can add logic here to display engagement stats if UI elements exist
       console.log('Engagement Summary:', summary);
     });
+  }
+
+  getTimeAgo(dateStr: string): string {
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffSeconds = Math.floor(diffMs / 1000);
+    const diffMinutes = Math.floor(diffSeconds / 60);
+    const diffHours = Math.floor(diffMinutes / 60);
+    const diffDays = Math.floor(diffHours / 24);
+
+    if (diffSeconds < 60) return 'الآن';
+    if (diffMinutes < 60) return `منذ ${diffMinutes} دقيقة`;
+    if (diffHours < 24) return `منذ ${diffHours} ساعة`;
+    if (diffDays < 7) return `منذ ${diffDays} يوم`;
+    return date.toLocaleDateString('ar-SA');
   }
 
   logout() {
