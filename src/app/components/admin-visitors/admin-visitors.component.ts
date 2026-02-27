@@ -4,10 +4,10 @@ import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../services/api.service';
 
 @Component({
-    selector: 'app-admin-visitors',
-    standalone: true,
-    imports: [CommonModule, FormsModule],
-    template: `
+  selector: 'app-admin-visitors',
+  standalone: true,
+  imports: [CommonModule, FormsModule],
+  template: `
     <div class="visitors-page">
       
       <!-- Header -->
@@ -124,80 +124,82 @@ import { ApiService } from '../../services/api.service';
       </div>
     </div>
   `,
-    styles: [`
+  styles: [`
     .visitors-page {
       padding: 1rem;
     }
   `]
 })
 export class AdminVisitorsComponent implements OnInit {
-    allVisitors: any[] = [];
-    filteredVisitors: any[] = [];
-    searchTerm = '';
-    visitorStats = { withName: 0, withoutName: 0, total: 0 };
+  allVisitors: any[] = [];
+  filteredVisitors: any[] = [];
+  searchTerm = '';
+  visitorStats = { withName: 0, withoutName: 0, total: 0 };
 
-    constructor(private api: ApiService) { }
+  constructor(private api: ApiService) { }
 
-    ngOnInit() {
-        this.loadVisitors();
-        this.loadStats();
+  ngOnInit() {
+    this.loadVisitors();
+    this.loadStats();
+  }
+
+  loadVisitors() {
+    this.api.getRecentVisitors(100).subscribe({
+      next: (data) => {
+        this.allVisitors = data;
+        this.filterVisitors();
+      },
+      error: (err) => console.error('Error loading visitors:', err)
+    });
+  }
+
+  loadStats() {
+    this.api.getVisitorStats().subscribe({
+      next: (data) => {
+        this.visitorStats = data;
+      },
+      error: (err) => console.error('Error loading visitor stats:', err)
+    });
+  }
+
+  filterVisitors() {
+    if (!this.searchTerm.trim()) {
+      this.filteredVisitors = [...this.allVisitors];
+    } else {
+      const term = this.searchTerm.trim().toLowerCase();
+      this.filteredVisitors = this.allVisitors.filter(v =>
+        v.name.toLowerCase().includes(term)
+      );
     }
+  }
 
-    loadVisitors() {
-        this.api.getRecentVisitors(100).subscribe({
-            next: (data) => {
-                this.allVisitors = data;
-                this.filterVisitors();
-            },
-            error: (err) => console.error('Error loading visitors:', err)
-        });
-    }
+  getTimeAgo(dateStr: string): string {
+    const utcStr = dateStr.endsWith('Z') ? dateStr : dateStr + 'Z';
+    const date = new Date(utcStr);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffSeconds = Math.floor(diffMs / 1000);
+    const diffMinutes = Math.floor(diffSeconds / 60);
+    const diffHours = Math.floor(diffMinutes / 60);
+    const diffDays = Math.floor(diffHours / 24);
 
-    loadStats() {
-        this.api.getVisitorStats().subscribe({
-            next: (data) => {
-                this.visitorStats = data;
-            },
-            error: (err) => console.error('Error loading visitor stats:', err)
-        });
-    }
+    if (diffSeconds < 60) return 'الآن';
+    if (diffMinutes < 60) return `منذ ${diffMinutes} دقيقة`;
+    if (diffHours < 24) return `منذ ${diffHours} ساعة`;
+    if (diffDays < 7) return `منذ ${diffDays} يوم`;
+    if (diffDays < 30) return `منذ ${Math.floor(diffDays / 7)} أسبوع`;
+    return date.toLocaleDateString('ar-SA');
+  }
 
-    filterVisitors() {
-        if (!this.searchTerm.trim()) {
-            this.filteredVisitors = [...this.allVisitors];
-        } else {
-            const term = this.searchTerm.trim().toLowerCase();
-            this.filteredVisitors = this.allVisitors.filter(v =>
-                v.name.toLowerCase().includes(term)
-            );
-        }
-    }
-
-    getTimeAgo(dateStr: string): string {
-        const date = new Date(dateStr);
-        const now = new Date();
-        const diffMs = now.getTime() - date.getTime();
-        const diffSeconds = Math.floor(diffMs / 1000);
-        const diffMinutes = Math.floor(diffSeconds / 60);
-        const diffHours = Math.floor(diffMinutes / 60);
-        const diffDays = Math.floor(diffHours / 24);
-
-        if (diffSeconds < 60) return 'الآن';
-        if (diffMinutes < 60) return `منذ ${diffMinutes} دقيقة`;
-        if (diffHours < 24) return `منذ ${diffHours} ساعة`;
-        if (diffDays < 7) return `منذ ${diffDays} يوم`;
-        if (diffDays < 30) return `منذ ${Math.floor(diffDays / 7)} أسبوع`;
-        return date.toLocaleDateString('ar-SA');
-    }
-
-    formatDate(dateStr: string): string {
-        const date = new Date(dateStr);
-        return date.toLocaleDateString('ar-SA', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-    }
+  formatDate(dateStr: string): string {
+    const utcStr = dateStr.endsWith('Z') ? dateStr : dateStr + 'Z';
+    const date = new Date(utcStr);
+    return date.toLocaleDateString('ar-SA', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  }
 }

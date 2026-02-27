@@ -391,7 +391,8 @@ export class AdminDashboardComponent implements OnInit {
   }
 
   getTimeAgo(dateStr: string): string {
-    const date = new Date(dateStr);
+    const utcStr = dateStr.endsWith('Z') ? dateStr : dateStr + 'Z';
+    const date = new Date(utcStr);
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
     const diffSeconds = Math.floor(diffMs / 1000);
