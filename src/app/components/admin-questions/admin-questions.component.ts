@@ -454,6 +454,7 @@ interface QuestionFilter {
                           class="w-full p-2.5 border rounded-lg bg-gray-50 focus:ring-2 focus:ring-nafes-gold">
                     <option [value]="1">نافس</option>
                     <option [value]="2">مركزي</option>
+                    <option [value]="3">نافس والمركزي</option>
                   </select>
                 </div>
               </div>
@@ -790,6 +791,48 @@ export class AdminQuestionsComponent implements OnInit, OnDestroy {
     payload.type = Number(payload.type) || 1;
     payload.difficulty = Number(payload.difficulty) || 1;
     payload.testType = Number(payload.testType) || 1;
+
+    // Handle "Both" (testType === 3): save for Nafes (1) and Central (2)
+    if (payload.testType === 3) {
+      const payloadNafes = { ...payload, testType: 1 };
+      const payloadCentral = { ...payload, testType: 2 };
+
+      // Stringify options for both
+      if (Array.isArray(this.currentQuestion.options)) {
+        payloadNafes.options = JSON.stringify(this.currentQuestion.options);
+        payloadCentral.options = JSON.stringify(this.currentQuestion.options);
+      }
+
+      const requestNafes = this.isEditing
+        ? this.api.updateQuestion(payloadNafes.id, payloadNafes)
+        : this.api.createQuestion(payloadNafes);
+
+      requestNafes.pipe(takeUntil(this.destroy$)).subscribe({
+        next: () => {
+          this.api.createQuestion(payloadCentral).pipe(takeUntil(this.destroy$)).subscribe({
+            next: () => {
+              this.closeModal();
+              this.loadQuestions();
+              this.loadStats();
+              this.isSaving = false;
+            },
+            error: (err) => {
+              console.error('❌ Save Central Error:', err);
+              const errorMsg = err.error?.message || err.error?.errors?.join(', ') || err.message;
+              alert('فشل حفظ نسخة المركزي: ' + errorMsg);
+              this.isSaving = false;
+            }
+          });
+        },
+        error: (err) => {
+          console.error('❌ Save Nafes Error:', err);
+          const errorMsg = err.error?.message || err.error?.errors?.join(', ') || err.message;
+          alert(this.isEditing ? 'فشل التحديث: ' + errorMsg : 'فشل الإضافة: ' + errorMsg);
+          this.isSaving = false;
+        }
+      });
+      return;
+    }
 
     // Sanitize optional fields
     if (!payload.mediaUrl) payload.mediaUrl = null;

@@ -207,6 +207,56 @@ export class AdminWheelQuestionFormComponent implements OnInit {
             testType: this.testType
         };
 
+        // Handle "Both" (testType === 3): save for Nafes (1) and Central (2)
+        if (this.testType === 3) {
+            const payloadNafes = { ...payload, testType: 1 };
+            const payloadCentral = { ...payload, testType: 2 };
+
+            if (this.isEditMode && this.questionId) {
+                // In edit mode, update existing with testType 1, then create a copy with testType 2
+                this.wheelService.update(this.questionId, { ...payloadNafes, isActive: true }).subscribe({
+                    next: () => {
+                        this.wheelService.create(payloadCentral).subscribe({
+                            next: () => {
+                                this.showToast('تم حفظ السؤال لنافس والمركزي بنجاح ✅', 'success');
+                                setTimeout(() => this.router.navigate(['/admin/wheel-questions']), 1200);
+                            },
+                            error: (err) => {
+                                this.saving = false;
+                                this.handleApiError(err);
+                            }
+                        });
+                    },
+                    error: (err) => {
+                        this.saving = false;
+                        this.handleApiError(err);
+                    }
+                });
+            } else {
+                // Create mode: create two questions
+                this.wheelService.create(payloadNafes).subscribe({
+                    next: () => {
+                        this.wheelService.create(payloadCentral).subscribe({
+                            next: () => {
+                                this.showToast('تم حفظ السؤال لنافس والمركزي بنجاح ✅', 'success');
+                                setTimeout(() => this.router.navigate(['/admin/wheel-questions']), 1200);
+                            },
+                            error: (err) => {
+                                this.saving = false;
+                                this.handleApiError(err);
+                            }
+                        });
+                    },
+                    error: (err) => {
+                        this.saving = false;
+                        this.handleApiError(err);
+                    }
+                });
+            }
+            return;
+        }
+
+        // Single testType save (original logic)
         if (this.isEditMode && this.questionId) {
             this.wheelService.update(this.questionId, { ...payload, isActive: true }).subscribe({
                 next: () => {

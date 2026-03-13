@@ -84,7 +84,7 @@ export class QuestionWizardComponent implements OnInit {
         { value: 6, label: 'الصف السادس' }
     ];
 
-    // Dynamic grades based on testType (1=نافس → 3,6 only; 2=مركزي → all)
+    // Dynamic grades based on testType (1=نافس → 3,6 only; 2=مركزي or 3=Both → all)
     get availableGrades() {
         if (this.currentDraft.testType === 1) {
             return this.grades.filter(g => g.value === 3 || g.value === 6);
@@ -469,13 +469,35 @@ export class QuestionWizardComponent implements OnInit {
         }
 
         try {
-            if (this.isEditMode && this.editQuestionId) {
-                await this.api.updateQuestion(this.editQuestionId, payload).toPromise();
-                this.toastSuccess('تم تحديث السؤال بنجاح! ✅');
+            // Handle "Both" (testType === 3): save for Nafes (1) and Central (2)
+            if (this.currentDraft.testType === 3) {
+                const payloadNafes = { ...payload, testType: 1 };
+                const payloadCentral = { ...payload, testType: 2 };
+                // Re-add passage subQuestions (spread doesn't deep-copy)
+                if (this.isPassageType) {
+                    payloadNafes.subQuestions = this.buildSubQuestionsPayload();
+                    payloadCentral.subQuestions = this.buildSubQuestionsPayload();
+                }
+
+                if (this.isEditMode && this.editQuestionId) {
+                    await this.api.updateQuestion(this.editQuestionId, payloadNafes).toPromise();
+                    await this.api.createQuestion(payloadCentral).toPromise();
+                    this.toastSuccess('تم حفظ السؤال لنافس والمركزي بنجاح! ✅');
+                } else {
+                    await this.api.createQuestion(payloadNafes).toPromise();
+                    await this.api.createQuestion(payloadCentral).toPromise();
+                    this.questionQueue.push({ ...this.currentDraft });
+                    this.toastSuccess('تم حفظ السؤال لنافس والمركزي بنجاح! ✅');
+                }
             } else {
-                await this.api.createQuestion(payload).toPromise();
-                this.questionQueue.push({ ...this.currentDraft });
-                this.toastSuccess('تم حفظ السؤال بنجاح! ✅');
+                if (this.isEditMode && this.editQuestionId) {
+                    await this.api.updateQuestion(this.editQuestionId, payload).toPromise();
+                    this.toastSuccess('تم تحديث السؤال بنجاح! ✅');
+                } else {
+                    await this.api.createQuestion(payload).toPromise();
+                    this.questionQueue.push({ ...this.currentDraft });
+                    this.toastSuccess('تم حفظ السؤال بنجاح! ✅');
+                }
             }
         } catch (error: any) {
             const msg = error?.error?.message || 'حدث خطأ أثناء الحفظ. حاول مرة أخرى.';
