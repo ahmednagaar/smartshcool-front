@@ -90,12 +90,7 @@ export class SubjectSelectionComponent implements OnInit {
     };
     this.gradeName = gradeNames[grade] || 'الصف الثالث الابتدائي';
 
-    // Grade 3 doesn't have Science
-    if (grade === '3') {
-      this.availableSubjects = this.allSubjects.filter(s => s.value !== 'science');
-    } else {
-      this.availableSubjects = this.allSubjects;
-    }
+    this.availableSubjects = this.allSubjects;
   }
 
   selectSubject(subject: Subject) {
